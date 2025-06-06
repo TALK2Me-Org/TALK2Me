@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TALK2Me - Bo miłość potrzebuje tłumaczenia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #FFF9F5;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .logo .pink {
+            color: #FF69B4;
+        }
+
+        .tagline {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 25px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .input-field {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .input-field::placeholder {
+            color: #999;
+        }
+
+        .mic-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 24px;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #FF69B4, #FFA500);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .submit-button:hover {
+            transform: scale(1.02);
+        }
+
+        .response-container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: none;
+        }
+
+        .response-section {
+            margin-bottom: 25px;
+        }
+
+        .response-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-content {
+            color: #555;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        .emoji {
+            font-size: 20px;
+        }
+
+        .user-message {
+            background: #E8F4FF;
+            border-radius: 20px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            align-self: flex-end;
+            max-width: 80%;
+            margin-left: auto;
+        }
+
+        .loading {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            display: none;
+        }
+
+        .loading-dots {
+            display: inline-block;
+            animation: loading 1.4s infinite ease-in-out both;
+        }
+
+        @keyframes loading {
+            0%, 80%, 100% {
+                opacity: 0.6;
+            }
+            40% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">TALK<span class="pink">2</span>Me</div>
+            <div class="tagline">Bo miłość potrzebuje tłumaczenia</div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <!-- Tutaj będą pojawiać się wiadomości -->
+        </div>
+
+        <div class="input-section">
+            <input 
+                type="text" 
+                class="input-field" 
+                id="userInput"
+                placeholder="Powiedz lub wpisz, co Ci leży na sercu..."
+            >
+            <button class="mic-button">🎤</button>
+        </div>
+
+        <button class="submit-button" onclick="sendMessage()">Pomóż mi zrozumieć</button>
+    </div>
+
+    <script>
+        // Przykładowe odpowiedzi AI (później podłączymy prawdziwe AI)
+        const sampleResponses = [
+            {
+                intro: "Hej, widzę, że to co powiedziała Ci dziewczyna mocno Cię dotknęło. Musi być naprawdę frustrujące, kiedy czujesz, że nie spełniasz jej oczekiwań, prawda?",
+                situation: "Twoja dziewczyna prawdopodobnie czuje się niepewna, kiedy nie dzwonisz do niej o oczekiwanej porze. Może to być jej sposób na wyrażenie tęsknoty za Tobą, choć w sposób, który nie jest dla Ciebie konstruktywny.",
+                communication: "Kiedy kobiety są zdenerwowane, mogą skupić się na emocjach zamiast na logicznym wyrażaniu, czego potrzebują. Może jej chodziło o to, że po prostu chciałaby więcej kontaktu z Tobą, ale zamiast tego, wyraziła to w formie wyrzutów. Warto pamiętać, że to nie jest konflikt charakterów, ale różnica w komunikacji.",
+                suggestion: "\"Kochanie, wiem, że jest Ci smutno, kiedy nie dzwonię do Ciebie, kiedy tego oczekujesz. Czy możemy porozmawiać o tym, jak mogę lepiej spełniać Twoje oczekiwania, nie czując się przy tym obrażony winą?\""
+            }
+        ];
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            const chatContainer = document.getElementById('chatContainer');
+            
+            // Dodaj wiadomość użytkownika
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'user-message';
+            userMessageDiv.textContent = message;
+            chatContainer.appendChild(userMessageDiv);
+
+            // Pokaż loading
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.innerHTML = 'Analizuję <span class="loading-dots">...</span>';
+            chatContainer.appendChild(loadingDiv);
+            loadingDiv.style.display = 'block';
+
+            // Czyść input
+            input.value = '';
+
+            // Symuluj odpowiedź AI po 2 sekundach
+            setTimeout(() => {
+                loadingDiv.remove();
+                
+                const response = sampleResponses[0];
+                const responseDiv = document.createElement('div');
+                responseDiv.className = 'response-container';
+                responseDiv.style.display = 'block';
+                
+                responseDiv.innerHTML = `
+                    <div class="response-section">
+                        <div class="section-header">
+                            <span class="emoji">❤️</span> Przede wszystkim...
+                        </div>
+                        <div class="section-content">${response.intro}</div>
+                    </div>
+
+                    <div class="response-section">
+                        <div class="section-header">
+                            <span class="emoji">🤔</span> Co mogło się wydarzyć
+                        </div>
+                        <div class="section-content">${response.situation}</div>
+                    </div>
+
+                    <div class="response-section">
+                        <div class="section-header">
+                            <span class="emoji">🌿</span> Różnica w komunikacji
+                        </div>
+                        <div class="section-content">${response.communication}</div>
+                    </div>
+
+                    <div class="response-section">
+                        <div class="section-header">
+                            <span class="emoji">💬</span> Spróbuj powiedzieć tak
+                        </div>
+                        <div class="section-content">"${response.suggestion}"</div>
+                    </div>
+                `;
+                
+                chatContainer.appendChild(responseDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 2000);
+        }
+
+        // Obsługa Enter
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "public": true,
+  "github": {
+    "silent": true
+  },
+  "builds": [
+    {
+      "src": "mobile/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/mobile/prototype-final.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/mobile/login.html"
+    },
+    {
+      "src": "/login.html",
+      "dest": "/mobile/login.html"
+    },
+    {
+      "src": "/app",
+      "dest": "/mobile/prototype-final.html"
+    },
+    {
+      "src": "/mobile/(.*)",
+      "dest": "/mobile/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+}
