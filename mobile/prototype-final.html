@@ -1313,6 +1313,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateAllTranslations(); // Ustaw wszystkie tłumaczenia na starcie
             updateUserUI();
+            
+            // Załaduj zapisany kolor akcentu
+            const savedAccentColor = localStorage.getItem('accentColor');
+            if (savedAccentColor && savedAccentColor !== '#FF69B4') {
+                changeAccentColor(savedAccentColor);
+            }
+            
             if (localStorage.getItem('token')) {
                 loadChatHistory();
                 loadFavoriteChats();
@@ -2143,9 +2150,54 @@
         function changeAccentColor(color) {
             document.documentElement.style.setProperty('--accent-color', color);
             localStorage.setItem('accentColor', color);
-            // Zmień kolor różowych elementów
+            
+            // Zmień kolor wszystkich różowych elementów
             const pinkElements = document.querySelectorAll('.pink');
             pinkElements.forEach(el => el.style.color = color);
+            
+            // Zmień tło przycisków i elementów z kolorem #FF69B4
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.style.background === '#FF69B4' || btn.style.background === 'rgb(255, 105, 180)' || btn.style.backgroundColor === '#FF69B4') {
+                    btn.style.background = color;
+                    btn.style.backgroundColor = color;
+                }
+            });
+            
+            // Zmień kolor awatara
+            const avatars = document.querySelectorAll('.profile-avatar');
+            avatars.forEach(avatar => {
+                if (avatar.style.background === '#FF69B4' || avatar.style.background === 'rgb(255, 105, 180)' || avatar.style.backgroundColor === '#FF69B4') {
+                    avatar.style.background = color;
+                    avatar.style.backgroundColor = color;
+                }
+            });
+            
+            // Zmień kolor przełączników (slider)
+            const sliders = document.querySelectorAll('input:checked + .slider');
+            sliders.forEach(slider => {
+                slider.style.backgroundColor = color;
+            });
+            
+            // Zmień kolor logo "2"
+            const logoTwo = document.querySelector('.pink');
+            if (logoTwo) {
+                logoTwo.style.color = color;
+            }
+            
+            // Aktualizuj style CSS dla przyszłych elementów
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = `
+                .pink { color: ${color} !important; }
+                input:checked + .slider { background-color: ${color} !important; }
+                .profile-avatar { background: ${color} !important; }
+                button[style*="background: #FF69B4"], 
+                button[style*="background-color: #FF69B4"] { 
+                    background: ${color} !important; 
+                    background-color: ${color} !important; 
+                }
+            `;
+            document.head.appendChild(styleSheet);
         }
         
         function toggleSounds(enabled) {
