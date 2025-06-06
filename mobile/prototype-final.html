@@ -1888,11 +1888,6 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ chatId: chatId })
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
                 });
                 
                 console.log('Response status:', response.status);
