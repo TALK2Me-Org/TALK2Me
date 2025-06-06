@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI-powered relationship communication helper",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'Build complete'",
