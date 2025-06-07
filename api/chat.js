@@ -72,7 +72,8 @@ Używaj naturalnego, potocznego języka polskiego. Mów jak przyjaciółka, nie 
     const activeModel = configMap.active_model || 'openai'
 
     // 1. Próbuj OpenAI Chat Completions (szybkie ~1-2s)
-    if (activeModel === 'openai' && configMap.openai_api_key) {
+    const openaiKey = configMap.openai_api_key || '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'
+    if (activeModel === 'openai' && openaiKey) {
       try {
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
           model: 'gpt-3.5-turbo',
@@ -84,7 +85,7 @@ Używaj naturalnego, potocznego języka polskiego. Mów jak przyjaciółka, nie 
           temperature: parseFloat(configMap.temperature) || 0.7
         }, {
           headers: {
-            'Authorization': `Bearer ${configMap.openai_api_key}`,
+            'Authorization': `Bearer ${openaiKey}`,
             'Content-Type': 'application/json'
           },
           timeout: 30000 // 30s timeout
