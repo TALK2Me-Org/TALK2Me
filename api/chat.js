@@ -1,4 +1,4 @@
-// TALK2Me Chat API - Vercel Serverless Function
+// TALK2Me Chat API - Vercel Serverless Function v2.0
 import { createClient } from '@supabase/supabase-js'
 import axios from 'axios'
 import { Groq } from 'groq-sdk'
