@@ -7,6 +7,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>TALK2Me - Bo miłość potrzebuje zrozumienia v1.1</title>
     <style>
+        :root {
+            --accent-color: #FF69B4;
+            --accent-color-hover: #FF1493;
+            --accent-color-light: rgba(255, 105, 180, 0.2);
+            --accent-color-dark: rgba(255, 105, 180, 0.3);
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -74,7 +81,7 @@
         }
 
         .top-logo .pink {
-            color: #FF69B4;
+            color: var(--accent-color);
         }
 
         /* Przycisk nowy czat - okrągła chmurka */
@@ -298,7 +305,8 @@
         }
 
         .user-message {
-            background: #F0F0F0;
+            background: var(--accent-color);
+            color: white;
             border-radius: 18px;
             padding: 12px 16px;
             margin-bottom: 15px;
@@ -447,7 +455,7 @@
         .profile-avatar {
             width: 50px;
             height: 50px;
-            background: #FF69B4;
+            background: var(--accent-color);
             color: white;
             border-radius: 50%;
             display: flex;
@@ -500,25 +508,25 @@
             font-size: 16px;
         }
 
-        /* Menu profilu wyjeżdżające z dołu lewego menu */
+        /* Menu profilu - takie same wymiary jak hamburger menu */
         .profile-menu {
             position: fixed;
-            bottom: -100%;
-            left: 0;
-            width: 300px;
-            height: 85vh;
-            max-height: 600px;
+            top: 0;
+            left: -100%;
+            width: 85%;
+            max-width: 300px;
+            height: 100vh;
             background: white;
-            box-shadow: 0 -2px 25px rgba(0,0,0,0.1);
-            transition: bottom 0.3s ease;
-            z-index: 102;
+            box-shadow: 2px 0 25px rgba(0,0,0,0.1);
+            transition: left 0.3s ease;
+            z-index: 103;
             overflow-y: auto;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
         .profile-menu.active {
-            bottom: 0;
+            left: 0;
         }
 
         .profile-menu-header {
@@ -573,12 +581,11 @@
         }
 
         /* Responsywność dla bardzo małych ekranów */
-        /* Responsywność dla menu profilu */
+        /* Responsywność dla menu profilu - identyczna z hamburger menu */
         @media (max-width: 768px) {
             .profile-menu {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 20px 20px 0 0;
+                width: 85%;
+                max-width: 300px;
             }
         }
         
@@ -672,7 +679,7 @@
         
         body.dark-mode .profile-menu {
             background: #2a2a2a;
-            box-shadow: 0 -2px 25px rgba(0,0,0,0.3);
+            box-shadow: 2px 0 25px rgba(0,0,0,0.3);
         }
         
         body.dark-mode .chat-item {
@@ -1846,11 +1853,13 @@
             const profileMenu = document.getElementById('profileMenu');
             
             menu.classList.toggle('active');
-            overlay.classList.toggle('active');
             
             // Jeśli zamykamy menu hamburger, zamknij też menu profilu
             if (!menu.classList.contains('active')) {
                 profileMenu.classList.remove('active');
+                overlay.classList.remove('active');
+            } else {
+                overlay.classList.add('active');
             }
             
             // Jeśli otwieramy menu i użytkownik jest zalogowany, odśwież listy
@@ -1870,14 +1879,11 @@
         // Funkcje menu profilu
         function openProfileMenu() {
             const profileMenu = document.getElementById('profileMenu');
-            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const overlay = document.getElementById('overlay');
             
-            // Upewnij się, że menu hamburger jest otwarte
-            if (!hamburgerMenu.classList.contains('active')) {
-                toggleHamburgerMenu();
-            }
-            
+            // Menu profilu przykrywa hamburger menu
             profileMenu.classList.add('active');
+            overlay.classList.add('active');
             
             // Zaktualizuj dane użytkownika gdy otwieramy menu profilu
             setTimeout(() => {
@@ -1887,7 +1893,14 @@
 
         function closeProfileMenu() {
             const menu = document.getElementById('profileMenu');
+            const overlay = document.getElementById('overlay');
             menu.classList.remove('active');
+            
+            // Jeśli menu hamburger nie jest aktywne, zamknij overlay
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            if (!hamburgerMenu.classList.contains('active')) {
+                overlay.classList.remove('active');
+            }
         }
 
         // Zamknij wszystkie menu

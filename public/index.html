@@ -7,6 +7,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>TALK2Me - Bo miłość potrzebuje zrozumienia v1.3</title>
     <style>
+        :root {
+            --accent-color: #FF69B4;
+            --accent-color-hover: #FF1493;
+            --accent-color-light: rgba(255, 105, 180, 0.2);
+            --accent-color-dark: rgba(255, 105, 180, 0.3);
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -74,7 +81,7 @@
         }
 
         .top-logo .pink {
-            color: #FF69B4;
+            color: var(--accent-color);
         }
 
         /* Przycisk nowy czat - okrągła chmurka */
@@ -147,8 +154,8 @@
         }
 
         .input-section:focus-within {
-            border-color: #FF69B4;
-            box-shadow: 0 4px 20px rgba(255,105,180,0.2);
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 20px var(--accent-color-light);
         }
 
         .input-field {
@@ -192,7 +199,7 @@
         }
 
         .mic-button:hover .mic-icon {
-            stroke: #FF69B4;
+            stroke: var(--accent-color);
         }
 
         .mic-button.recording .mic-icon {
@@ -298,7 +305,8 @@
         }
 
         .user-message {
-            background: #F0F0F0;
+            background: var(--accent-color);
+            color: white;
             border-radius: 18px;
             padding: 12px 16px;
             margin-bottom: 15px;
@@ -447,7 +455,7 @@
         .profile-avatar {
             width: 50px;
             height: 50px;
-            background: #FF69B4;
+            background: var(--accent-color);
             color: white;
             border-radius: 50%;
             display: flex;
@@ -500,25 +508,25 @@
             font-size: 16px;
         }
 
-        /* Menu profilu wyjeżdżające z dołu lewego menu */
+        /* Menu profilu - takie same wymiary jak hamburger menu */
         .profile-menu {
             position: fixed;
-            bottom: -100%;
-            left: 0;
-            width: 300px;
-            height: 85vh;
-            max-height: 600px;
+            top: 0;
+            left: -100%;
+            width: 85%;
+            max-width: 300px;
+            height: 100vh;
             background: white;
-            box-shadow: 0 -2px 25px rgba(0,0,0,0.1);
-            transition: bottom 0.3s ease;
-            z-index: 102;
+            box-shadow: 2px 0 25px rgba(0,0,0,0.1);
+            transition: left 0.3s ease;
+            z-index: 103;
             overflow-y: auto;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
         .profile-menu.active {
-            bottom: 0;
+            left: 0;
         }
 
         .profile-menu-header {
@@ -573,12 +581,11 @@
         }
 
         /* Responsywność dla bardzo małych ekranów */
-        /* Responsywność dla menu profilu */
+        /* Responsywność dla menu profilu - identyczna z hamburger menu */
         @media (max-width: 768px) {
             .profile-menu {
-                width: 100%;
-                max-width: 100%;
-                border-radius: 20px 20px 0 0;
+                width: 85%;
+                max-width: 300px;
             }
         }
         
@@ -627,7 +634,7 @@
         }
         
         body.dark-mode .user-message {
-            background: #FF69B4;
+            background: var(--accent-color);
             color: white;
         }
         
@@ -654,8 +661,8 @@
         
         body.dark-mode .input-section:focus-within {
             background: #000000 !important;
-            border-color: #FF69B4 !important;
-            box-shadow: 0 4px 20px rgba(255,105,180,0.3);
+            border-color: var(--accent-color) !important;
+            box-shadow: 0 4px 20px var(--accent-color-dark);
         }
         
         /* FORCE BLACK INPUT - najwyższa specyficzność */
@@ -672,7 +679,7 @@
         
         body.dark-mode .profile-menu {
             background: #2a2a2a;
-            box-shadow: 0 -2px 25px rgba(0,0,0,0.3);
+            box-shadow: 2px 0 25px rgba(0,0,0,0.3);
         }
         
         body.dark-mode .chat-item {
@@ -699,6 +706,37 @@
         
         body.dark-mode .menu-item-value {
             color: #999;
+        }
+        
+        /* Klasy dla elementów używających accent color */
+        .pro-upgrade {
+            color: var(--accent-color) !important;
+        }
+        
+        .font-size-option {
+            color: var(--accent-color) !important;
+        }
+        
+        .accent-text {
+            color: var(--accent-color) !important;
+        }
+        
+        .accent-button {
+            background: var(--accent-color) !important;
+        }
+        
+        .accent-button:hover {
+            background: var(--accent-color-hover) !important;
+        }
+        
+        .font-size-select {
+            background: transparent;
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+        
+        .font-size-select option {
+            color: var(--accent-color);
         }
         
         body.dark-mode .section-header {
@@ -900,7 +938,7 @@
         }
         
         input:checked + .slider {
-            background-color: #FF69B4;
+            background-color: var(--accent-color);
         }
         
         input:checked + .slider:before {
@@ -948,7 +986,7 @@
                         <span id="hamburgerAccountSettings">⚙️ Ustawienia konta</span>
                         <span class="arrow">→</span>
                     </div>
-                    <div class="quick-action-item" style="color: #FF69B4;" onclick="showProUpgrade()">
+                    <div class="quick-action-item pro-upgrade" onclick="showProUpgrade()">
                         <span id="hamburgerUpgradePro">⭐ Rozszerz do Pro</span>
                         <span class="arrow">→</span>
                     </div>
@@ -991,7 +1029,7 @@
                 <span id="profileSubscriptionLabel">💳 Subskrypcja</span>
                 <span class="menu-item-value" id="profileSubscription">Free</span>
             </div>
-            <div class="menu-item" style="color: #FF69B4;" onclick="showProUpgrade()">
+            <div class="menu-item pro-upgrade" onclick="showProUpgrade()">
                 <span id="profileUpgradeProLabel">⭐ Rozszerz do Pro</span>
                 <span>→</span>
             </div>
@@ -1428,7 +1466,7 @@
             container.innerHTML = chats.slice(0, 5).map(chat => {
                 const date = new Date(chat.created_at);
                 const preview = chat.message.length > 50 ? chat.message.substring(0, 50) + '...' : chat.message;
-                const favoriteIcon = chat.is_favorite ? '<span style="color: #FF69B4; float: right;">❤️</span>' : '';
+                const favoriteIcon = chat.is_favorite ? '<span class="accent-text" style="float: right;">❤️</span>' : '';
                 return `
                     <div class="chat-item" onclick="loadChat(${chat.id})">
                         <div class="chat-item-title">${chat.message.split(' ').slice(0, 4).join(' ')}...${favoriteIcon}</div>
@@ -1847,11 +1885,13 @@
             const profileMenu = document.getElementById('profileMenu');
             
             menu.classList.toggle('active');
-            overlay.classList.toggle('active');
             
             // Jeśli zamykamy menu hamburger, zamknij też menu profilu
             if (!menu.classList.contains('active')) {
                 profileMenu.classList.remove('active');
+                overlay.classList.remove('active');
+            } else {
+                overlay.classList.add('active');
             }
             
             // Jeśli otwieramy menu i użytkownik jest zalogowany, odśwież listy
@@ -1871,14 +1911,11 @@
         // Funkcje menu profilu
         function openProfileMenu() {
             const profileMenu = document.getElementById('profileMenu');
-            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const overlay = document.getElementById('overlay');
             
-            // Upewnij się, że menu hamburger jest otwarte
-            if (!hamburgerMenu.classList.contains('active')) {
-                toggleHamburgerMenu();
-            }
-            
+            // Menu profilu przykrywa hamburger menu
             profileMenu.classList.add('active');
+            overlay.classList.add('active');
             
             // Zaktualizuj dane użytkownika gdy otwieramy menu profilu
             setTimeout(() => {
@@ -1888,7 +1925,14 @@
 
         function closeProfileMenu() {
             const menu = document.getElementById('profileMenu');
+            const overlay = document.getElementById('overlay');
             menu.classList.remove('active');
+            
+            // Jeśli menu hamburger nie jest aktywne, zamknij overlay
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            if (!hamburgerMenu.classList.contains('active')) {
+                overlay.classList.remove('active');
+            }
         }
 
         // Zamknij wszystkie menu
@@ -1900,8 +1944,12 @@
         // Obsługa kliknięcia w overlay
         document.getElementById('overlay').addEventListener('click', function() {
             const profileMenu = document.getElementById('profileMenu');
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            
             if (profileMenu.classList.contains('active')) {
                 closeProfileMenu();
+            } else if (hamburgerMenu.classList.contains('active')) {
+                closeHamburgerMenu();
             } else {
                 closeAllMenus();
             }
@@ -2024,7 +2072,7 @@
         function showProUpgrade() {
             const proFeatures = `
                 <div style="padding: 20px; text-align: center;">
-                    <h3 style="color: #FF69B4;">${t('proUpgradeTitle')}</h3>
+                    <h3 class="accent-text">${t('proUpgradeTitle')}</h3>
                     <p style="margin: 15px 0;">${t('proUpgradeSubtitle')}</p>
                     
                     <div style="text-align: left; margin: 20px 0;">
@@ -2037,12 +2085,12 @@
                     </div>
                     
                     <div style="margin: 20px 0;">
-                        <div style="font-size: 24px; color: #FF69B4; font-weight: bold;">${localStorage.getItem('language') === 'en' ? '$3.99/month' : '29,99 zł/mies.'}</div>
+                        <div class="accent-text" style="font-size: 24px; font-weight: bold;">${localStorage.getItem('language') === 'en' ? '$3.99/month' : '29,99 zł/mies.'}</div>
                         <div style="font-size: 14px; color: #999;">${localStorage.getItem('language') === 'en' ? 'or $39.99/year (save 20%)' : 'lub 299,99 zł/rok (oszczędzasz 20%)'}</div>
                     </div>
                     
                     <button onclick="alert('${localStorage.getItem('language') === 'en' ? 'Payments will be available in App Store/Google Play' : 'Płatności będą dostępne w App Store/Google Play'}')" 
-                            style="background: #FF69B4; color: white; border: none; padding: 12px 30px; 
+                            class="accent-button" style="color: white; border: none; padding: 12px 30px; 
                                    border-radius: 20px; font-size: 16px; cursor: pointer;">
                         ${t('upgradeNow')}
                     </button>
@@ -2060,11 +2108,11 @@
                     <div class="menu-item" style="margin: 15px 0; flex-direction: column; align-items: flex-start;">
                         <span style="margin-bottom: 10px;">👤 ${t('avatar')}</span>
                         <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
-                            <div id="currentAvatarPreview" style="width: 60px; height: 60px; background: #FF69B4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+                            <div id="currentAvatarPreview" class="profile-avatar" style="width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
                                 ${currentAvatar}
                             </div>
                             <div>
-                                <button onclick="changeAvatar()" style="background: #FF69B4; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 5px; display: block;">
+                                <button onclick="changeAvatar()" class="accent-button" style=" color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 5px; display: block;">
                                     ${t('changePhoto')}
                                 </button>
                                 <div style="font-size: 12px; color: #999;">
@@ -2077,18 +2125,18 @@
                     
                     <div class="menu-item" style="margin: 15px 0;">
                         <span>Wielkość czcionki</span>
-                        <select onchange="changeFontSize(this.value)" style="background: transparent; border: 1px solid #ccc; padding: 5px;">
-                            <option value="14">Mała</option>
-                            <option value="16" selected>Średnia</option>
-                            <option value="18">Duża</option>
-                            <option value="20">Bardzo duża</option>
+                        <select onchange="changeFontSize(this.value)" class="font-size-select">
+                            <option value="14" class="font-size-option">Mała</option>
+                            <option value="16" class="font-size-option" selected>Średnia</option>
+                            <option value="18" class="font-size-option">Duża</option>
+                            <option value="20" class="font-size-option">Bardzo duża</option>
                         </select>
                     </div>
                     
                     <div class="menu-item" style="margin: 15px 0;">
                         <span>Kolor akcentu</span>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <div onclick="changeAccentColor('#FF69B4')" style="width: 30px; height: 30px; background: #FF69B4; border-radius: 50%; cursor: pointer;" title="Różowy"></div>
+                            <div onclick="changeAccentColor('#FF69B4')" style="width: 30px; height: 30px; background: var(--accent-color); border-radius: 50%; cursor: pointer;" title="Różowy"></div>
                             <div onclick="changeAccentColor('#00BCD4')" style="width: 30px; height: 30px; background: #00BCD4; border-radius: 50%; cursor: pointer;" title="Turkusowy"></div>
                             <div onclick="changeAccentColor('#4CAF50')" style="width: 30px; height: 30px; background: #4CAF50; border-radius: 50%; cursor: pointer;" title="Zielony"></div>
                             <div onclick="changeAccentColor('#FF9800')" style="width: 30px; height: 30px; background: #FF9800; border-radius: 50%; cursor: pointer;" title="Pomarańczowy"></div>
@@ -2181,7 +2229,7 @@
                         <input type="password" placeholder="Obecne hasło" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px;">
                         <input type="password" placeholder="Nowe hasło" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px;">
                         <input type="password" placeholder="Powtórz nowe hasło" style="width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px;">
-                        <button onclick="changePassword()" style="background: #FF69B4; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-top: 10px; cursor: pointer;">
+                        <button onclick="changePassword()" class="accent-button" style="color: white; border: none; padding: 10px 20px; border-radius: 5px; margin-top: 10px; cursor: pointer;">
                             Zmień hasło
                         </button>
                     </div>
@@ -2209,6 +2257,14 @@
         
         function changeAccentColor(color) {
             document.documentElement.style.setProperty('--accent-color', color);
+            
+            // Update related color variables
+            const lighterColor = color + '33'; // Add transparency for light version
+            const darkerColor = color + '66'; // Add transparency for dark version
+            
+            document.documentElement.style.setProperty('--accent-color-light', lighterColor);
+            document.documentElement.style.setProperty('--accent-color-dark', darkerColor);
+            
             localStorage.setItem('accentColor', color);
             
             // Zmień kolor wszystkich różowych elementów
@@ -2317,7 +2373,7 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button onclick="saveNewAvatar('${imageData}')" style="background: #FF69B4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                        <button onclick="saveNewAvatar('${imageData}')" class="accent-button" style="color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
                             ${t('saveNewPhoto')}
                         </button>
                         <button onclick="closeModal()" style="background: #ccc; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
@@ -2435,7 +2491,7 @@
                     <input type="tel" id="phoneInput" placeholder="+48 123 456 789" 
                            style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
                     <button onclick="savePhoneNumber()" 
-                            style="background: #FF69B4; color: white; border: none; padding: 10px 20px; 
+                            class="accent-button" style="color: white; border: none; padding: 10px 20px; 
                                    border-radius: 5px; cursor: pointer;">
                         Zapisz
                     </button>
