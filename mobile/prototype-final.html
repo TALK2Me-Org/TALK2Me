@@ -500,23 +500,25 @@
             font-size: 16px;
         }
 
-        /* Menu profilu wyjeżdżające z prawej */
+        /* Menu profilu wyjeżdżające z dołu lewego menu */
         .profile-menu {
             position: fixed;
-            top: 0;
-            right: -100%;
-            width: 85%;
-            max-width: 320px;
-            height: 100vh;
+            bottom: -100%;
+            left: 0;
+            width: 300px;
+            height: 85vh;
+            max-height: 600px;
             background: white;
-            box-shadow: -2px 0 25px rgba(0,0,0,0.1);
-            transition: right 0.3s ease;
+            box-shadow: 0 -2px 25px rgba(0,0,0,0.1);
+            transition: bottom 0.3s ease;
             z-index: 102;
             overflow-y: auto;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
         }
 
         .profile-menu.active {
-            right: 0;
+            bottom: 0;
         }
 
         .profile-menu-header {
@@ -571,6 +573,15 @@
         }
 
         /* Responsywność dla bardzo małych ekranów */
+        /* Responsywność dla menu profilu */
+        @media (max-width: 768px) {
+            .profile-menu {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 20px 20px 0 0;
+            }
+        }
+        
         @media (max-width: 320px) {
             .top-logo {
                 font-size: 20px;
@@ -661,6 +672,7 @@
         
         body.dark-mode .profile-menu {
             background: #2a2a2a;
+            box-shadow: 0 -2px 25px rgba(0,0,0,0.3);
         }
         
         body.dark-mode .chat-item {
@@ -669,6 +681,24 @@
         
         body.dark-mode .menu-item {
             border-bottom-color: #333;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .menu-section {
+            border-bottom-color: #333;
+        }
+        
+        body.dark-mode .profile-menu-header {
+            border-bottom-color: #333;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .menu-section-title {
+            color: #999;
+        }
+        
+        body.dark-mode .menu-item-value {
+            color: #999;
         }
         
         body.dark-mode .section-header {
@@ -1815,11 +1845,13 @@
             const overlay = document.getElementById('overlay');
             const profileMenu = document.getElementById('profileMenu');
             
-            // Zamknij menu profilu jeśli otwarte
-            profileMenu.classList.remove('active');
-            
             menu.classList.toggle('active');
             overlay.classList.toggle('active');
+            
+            // Jeśli zamykamy menu hamburger, zamknij też menu profilu
+            if (!menu.classList.contains('active')) {
+                profileMenu.classList.remove('active');
+            }
             
             // Jeśli otwieramy menu i użytkownik jest zalogowany, odśwież listy
             if (menu.classList.contains('active') && localStorage.getItem('token')) {
@@ -1838,9 +1870,14 @@
         // Funkcje menu profilu
         function openProfileMenu() {
             const profileMenu = document.getElementById('profileMenu');
-            const overlay = document.getElementById('overlay');
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            
+            // Upewnij się, że menu hamburger jest otwarte
+            if (!hamburgerMenu.classList.contains('active')) {
+                toggleHamburgerMenu();
+            }
+            
             profileMenu.classList.add('active');
-            overlay.classList.add('active');
             
             // Zaktualizuj dane użytkownika gdy otwieramy menu profilu
             setTimeout(() => {
@@ -1851,7 +1888,6 @@
         function closeProfileMenu() {
             const menu = document.getElementById('profileMenu');
             menu.classList.remove('active');
-            // Nie zamykaj overlay, bo menu hamburger może być nadal otwarte
         }
 
         // Zamknij wszystkie menu
