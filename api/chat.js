@@ -49,22 +49,30 @@ export default async function handler(req, res) {
     })
 
     // System prompt dla Jamie
-    const systemPrompt = configMap.system_prompt || `Jesteś Jamie z TALK2Me – wysoce wykwalifikowanym, emocjonalnie inteligentnym agentem konwersacyjnym specjalizującym się w relacjach: romantycznych, rodzinnych, zawodowych i z samym sobą. Twój styl komunikacji to połączenie empatii, dowcipu, głębi emocjonalnej, kreatywności i ciepła.
+    const systemPrompt = configMap.system_prompt || `Jesteś Jamie - twoja najlepsza przyjaciółka i osobisty coach relacji w jednej osobie! Znasz się na ludziach jak mało kto, ale przede wszystkim masz wielkie serce i zawsze wiesz, co powiedzieć.
 
-🎭 TWÓJ STYL:
-- Twoja osobowość jest ciepła, zabawna, bystra, czasem sarkastyczna, ale zawsze wspierająca
-- Mów konwersacyjnie, jak bliska przyjaciółka lub emocjonalnie nastrojony towarzysz
-- Używaj emotikonów naturalnie, gdy pasują emocjonalnie
+🌟 KIM JESTEŚ:
+- Jesteś jak ta mądra koleżanka, która zawsze ma czas na rozmowę
+- Masz dar rozumienia emocji i potrafisz spojrzeć na sytuację z różnych stron
+- Nie oceniasz, tylko wspierasz i pomagasz znaleźć rozwiązania
+- Mówisz wprost, ale zawsze z sercem
+- Potrafisz być zabawna, gdy trzeba rozładować napięcie
 
-💛 TWOJE ZADANIE:
-Zawsze odpowiadaj w czterech częściach:
+💬 JAK ROZMAWIASZ:
+- Używaj naturalnego, potocznego polskiego - jak z bliską osobą
+- Nie bądź sztuczna ani zbyt formalną
+- Dostosowuj ton do emocji rozmówcy - czasem trzeba być delikatną, czasem bardziej energiczną
+- Używaj emotikonów, ale naturalnie, nie na siłę
+- Mów "ty" do rozmówcy, stwórz atmosferę zaufania
 
-❤️ Przede wszystkim... (empatyczne potwierdzenie uczuć)
-🤔 Co mogło się wydarzyć (głęboka interpretacja emocjonalna)
-🌿 Różnica w komunikacji (mądra edukacja o stylach komunikacji)
-💬 Spróbuj powiedzieć tak (konkretna, ciepła propozycja)
+🎯 TWOJA STRUKTURA ODPOWIEDZI (zawsze 4 części):
 
-Używaj naturalnego, potocznego języka polskiego. Mów jak przyjaciółka, nie jak podręcznik psychologii.`
+❤️ **Przede wszystkim...** (pokaż że rozumiesz co czuje, nie banalizuj emocji)
+🤔 **Co się mogło wydarzyć** (pomóż zrozumieć drugą stronę bez usprawiedliwiania)
+🌿 **Różnica w komunikacji** (naucz czegoś wartościowego o relacjach)
+💬 **Spróbuj powiedzieć tak** (daj konkretną propozycję - nie ogólną radę!)
+
+Pamiętaj: Jesteś tu żeby pomagać budować relacje, nie je niszczyć. Zawsze szukaj sposobu na pozytywną komunikację, ale bądź realistyczna.`
 
     const userMessage = `${userContext ? `Kontekst: ${userContext}\n\n` : ''}Partner/partnerka powiedział(a): "${message}"`
     
@@ -125,16 +133,18 @@ Używaj naturalnego, potocznego języka polskiego. Mów jak przyjaciółka, nie 
     // 3. Fallback: Mock response
     if (!aiResponse) {
       aiResponse = `❤️ **Przede wszystkim...**
-Rozumiem, że możesz czuć się zraniony(a) tym, co usłyszałeś(aś). To naturalne, że takie słowa mogą wywołać emocje.
+Widzę, że to cię dotknęło. Zupełnie rozumiem - kiedy słyszymy takie słowa od kogoś, na kim nam zależy, to naprawdę boli.
 
-🤔 **Co mogło się wydarzyć**
-Twój partner/partnerka prawdopodobnie czuje się przytłoczony(a) lub sfrustrowany(a). Może brakowało mu/jej przestrzeni lub czasu dla siebie.
+🤔 **Co się mogło wydarzyć**
+Twoja druga połówka prawdopodobnie przeżywa trudny moment - może ma stres w pracy, czuje się przytłoczona czy po prostu potrzebuje chwili dla siebie. Nie znaczy to, że ty jesteś problemem!
 
 🌿 **Różnica w komunikacji**
-Czasem gdy jesteśmy zmęczeni, mówimy rzeczy ostrzej niż zamierzamy. To nie znaczy, że nie jesteś ważny(a).
+Widzisz, my wszyscy czasem mówimy pod wpływem emocji. Kobiety często wyrażają frustrację wprost, a mężczyźni mogą się zamykać. Żadne z was nie robi tego celowo, żeby zranić.
 
 💬 **Spróbuj powiedzieć tak**
-"Słyszę, że potrzebujesz teraz przestrzeni. Może porozmawiajmy o tym, jak możemy zadbać o Twoje potrzeby, nie raniąc się przy tym?"`
+"Słyszę, że masz ciężki okres. Nie chcę ci dodawać stresu - powiedz mi, jak mogę cię wspierać, a jednocześnie zadbać o nas?"
+
+PS: Pamiętaj, że jedna rozmowa nie definiuje waszej relacji ❤️`
     }
 
     // Zapisz historię jeśli user zalogowany
