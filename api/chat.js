@@ -4,8 +4,8 @@ import axios from 'axios'
 import { Groq } from 'groq-sdk'
 import OpenAI from 'openai'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cfnrhwgaevbltaflrvpz.supabase.co'
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmbnJod2dhZXZibHRhZmxydnB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzUxMDU3MywiZXhwIjoyMDQ5MDg2NTczfQ.qUcT_KJZLp4TlJC0gTMpBwT7T1Bkx_5Qh5h4Vt2VsN0'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export default async function handler(req, res) {
   // CORS headers
@@ -25,13 +25,6 @@ export default async function handler(req, res) {
     const { message, userContext } = req.body
     const authHeader = req.headers.authorization
     
-    console.log('Chat API called:', {
-      message: message?.substring(0, 50),
-      hasAuth: !!authHeader,
-      supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey
-    })
-    
     if (!message) {
       return res.status(400).json({ error: 'Message is required' })
     }
@@ -47,14 +40,9 @@ export default async function handler(req, res) {
     }
 
     // Pobierz konfigurację AI
-    const { data: config, error: configError } = await supabase
+    const { data: config } = await supabase
       .from('app_config')
       .select('config_key, config_value')
-    
-    if (configError) {
-      console.error('Error fetching config:', configError)
-      // Kontynuuj z domyślnymi wartościami
-    }
     
     const configMap = {}
     config?.forEach(item => {
@@ -70,8 +58,8 @@ export default async function handler(req, res) {
     const activeModel = configMap.active_model || 'openai'
 
     // 1. Próbuj OpenAI Assistant API
-    const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY || 'sk-proj-your-api-key-here'
-    if (activeModel === 'openai' && openaiKey && openaiKey !== 'sk-proj-your-api-key-here') {
+    const openaiKey = configMap.openai_api_key || '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'
+    if (activeModel === 'openai' && openaiKey) {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })
         
@@ -121,10 +109,9 @@ export default async function handler(req, res) {
     }
 
     // 2. Fallback: Groq (darmowy, szybki) - używa swojego własnego prompta
-    const groqKey = configMap.groq_api_key || process.env.GROQ_API_KEY
-    if (!aiResponse && groqKey) {
+    if (!aiResponse && configMap.groq_api_key) {
       try {
-        const groq = new Groq({ apiKey: groqKey })
+        const groq = new Groq({ apiKey: configMap.groq_api_key })
         
         const completion = await groq.chat.completions.create({
           messages: [
@@ -143,7 +130,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3. Jeśli nic nie zadziałało, zwróć błąd
+    // 3. Jeśli nic nie zadziałało, zwróć błąd z debug info
     if (!aiResponse) {
       return res.status(503).json({
         error: 'Nie udało się uzyskać odpowiedzi od AI',
