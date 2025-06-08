@@ -52,14 +52,11 @@ app_config (id, config_key, config_value, updated_at)
 
 ## 🔑 Zmienne Środowiskowe (Vercel)
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=https://cfnrhwgaevbltaflrvpz.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://hpxzhbubvdgxdvwxmhzo.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-ADMIN_PASSWORD=qwe123
-ASSISTANT_ID=asst_whKO6qzN1Aypy48U1tjnsPv9
-OPENAI_API_KEY=sk-proj-...
-GROQ_API_KEY=gsk_...
 ```
+**Uwaga**: Wszystkie inne konfiguracje (API keys, assistant ID, etc.) są teraz przechowywane w bazie danych i zarządzane przez panel admina.
 
 ## 🚀 Endpointy API
 - `GET /api/setup` - Inicjalizacja bazy danych (✅ działa)
