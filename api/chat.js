@@ -41,8 +41,26 @@ export default async function handler(req, res) {
     let userId = null
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1]
-      const { data: { user } } = await supabase.auth.getUser(token)
-      userId = user?.id
+      
+      // Weryfikuj JWT token
+      try {
+        // Pobierz JWT secret
+        const { data: config } = await supabase
+          .from('app_config')
+          .select('config_value')
+          .eq('config_key', 'jwt_secret')
+          .single()
+        
+        const jwtSecret = config?.config_value || 'talk2me-secret-key-2024'
+        
+        // Import jwt dynamically
+        const jwt = await import('jsonwebtoken')
+        const decoded = jwt.default.verify(token, jwtSecret)
+        userId = decoded.id
+      } catch (error) {
+        console.log('Invalid token:', error.message)
+        // Kontynuuj jako gość jeśli token nieprawidłowy
+      }
     }
 
     // Jeśli brak userId, nie możemy obsługiwać konwersacji

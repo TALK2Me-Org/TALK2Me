@@ -569,21 +569,49 @@
 
         // Inicjalizacja
         window.onload = async function() {
+            // Włącz przycisk wysyłania dla wszystkich
+            document.getElementById('sendButton').disabled = false;
+
             if (!token) {
-                window.location.href = '/login.html';
+                // Tryb gościa - ukryj sidebar
+                document.getElementById('conversationsSidebar').classList.add('hidden');
+                console.log('Tryb gościa - konwersacje niedostępne');
                 return;
             }
 
-            // Pokaż sidebar jeśli desktop
-            if (window.innerWidth > 768) {
-                document.getElementById('conversationsSidebar').classList.remove('hidden');
-            }
+            // Weryfikuj token
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
 
-            // Załaduj konwersacje
-            await loadConversations();
-            
-            // Włącz przycisk wysyłania
-            document.getElementById('sendButton').disabled = false;
+                const data = await response.json();
+                
+                if (!data.valid) {
+                    // Token nieprawidłowy - tryb gościa
+                    localStorage.removeItem('token');
+                    token = null;
+                    document.getElementById('conversationsSidebar').classList.add('hidden');
+                    console.log('Token nieprawidłowy - tryb gościa');
+                    return;
+                }
+
+                // Token OK - pokaż sidebar dla zalogowanych
+                if (window.innerWidth > 768) {
+                    document.getElementById('conversationsSidebar').classList.remove('hidden');
+                }
+
+                // Załaduj konwersacje
+                await loadConversations();
+                
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                // W razie błędu - tryb gościa
+                document.getElementById('conversationsSidebar').classList.add('hidden');
+            }
         };
 
         // Załaduj listę konwersacji
@@ -597,7 +625,8 @@
 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        window.location.href = '/login.html';
+                        console.log('Unauthorized - hiding conversations');
+                        document.getElementById('conversationsSidebar').classList.add('hidden');
                         return;
                     }
                     throw new Error('Failed to load conversations');

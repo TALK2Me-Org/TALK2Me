@@ -1,4 +1,4 @@
-// TALK2Me User Profile API - Custom JWT Version (Fixed)
+// TALK2Me Token Verification API
 import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
 
@@ -8,21 +8,22 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
 
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
     const authHeader = req.headers.authorization
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Brak autoryzacji' })
+      return res.status(401).json({ valid: false, error: 'No token provided' })
     }
 
     const token = authHeader.split(' ')[1]
@@ -38,34 +39,35 @@ export default async function handler(req, res) {
     const jwtSecret = config?.config_value || 'talk2me-secret-key-2024'
     
     // Weryfikuj token
-    let decoded
     try {
-      decoded = jwt.verify(token, jwtSecret)
+      const decoded = jwt.verify(token, jwtSecret)
+      
+      // Sprawdź czy użytkownik istnieje
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', decoded.id)
+        .single()
+      
+      if (!user) {
+        return res.json({ valid: false, error: 'User not found' })
+      }
+      
+      return res.json({ 
+        valid: true, 
+        userId: decoded.id,
+        email: decoded.email 
+      })
+      
     } catch (error) {
-      return res.status(401).json({ error: 'Nieprawidłowy token' })
+      return res.json({ valid: false, error: 'Invalid token' })
     }
-
-    // Pobierz dane użytkownika
-    const { data: user, error: findError } = await supabase
-      .from('users')
-      .select('id, email, name, subscription_type, is_verified, created_at')
-      .eq('id', decoded.id)
-      .single()
-
-    if (findError || !user) {
-      return res.status(404).json({ error: 'Użytkownik nie znaleziony' })
-    }
-
-    res.json({
-      success: true,
-      user
-    })
 
   } catch (error) {
-    console.error('Get user error:', error)
+    console.error('Verify error:', error)
     res.status(500).json({ 
-      error: 'Błąd serwera',
-      details: error.message 
+      valid: false,
+      error: 'Server error' 
     })
   }
 }

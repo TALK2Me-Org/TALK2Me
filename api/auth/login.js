@@ -1,8 +1,10 @@
-// TALK2Me Login API - Supabase Auth Version
+// TALK2Me Login API - Custom JWT Version (Fixed)
 import { createClient } from '@supabase/supabase-js'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export default async function handler(req, res) {
   // CORS headers
@@ -25,45 +27,59 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Email i hasło są wymagane' })
     }
 
-    // Użyj anon key dla auth operacji
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Zaloguj przez Supabase Auth
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase(),
-      password: password
-    })
-
-    if (error) {
-      console.error('Login error:', error)
-      return res.status(401).json({ 
-        error: 'Nieprawidłowy email lub hasło',
-        details: error.message 
-      })
-    }
-
-    if (!data.session) {
-      return res.status(401).json({ error: 'Nie udało się utworzyć sesji' })
-    }
-
-    // Pobierz dodatkowe dane użytkownika z tabeli users
-    const { data: userData, error: userError } = await supabase
+    // Znajdź użytkownika po emailu
+    const { data: users, error: findError } = await supabase
       .from('users')
       .select('*')
       .eq('email', email.toLowerCase())
       .single()
 
-    // Zwróć token i dane użytkownika
+    if (findError || !users) {
+      return res.status(401).json({ error: 'Nieprawidłowy email lub hasło' })
+    }
+
+    // Sprawdź hasło
+    const isValidPassword = await bcrypt.compare(password, users.password)
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Nieprawidłowy email lub hasło' })
+    }
+
+    // Pobierz JWT secret z konfiguracji
+    const { data: config } = await supabase
+      .from('app_config')
+      .select('config_value')
+      .eq('config_key', 'jwt_secret')
+      .single()
+    
+    const jwtSecret = config?.config_value || 'talk2me-secret-key-2024'
+
+    // Generuj JWT token
+    const token = jwt.sign(
+      { 
+        id: users.id, 
+        email: users.email,
+        name: users.name 
+      },
+      jwtSecret,
+      { expiresIn: '7d' }
+    )
+
+    // Aktualizuj last_login
+    await supabase
+      .from('users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', users.id)
+
+    // Zwróć dane użytkownika (bez hasła)
+    const { password: _, ...userWithoutPassword } = users
+
     res.json({
       success: true,
-      token: data.session.access_token,
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-        name: userData?.name || data.user.email.split('@')[0],
-        subscription_type: userData?.subscription_type || 'free',
-        created_at: data.user.created_at
-      }
+      token,
+      user: userWithoutPassword
     })
 
   } catch (error) {
