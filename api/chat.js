@@ -4,8 +4,8 @@ import axios from 'axios'
 import { Groq } from 'groq-sdk'
 import OpenAI from 'openai'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cfnrhwgaevbltaflrvpz.supabase.co'
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmbnJod2dhZXZibHRhZmxydnB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzUxMDU3MywiZXhwIjoyMDQ5MDg2NTczfQ.qUcT_KJZLp4TlJC0gTMpBwT7T1Bkx_5Qh5h4Vt2VsN0'
 
 export default async function handler(req, res) {
   // CORS headers
@@ -25,6 +25,13 @@ export default async function handler(req, res) {
     const { message, userContext } = req.body
     const authHeader = req.headers.authorization
     
+    console.log('Chat API called:', {
+      message: message?.substring(0, 50),
+      hasAuth: !!authHeader,
+      supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey
+    })
+    
     if (!message) {
       return res.status(400).json({ error: 'Message is required' })
     }
@@ -40,9 +47,14 @@ export default async function handler(req, res) {
     }
 
     // Pobierz konfigurację AI
-    const { data: config } = await supabase
+    const { data: config, error: configError } = await supabase
       .from('app_config')
       .select('config_key, config_value')
+    
+    if (configError) {
+      console.error('Error fetching config:', configError)
+      // Kontynuuj z domyślnymi wartościami
+    }
     
     const configMap = {}
     config?.forEach(item => {
