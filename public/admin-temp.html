@@ -379,6 +379,19 @@
             <div class="config-section">
                 <div class="config-header">⚙️ AI Parameters</div>
                 <div class="config-item">
+                    <div class="config-label">OpenAI Model:</div>
+                    <div class="config-value">
+                        <select id="openai_model" onchange="updateModelInfo()">
+                            <option value="gpt-4o">GPT-4o (Najnowszy, najlepszy)</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            <option value="gpt-4">GPT-4 (Classic)</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Szybki, tańszy)</option>
+                        </select>
+                        <button class="btn-save" onclick="saveConfig('openai_model')">Save</button>
+                        <div id="model-info" style="font-size: 12px; color: #666; margin-top: 5px;"></div>
+                    </div>
+                </div>
+                <div class="config-item">
                     <div class="config-label">Max Tokens:</div>
                     <div class="config-value">
                         <input type="number" id="max_tokens" min="100" max="4000" step="100">
@@ -437,6 +450,22 @@
             }, 5000);
         }
         
+        // Update model info
+        function updateModelInfo() {
+            const modelSelect = document.getElementById('openai_model');
+            const modelInfo = document.getElementById('model-info');
+            const selectedModel = modelSelect.value;
+            
+            const modelDescriptions = {
+                'gpt-4o': '🚀 Najnowszy i najinteligentniejszy model OpenAI',
+                'gpt-4-turbo': '💪 Potężny model z długą pamięcią kontekstu',
+                'gpt-4': '🎯 Klasyczny GPT-4, stabilny i niezawodny',
+                'gpt-3.5-turbo': '⚡ Szybki i ekonomiczny, dobry do prostych zadań'
+            };
+            
+            modelInfo.textContent = modelDescriptions[selectedModel] || '';
+        }
+        
         // Load configuration
         async function loadConfig() {
             try {
@@ -448,7 +477,11 @@
                     data.config.forEach(item => {
                         const element = document.getElementById(item.config_key);
                         if (element) {
-                            element.value = item.config_value || '';
+                            if (element.tagName === 'SELECT') {
+                                element.value = item.config_value || element.options[0].value;
+                            } else {
+                                element.value = item.config_value || '';
+                            }
                         }
                     });
                     
@@ -490,6 +523,9 @@
                     
                     // Fetch assistant info
                     fetchAssistantInfo();
+                    
+                    // Update model info
+                    updateModelInfo();
                     
                     showStatus('adminStatus', 'Configuration loaded successfully', 'success');
                 } else {

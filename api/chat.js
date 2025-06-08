@@ -73,9 +73,13 @@ Odpowiadasz w sposób ciepły, wspierający i konstruktywny.
 Unikasz osądzania i zawsze starasz się zrozumieć perspektywę użytkownika.
 Mówisz naturalnie, jak przyjaciółka, używając prostego języka.`
         
+        // Wybierz model z konfiguracji (domyślnie gpt-4o)
+        const modelName = configMap.openai_model || 'gpt-4o';
+        console.log('🤖 Używam modelu:', modelName);
+        
         // Stream response
         const stream = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
+          model: modelName,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }

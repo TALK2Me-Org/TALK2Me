@@ -26,6 +26,7 @@ export default async function handler(req, res) {
       { config_key: 'groq_api_key', config_value: '' },
       { config_key: 'assistant_id', config_value: 'asst_whKO6qzN1Aypy48U1tjnsPv9' },
       { config_key: 'active_model', config_value: 'openai' },
+      { config_key: 'openai_model', config_value: 'gpt-4o' },
       { config_key: 'temperature', config_value: '0.7' },
       { config_key: 'max_tokens', config_value: '1000' },
       { config_key: 'admin_password', config_value: 'qwe123' },

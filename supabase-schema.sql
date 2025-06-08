@@ -75,6 +75,7 @@ INSERT INTO app_config (config_key, config_value, config_type, description) VALU
 
 -- Model Settings
 ('active_model', 'openai', 'string', 'Currently active AI model'),
+('openai_model', 'gpt-4o', 'string', 'Specific OpenAI model to use'),
 ('groq_enabled', 'false', 'boolean', 'Enable Groq as fallback'),
 ('claude_enabled', 'false', 'boolean', 'Enable Claude model'),
 
