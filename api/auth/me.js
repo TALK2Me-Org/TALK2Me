@@ -1,6 +1,5 @@
-// TALK2Me User Profile API - Vercel Serverless Function
+// TALK2Me User Profile API - Supabase Auth Version
 import { createClient } from '@supabase/supabase-js'
-import jwt from 'jsonwebtoken'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -29,40 +28,30 @@ export default async function handler(req, res) {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // Pobierz JWT secret z konfiguracji
-    const { data: config } = await supabase
-      .from('app_config')
-      .select('config_value')
-      .eq('config_key', 'jwt_secret')
-      .single()
-    
-    const jwtSecret = config?.config_value
-    if (!jwtSecret) {
-      return res.status(500).json({ error: 'Brak konfiguracji JWT secret' })
-    }
-    
-    // Weryfikuj token
-    let decoded
-    try {
-      decoded = jwt.verify(token, jwtSecret)
-    } catch (error) {
+    // Weryfikuj token przez Supabase Auth
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+
+    if (error || !user) {
       return res.status(401).json({ error: 'Nieprawidłowy token' })
     }
 
-    // Pobierz dane użytkownika
-    const { data: user, error: findError } = await supabase
+    // Pobierz dodatkowe dane z tabeli users
+    const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('id, email, name, subscription_type, is_verified, created_at')
-      .eq('id', decoded.id)
+      .select('*')
+      .eq('id', user.id)
       .single()
-
-    if (findError || !user) {
-      return res.status(404).json({ error: 'Użytkownik nie znaleziony' })
-    }
 
     res.json({
       success: true,
-      user
+      user: {
+        id: user.id,
+        email: user.email,
+        name: userData?.name || user.email.split('@')[0],
+        subscription_type: userData?.subscription_type || 'free',
+        is_verified: userData?.is_verified || false,
+        created_at: user.created_at
+      }
     })
 
   } catch (error) {

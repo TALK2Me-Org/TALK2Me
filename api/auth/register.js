@@ -1,9 +1,8 @@
-// TALK2Me Register API - Vercel Serverless Function
+// TALK2Me Register API - Supabase Auth Version
 import { createClient } from '@supabase/supabase-js'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export default async function handler(req, res) {
@@ -21,78 +20,83 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, email, password } = req.body
+    const { email, password, name } = req.body
 
-    if (!name || !email || !password) {
+    if (!email || !password || !name) {
       return res.status(400).json({ error: 'Wszystkie pola są wymagane' })
     }
 
+    // Walidacja hasła
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Hasło musi mieć minimum 6 znaków' })
+      return res.status(400).json({ error: 'Hasło musi mieć co najmniej 6 znaków' })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    // Użyj anon key dla rejestracji
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    // Sprawdź czy użytkownik już istnieje
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email.toLowerCase())
-      .single()
+    // Rejestracja przez Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: email.toLowerCase(),
+      password: password,
+      options: {
+        data: {
+          name: name
+        }
+      }
+    })
 
-    if (existingUser) {
-      return res.status(400).json({ error: 'Użytkownik z tym emailem już istnieje' })
+    if (authError) {
+      console.error('Registration auth error:', authError)
+      if (authError.message.includes('already registered')) {
+        return res.status(400).json({ error: 'Ten email jest już zarejestrowany' })
+      }
+      return res.status(400).json({ 
+        error: 'Błąd podczas rejestracji',
+        details: authError.message 
+      })
     }
 
-    // Hashuj hasło
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // Użyj service key do utworzenia wpisu w tabeli users
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Stwórz użytkownika
-    const { data: newUser, error: createError } = await supabase
+    // Dodaj użytkownika do naszej tabeli users
+    const { error: insertError } = await supabaseAdmin
       .from('users')
       .insert({
-        name,
+        id: authData.user.id,
         email: email.toLowerCase(),
-        password: hashedPassword,
+        name: name,
+        password: 'supabase_auth', // Placeholder - hasło jest zarządzane przez Supabase Auth
         subscription_type: 'free',
         is_verified: false,
-        created_at: new Date().toISOString()
+        auth_provider: 'email'
       })
-      .select()
-      .single()
 
-    if (createError) {
-      console.error('Create user error:', createError)
-      return res.status(500).json({ error: 'Błąd tworzenia konta' })
+    if (insertError) {
+      console.error('User insert error:', insertError)
+      // Nie zwracaj błędu - użytkownik jest już zarejestrowany w Auth
     }
 
-    // Pobierz JWT secret z konfiguracji
-    const { data: config } = await supabase
-      .from('app_config')
-      .select('config_value')
-      .eq('config_key', 'jwt_secret')
-      .single()
-    
-    const jwtSecret = config?.config_value
-    if (!jwtSecret) {
-      return res.status(500).json({ error: 'Brak konfiguracji JWT secret' })
+    // Automatyczne logowanie po rejestracji
+    if (authData.session) {
+      res.json({
+        success: true,
+        token: authData.session.access_token,
+        user: {
+          id: authData.user.id,
+          email: authData.user.email,
+          name: name,
+          subscription_type: 'free'
+        }
+      })
+    } else {
+      // Jeśli wymagana weryfikacja emaila
+      res.json({
+        success: true,
+        message: 'Rejestracja pomyślna! Sprawdź email aby potwierdzić konto.',
+        requiresEmailVerification: true
+      })
     }
-
-    // Generuj JWT token
-    const token = jwt.sign(
-      { id: newUser.id, email: newUser.email },
-      jwtSecret,
-      { expiresIn: '7d' }
-    )
-
-    // Zwróć dane użytkownika (bez hasła)
-    const { password: _, ...userWithoutPassword } = newUser
-
-    res.json({
-      success: true,
-      token,
-      user: userWithoutPassword
-    })
 
   } catch (error) {
     console.error('Register error:', error)
