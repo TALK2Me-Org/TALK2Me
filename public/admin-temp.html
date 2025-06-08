@@ -295,10 +295,10 @@
                         <div class="model-card primary active" data-model="openai">
                             <div class="model-status active">✅ ACTIVE - PRIMARY</div>
                             <h3>🧠 OpenAI</h3>
-                            <p>GPT-3.5 Turbo</p>
+                            <p id="current_model_display">Loading...</p>
                             <div class="assistant-info">
-                                <small>Assistant: <strong id="assistant_name">Loading...</strong></small>
-                                <small>ID: <span id="assistant_id_display" style="font-family: monospace; font-size: 11px;">...</span></small>
+                                <small>Model: <strong id="current_model_name">Loading...</strong></small>
+                                <small>Assistant ID: <span id="assistant_id_display" style="font-family: monospace; font-size: 11px;">...</span></small>
                             </div>
                             <div class="model-toggle">
                                 <label class="switch">
@@ -382,10 +382,32 @@
                     <div class="config-label">OpenAI Model:</div>
                     <div class="config-value">
                         <select id="openai_model" onchange="updateModelInfo()">
-                            <option value="gpt-4o">GPT-4o (Najnowszy, najlepszy)</option>
-                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                            <option value="gpt-4">GPT-4 (Classic)</option>
-                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Szybki, tańszy)</option>
+                            <optgroup label="GPT-4 Omni (Najnowsze)">
+                                <option value="gpt-4o">GPT-4o (Omni - najlepszy)</option>
+                                <option value="gpt-4o-2024-11-20">GPT-4o (2024-11-20)</option>
+                                <option value="gpt-4o-2024-08-06">GPT-4o (2024-08-06)</option>
+                                <option value="gpt-4o-2024-05-13">GPT-4o (2024-05-13)</option>
+                                <option value="gpt-4o-mini">GPT-4o Mini (szybszy, tańszy)</option>
+                                <option value="gpt-4o-mini-2024-07-18">GPT-4o Mini (2024-07-18)</option>
+                            </optgroup>
+                            <optgroup label="GPT-4 Turbo">
+                                <option value="gpt-4-turbo">GPT-4 Turbo (najnowszy)</option>
+                                <option value="gpt-4-turbo-2024-04-09">GPT-4 Turbo (2024-04-09)</option>
+                                <option value="gpt-4-turbo-preview">GPT-4 Turbo Preview</option>
+                                <option value="gpt-4-0125-preview">GPT-4 (0125 Preview)</option>
+                                <option value="gpt-4-1106-preview">GPT-4 (1106 Preview)</option>
+                            </optgroup>
+                            <optgroup label="GPT-4 (Standard)">
+                                <option value="gpt-4">GPT-4 (stabilny)</option>
+                                <option value="gpt-4-0613">GPT-4 (0613)</option>
+                                <option value="gpt-4-0314">GPT-4 (0314 - legacy)</option>
+                            </optgroup>
+                            <optgroup label="GPT-3.5">
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (najnowszy)</option>
+                                <option value="gpt-3.5-turbo-0125">GPT-3.5 Turbo (0125)</option>
+                                <option value="gpt-3.5-turbo-1106">GPT-3.5 Turbo (1106)</option>
+                                <option value="gpt-3.5-turbo-16k">GPT-3.5 Turbo 16K</option>
+                            </optgroup>
                         </select>
                         <button class="btn-save" onclick="saveConfig('openai_model')">Save</button>
                         <div id="model-info" style="font-size: 12px; color: #666; margin-top: 5px;"></div>
@@ -457,10 +479,31 @@
             const selectedModel = modelSelect.value;
             
             const modelDescriptions = {
-                'gpt-4o': '🚀 Najnowszy i najinteligentniejszy model OpenAI',
-                'gpt-4-turbo': '💪 Potężny model z długą pamięcią kontekstu',
-                'gpt-4': '🎯 Klasyczny GPT-4, stabilny i niezawodny',
-                'gpt-3.5-turbo': '⚡ Szybki i ekonomiczny, dobry do prostych zadań'
+                // GPT-4 Omni
+                'gpt-4o': '🚀 Najnowszy model multimodalny - najlepsza jakość',
+                'gpt-4o-2024-11-20': '🆕 Najnowsza wersja GPT-4o (listopad 2024)',
+                'gpt-4o-2024-08-06': '📅 GPT-4o wersja z sierpnia 2024',
+                'gpt-4o-2024-05-13': '📅 GPT-4o wersja z maja 2024',
+                'gpt-4o-mini': '⚡ Szybsza i tańsza wersja GPT-4o',
+                'gpt-4o-mini-2024-07-18': '⚡ GPT-4o Mini (lipiec 2024)',
+                
+                // GPT-4 Turbo
+                'gpt-4-turbo': '💪 128K kontekst, wiedza do kwietnia 2023',
+                'gpt-4-turbo-2024-04-09': '🔄 GPT-4 Turbo z kwietnia 2024',
+                'gpt-4-turbo-preview': '🧪 Preview wersja GPT-4 Turbo',
+                'gpt-4-0125-preview': '📊 Ulepszone instrukcje, mniej "leniwości"',
+                'gpt-4-1106-preview': '🛠️ Stabilna wersja preview',
+                
+                // GPT-4 Standard
+                'gpt-4': '🎯 Klasyczny GPT-4, sprawdzony i stabilny',
+                'gpt-4-0613': '📌 Wersja z czerwca 2023',
+                'gpt-4-0314': '🏛️ Legacy - pierwsza publiczna wersja',
+                
+                // GPT-3.5
+                'gpt-3.5-turbo': '⚡ Szybki i ekonomiczny, 4K kontekst',
+                'gpt-3.5-turbo-0125': '🔧 Najnowsza wersja 3.5',
+                'gpt-3.5-turbo-1106': '📈 Ulepszone instrukcje',
+                'gpt-3.5-turbo-16k': '📚 16K kontekst dla długich rozmów'
             };
             
             modelInfo.textContent = modelDescriptions[selectedModel] || '';
@@ -527,6 +570,11 @@
                     // Update model info
                     updateModelInfo();
                     
+                    // Update current model display
+                    const currentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
+                    document.getElementById('current_model_display').textContent = currentModel;
+                    document.getElementById('current_model_name').textContent = currentModel;
+                    
                     showStatus('adminStatus', 'Configuration loaded successfully', 'success');
                 } else {
                     showStatus('adminStatus', 'Failed to load configuration', 'error');
@@ -557,6 +605,13 @@
                 
                 if (data.success) {
                     showStatus('adminStatus', `${configKey} saved successfully`, 'success');
+                    
+                    // Update model display if we just saved the model
+                    if (configKey === 'openai_model') {
+                        const newModel = element.value;
+                        document.getElementById('current_model_display').textContent = newModel;
+                        document.getElementById('current_model_name').textContent = newModel;
+                    }
                 } else {
                     showStatus('adminStatus', `Failed to save ${configKey}`, 'error');
                 }
