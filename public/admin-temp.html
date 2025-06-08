@@ -175,6 +175,104 @@
         .model-card small {
             color: #999;
         }
+        
+        /* Nowe style dla ulepszonego panelu */
+        .model-card.primary {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .model-card.disabled {
+            border-color: #6c757d;
+            background: #f8f9fa;
+            opacity: 0.8;
+        }
+        
+        .model-status {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .model-status.active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .model-status.disabled {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .assistant-info {
+            margin: 10px 0;
+            font-size: 13px;
+            text-align: left;
+        }
+        
+        .assistant-info small {
+            display: block;
+            margin: 2px 0;
+        }
+        
+        .model-toggle {
+            margin-top: 15px;
+        }
+        
+        /* Toggle switch styles */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #28a745;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        input:disabled + .slider {
+            background-color: #28a745;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -192,22 +290,53 @@
             <div class="config-section">
                 <div class="config-header">🤖 AI Models Configuration</div>
                 <div style="padding: 20px;">
-                    <h4>Active Model:</h4>
                     <div class="model-selector">
-                        <div class="model-card" data-model="openai">
+                        <!-- OpenAI - zawsze aktywny -->
+                        <div class="model-card primary active" data-model="openai">
+                            <div class="model-status active">✅ ACTIVE - PRIMARY</div>
                             <h3>🧠 OpenAI</h3>
                             <p>GPT-3.5 Turbo</p>
-                            <small>Fast & Reliable</small>
+                            <div class="assistant-info">
+                                <small>Assistant: <strong id="assistant_name">Loading...</strong></small>
+                                <small>ID: <span id="assistant_id_display" style="font-family: monospace; font-size: 11px;">...</span></small>
+                            </div>
+                            <div class="model-toggle">
+                                <label class="switch">
+                                    <input type="checkbox" checked disabled>
+                                    <span class="slider"></span>
+                                </label>
+                                <div style="margin-top: 5px; font-size: 12px;">Always ON</div>
+                            </div>
                         </div>
-                        <div class="model-card" data-model="groq">
+                        
+                        <!-- Groq - można włączyć/wyłączyć -->
+                        <div class="model-card disabled" data-model="groq" id="groq_card">
+                            <div class="model-status disabled" id="groq_status">❌ DISABLED</div>
                             <h3>⚡ Groq</h3>
                             <p>Llama 3 8B</p>
-                            <small>Free & Fast</small>
+                            <small>Free & Fast Fallback</small>
+                            <div class="model-toggle">
+                                <label class="switch">
+                                    <input type="checkbox" id="groq_enabled_toggle" onchange="toggleModel('groq')">
+                                    <span class="slider"></span>
+                                </label>
+                                <div style="margin-top: 5px; font-size: 12px;">Enable as backup</div>
+                            </div>
                         </div>
-                        <div class="model-card" data-model="claude">
+                        
+                        <!-- Claude - można włączyć/wyłączyć ale obecnie niedostępny -->
+                        <div class="model-card disabled" data-model="claude" id="claude_card">
+                            <div class="model-status disabled" id="claude_status">❌ DISABLED</div>
                             <h3>🎭 Claude</h3>
-                            <p>Haiku</p>
-                            <small>Disabled</small>
+                            <p>Claude 3 Haiku</p>
+                            <small>Currently unavailable</small>
+                            <div class="model-toggle">
+                                <label class="switch">
+                                    <input type="checkbox" id="claude_enabled_toggle" onchange="toggleModel('claude')" disabled>
+                                    <span class="slider"></span>
+                                </label>
+                                <div style="margin-top: 5px; font-size: 12px;">Not configured</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -335,8 +464,24 @@
                     // Display current assistant ID
                     const assistantId = data.config.find(c => c.config_key === 'assistant_id')?.config_value;
                     if (assistantId) {
-                        document.getElementById('current_assistant_id').textContent = assistantId;
+                        document.getElementById('assistant_id_display').textContent = assistantId.substring(0, 20) + '...';
+                        if (document.getElementById('current_assistant_id')) {
+                            document.getElementById('current_assistant_id').textContent = assistantId;
+                        }
                     }
+                    
+                    // Set toggle states for models
+                    const groqEnabled = data.config.find(c => c.config_key === 'groq_enabled')?.config_value === 'true';
+                    const claudeEnabled = data.config.find(c => c.config_key === 'claude_enabled')?.config_value === 'true';
+                    
+                    document.getElementById('groq_enabled_toggle').checked = groqEnabled;
+                    updateModelCard('groq', groqEnabled);
+                    
+                    document.getElementById('claude_enabled_toggle').checked = claudeEnabled;
+                    updateModelCard('claude', claudeEnabled);
+                    
+                    // Fetch assistant info
+                    fetchAssistantInfo();
                     
                     showStatus('adminStatus', 'Configuration loaded successfully', 'success');
                 } else {
@@ -376,38 +521,73 @@
             }
         }
         
-        // Model selector
-        document.querySelectorAll('.model-card').forEach(card => {
-            card.addEventListener('click', async () => {
-                const model = card.dataset.model;
-                if (model === 'claude') return; // Claude is disabled
+        // Toggle model enabled/disabled
+        async function toggleModel(model) {
+            const toggleElement = document.getElementById(`${model}_enabled_toggle`);
+            const enabled = toggleElement.checked;
+            
+            try {
+                const response = await fetch('/api/admin/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        config_key: `${model}_enabled`,
+                        config_value: enabled.toString()
+                    })
+                });
                 
-                // Update UI
-                document.querySelectorAll('.model-card').forEach(c => c.classList.remove('active'));
-                card.classList.add('active');
-                
-                // Save to backend
-                try {
-                    const response = await fetch('/api/admin/config', {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            config_key: 'active_model',
-                            config_value: model
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    if (data.success) {
-                        showStatus('adminStatus', `Active model changed to ${model}`, 'success');
-                    }
-                } catch (error) {
-                    showStatus('adminStatus', 'Error changing model: ' + error.message, 'error');
+                const data = await response.json();
+                if (data.success) {
+                    updateModelCard(model, enabled);
+                    showStatus('adminStatus', `${model.toUpperCase()} ${enabled ? 'enabled' : 'disabled'} as backup`, 'success');
+                } else {
+                    toggleElement.checked = !enabled; // Revert on error
+                    showStatus('adminStatus', `Failed to update ${model} status`, 'error');
                 }
-            });
-        });
+            } catch (error) {
+                toggleElement.checked = !enabled; // Revert on error
+                showStatus('adminStatus', 'Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Update model card visual state
+        function updateModelCard(model, enabled) {
+            const card = document.getElementById(`${model}_card`);
+            const status = document.getElementById(`${model}_status`);
+            
+            if (enabled) {
+                card.classList.remove('disabled');
+                card.classList.add('active');
+                status.classList.remove('disabled');
+                status.classList.add('active');
+                status.innerHTML = '🔄 BACKUP READY';
+            } else {
+                card.classList.remove('active');
+                card.classList.add('disabled');
+                status.classList.remove('active');
+                status.classList.add('disabled');
+                status.innerHTML = '❌ DISABLED';
+            }
+        }
+        
+        // Fetch assistant info from OpenAI
+        async function fetchAssistantInfo() {
+            try {
+                const response = await fetch('/api/assistant-info');
+                const data = await response.json();
+                
+                if (data.success && data.assistant) {
+                    document.getElementById('assistant_name').textContent = data.assistant.name || 'Unnamed Assistant';
+                } else {
+                    document.getElementById('assistant_name').textContent = 'Unable to load';
+                }
+            } catch (error) {
+                console.error('Error fetching assistant info:', error);
+                document.getElementById('assistant_name').textContent = 'Error loading';
+            }
+        }
         
         // Load config on page load
         console.log('⚠️ Panel admina bez hasła - tylko do testów!');

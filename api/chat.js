@@ -114,8 +114,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Fallback: Groq (darmowy, szybki) - używa swojego własnego prompta
-    if (!aiResponse && configMap.groq_api_key) {
+    // 2. Fallback: Groq (darmowy, szybki) - tylko jeśli włączony
+    const groqEnabled = configMap.groq_enabled === 'true'
+    if (!aiResponse && groqEnabled && configMap.groq_api_key) {
+      console.log('🔄 OpenAI failed, trying Groq fallback...')
       try {
         const groq = new Groq({ apiKey: configMap.groq_api_key })
         
@@ -134,6 +136,8 @@ export default async function handler(req, res) {
       } catch (error) {
         console.log('❌ Groq failed:', error.message)
       }
+    } else if (!aiResponse && !groqEnabled) {
+      console.log('⚠️ Groq is disabled, skipping fallback')
     }
 
     // 3. Jeśli nic nie zadziałało, zwróć błąd z debug info

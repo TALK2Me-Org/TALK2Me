@@ -29,7 +29,10 @@ export default async function handler(req, res) {
       { config_key: 'temperature', config_value: '0.7' },
       { config_key: 'max_tokens', config_value: '1000' },
       { config_key: 'admin_password', config_value: 'qwe123' },
-      { config_key: 'jwt_secret', config_value: 'talk2me-secret-key-2024' }
+      { config_key: 'jwt_secret', config_value: 'talk2me-secret-key-2024' },
+      { config_key: 'groq_enabled', config_value: 'false' },
+      { config_key: 'claude_enabled', config_value: 'false' },
+      { config_key: 'assistant_name', config_value: '' }
     ]
 
     // Upsert konfiguracji
