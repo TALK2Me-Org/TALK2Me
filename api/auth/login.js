@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cfnrhwgaevbltaflrvpz.supabase.co'
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmbnJod2dhZXZibHRhZmxydnB6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzUxMDU3MywiZXhwIjoyMDQ5MDg2NTczfQ.qUcT_KJZLp4TlJC0gTMpBwT7T1Bkx_5Qh5h4Vt2VsN0'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export default async function handler(req, res) {
   // CORS headers
@@ -47,10 +47,22 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Nieprawidłowy email lub hasło' })
     }
 
+    // Pobierz JWT secret z konfiguracji
+    const { data: config } = await supabase
+      .from('app_config')
+      .select('config_value')
+      .eq('config_key', 'jwt_secret')
+      .single()
+    
+    const jwtSecret = config?.config_value
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'Brak konfiguracji JWT secret' })
+    }
+
     // Generuj JWT token
     const token = jwt.sign(
       { id: users.id, email: users.email },
-      process.env.JWT_SECRET || 'talk2me-secret-key-2024',
+      jwtSecret,
       { expiresIn: '7d' }
     )
 

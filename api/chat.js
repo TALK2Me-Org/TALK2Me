@@ -49,8 +49,14 @@ export default async function handler(req, res) {
       configMap[item.config_key] = item.config_value
     })
 
-    // Assistant ID z konfiguracji lub zmiennych środowiskowych
-    const assistantId = configMap.assistant_id || process.env.ASSISTANT_ID || 'asst_whKO6qzN1Aypy48U1tjnsPv9'
+    // Assistant ID z konfiguracji
+    const assistantId = configMap.assistant_id
+    if (!assistantId) {
+      return res.status(503).json({
+        error: 'Brak konfiguracji Assistant ID',
+        details: 'Skonfiguruj Assistant ID w panelu administracyjnym'
+      })
+    }
 
     const userMessage = message
     
@@ -58,7 +64,7 @@ export default async function handler(req, res) {
     const activeModel = configMap.active_model || 'openai'
 
     // 1. Próbuj OpenAI Assistant API
-    const openaiKey = configMap.openai_api_key || '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'
+    const openaiKey = configMap.openai_api_key
     if (activeModel === 'openai' && openaiKey) {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })

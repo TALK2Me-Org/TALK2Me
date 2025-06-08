@@ -265,6 +265,25 @@
                 </div>
             </div>
             
+            <!-- System Security Section -->
+            <div class="config-section">
+                <div class="config-header">🔒 System Security</div>
+                <div class="config-item">
+                    <div class="config-label">Admin Panel Password:</div>
+                    <div class="config-value">
+                        <input type="password" id="admin_password" placeholder="Password for admin panel">
+                        <button class="btn-save" onclick="saveConfig('admin_password')">Save</button>
+                    </div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">JWT Secret Key:</div>
+                    <div class="config-value">
+                        <input type="password" id="jwt_secret" placeholder="Secret key for JWT tokens">
+                        <button class="btn-save" onclick="saveConfig('jwt_secret')">Save</button>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Assistant Info Section -->
             <div class="config-section">
                 <div class="config-header">📝 Assistant Information</div>

@@ -27,15 +27,27 @@ export default async function handler(req, res) {
 
     const token = authHeader.split(' ')[1]
     
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    // Pobierz JWT secret z konfiguracji
+    const { data: config } = await supabase
+      .from('app_config')
+      .select('config_value')
+      .eq('config_key', 'jwt_secret')
+      .single()
+    
+    const jwtSecret = config?.config_value
+    if (!jwtSecret) {
+      return res.status(500).json({ error: 'Brak konfiguracji JWT secret' })
+    }
+    
     // Weryfikuj token
     let decoded
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'talk2me-secret-key-2024')
+      decoded = jwt.verify(token, jwtSecret)
     } catch (error) {
       return res.status(401).json({ error: 'Nieprawidłowy token' })
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Pobierz dane użytkownika
     const { data: user, error: findError } = await supabase
