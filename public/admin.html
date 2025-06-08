@@ -579,11 +579,15 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    console.log('Loaded config from DB:', data.config);
                     data.config.forEach(item => {
                         const element = document.getElementById(item.config_key);
                         if (element) {
                             if (element.tagName === 'SELECT') {
                                 element.value = item.config_value || element.options[0].value;
+                                if (item.config_key === 'openai_model') {
+                                    console.log(`Setting openai_model select to: ${item.config_value}`);
+                                }
                             } else if (element.tagName === 'TEXTAREA') {
                                 element.value = item.config_value || '';
                             } else {
@@ -642,6 +646,7 @@
                     
                     // Update current model display
                     const currentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
+                    console.log('Loaded openai_model from DB:', currentModel);
                     document.getElementById('current_model_display').textContent = currentModel;
                     document.getElementById('current_model_name').textContent = currentModel;
                     
@@ -649,6 +654,7 @@
                     const modelSelect = document.getElementById('openai_model');
                     if (modelSelect && currentModel) {
                         modelSelect.value = currentModel;
+                        console.log('Set select value to:', currentModel);
                         updateModelInfo();
                     }
                     
@@ -666,6 +672,9 @@
             const element = document.getElementById(configKey);
             if (!element) return;
             
+            const valueToSave = element.value;
+            console.log(`Saving ${configKey} with value: ${valueToSave}`);
+            
             try {
                 const response = await fetch('/api/admin/config', {
                     method: 'PUT',
@@ -674,11 +683,12 @@
                     },
                     body: JSON.stringify({
                         config_key: configKey,
-                        config_value: element.value
+                        config_value: valueToSave
                     })
                 });
                 
                 const data = await response.json();
+                console.log('Save response:', data);
                 
                 if (data.success) {
                     showStatus('adminStatus', `${configKey} saved successfully`, 'success');
@@ -688,12 +698,15 @@
                         const newModel = element.value;
                         document.getElementById('current_model_display').textContent = newModel;
                         document.getElementById('current_model_name').textContent = newModel;
+                        console.log(`Updated display to: ${newModel}`);
                     }
                 } else {
-                    showStatus('adminStatus', `Failed to save ${configKey}`, 'error');
+                    showStatus('adminStatus', `Failed to save ${configKey}: ${data.error || 'Unknown error'}`, 'error');
+                    console.error('Save failed:', data);
                 }
             } catch (error) {
                 showStatus('adminStatus', 'Save error: ' + error.message, 'error');
+                console.error('Save error:', error);
             }
         }
         

@@ -41,13 +41,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'config_key is required' })
       }
 
+      // Używamy upsert zamiast update, aby działało nawet jeśli rekord nie istnieje
       const { error } = await supabase
         .from('app_config')
-        .update({ 
+        .upsert({ 
+          config_key: config_key,
           config_value: config_value,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'config_key'
         })
-        .eq('config_key', config_key)
 
       if (error) {
         return res.status(500).json({ error: 'Update failed', details: error })
