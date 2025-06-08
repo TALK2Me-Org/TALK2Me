@@ -76,18 +76,43 @@ Mówisz naturalnie, jak przyjaciółka, używając prostego języka.`
         // Wybierz model z konfiguracji (domyślnie gpt-4o)
         const modelName = configMap.openai_model || 'gpt-4o';
         console.log('🤖 Używam modelu:', modelName);
+        console.log('📊 Pełna konfiguracja:', {
+          model: modelName,
+          temperature: configMap.temperature,
+          max_tokens: configMap.max_tokens
+        });
         
         // Stream response
-        const stream = await openai.chat.completions.create({
-          model: modelName,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage }
-          ],
-          temperature: parseFloat(configMap.temperature) || 0.7,
-          max_tokens: parseInt(configMap.max_tokens) || 1000,
-          stream: true
-        })
+        let stream;
+        try {
+          stream = await openai.chat.completions.create({
+            model: modelName,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMessage }
+            ],
+            temperature: parseFloat(configMap.temperature) || 0.7,
+            max_tokens: parseInt(configMap.max_tokens) || 1000,
+            stream: true
+          })
+        } catch (modelError) {
+          // Jeśli model nie istnieje, spróbuj z gpt-4o
+          if (modelError.message?.includes('model') || modelError.status === 404) {
+            console.log(`⚠️ Model ${modelName} niedostępny, używam gpt-4o`)
+            stream = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userMessage }
+              ],
+              temperature: parseFloat(configMap.temperature) || 0.7,
+              max_tokens: parseInt(configMap.max_tokens) || 1000,
+              stream: true
+            })
+          } else {
+            throw modelError
+          }
+        }
         
         // Stream chunks do klienta
         for await (const chunk of stream) {
