@@ -1764,17 +1764,20 @@
                 responseDiv.className = 'response-container';
                 responseDiv.style.display = 'block';
                 
+                // Użyj unikalnego ID dla każdej odpowiedzi
+                const uniqueId = 'streaming-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                
                 // Przygotuj strukturę odpowiedzi
                 responseDiv.innerHTML = `
                     <div class="response-section">
                         <div class="section-content">
-                            <p id="streaming-response" class="streaming-cursor"></p>
+                            <p id="${uniqueId}" class="streaming-cursor"></p>
                         </div>
                     </div>
                 `;
                 
                 chatContainer.appendChild(responseDiv);
-                const streamingParagraph = document.getElementById('streaming-response');
+                const streamingParagraph = document.getElementById(uniqueId);
                 
                 // Czytaj stream odpowiedzi
                 const reader = response.body.getReader();
