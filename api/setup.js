@@ -18,48 +18,31 @@ export default async function handler(req, res) {
     
     console.log('🔧 Setting up TALK2Me database...')
     
-    // 1. Create users table
-    const { error: usersError } = await supabase.rpc('exec', {
-      sql: `
-        CREATE TABLE IF NOT EXISTS users (
-          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-          email VARCHAR(255) UNIQUE NOT NULL,
-          password VARCHAR(255) NOT NULL,
-          name VARCHAR(255) NOT NULL,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          subscription_type VARCHAR(50) DEFAULT 'free',
-          is_verified BOOLEAN DEFAULT false
-        );
-      `
-    })
+    // UWAGA: Ten endpoint nie tworzy tabel!
+    // Tabele musisz utworzyć ręcznie w Supabase SQL Editor
+    // używając pliku supabase-schema.sql
     
-    // 2. Create chat_history table
-    const { error: chatError } = await supabase.rpc('exec', {
-      sql: `
-        CREATE TABLE IF NOT EXISTS chat_history (
-          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-          user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-          message TEXT NOT NULL,
-          response TEXT NOT NULL,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-          is_favorite BOOLEAN DEFAULT false
-        );
-      `
-    })
+    console.log('⚠️ WAŻNE: Tabele muszą być utworzone ręcznie w Supabase!')
+    console.log('📋 Instrukcja:')
+    console.log('1. Zaloguj się do Supabase')
+    console.log('2. Wejdź do SQL Editor')
+    console.log('3. Wklej zawartość pliku supabase-schema.sql')
+    console.log('4. Kliknij RUN')
     
-    // 3. Create app_config table
-    const { error: configError } = await supabase.rpc('exec', {
-      sql: `
-        CREATE TABLE IF NOT EXISTS app_config (
-          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-          config_key VARCHAR(100) UNIQUE NOT NULL,
-          config_value TEXT,
-          config_type VARCHAR(50) DEFAULT 'string',
-          description TEXT,
-          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        );
-      `
-    })
+    // Sprawdź czy tabele istnieją
+    const { data: tables, error: tablesError } = await supabase
+      .from('app_config')
+      .select('config_key')
+      .limit(1)
+    
+    if (tablesError) {
+      return res.json({
+        success: false,
+        message: '❌ Tabele nie istnieją w bazie danych!',
+        instruction: 'Musisz najpierw utworzyć tabele używając SQL Editor w Supabase',
+        error: tablesError.message
+      })
+    }
 
     // 4. Insert default configuration
     const defaultConfigs = [

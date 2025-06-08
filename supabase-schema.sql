@@ -1,29 +1,50 @@
--- TALK2Me Supabase Schema
--- Uruchom to w Supabase SQL Editor
+-- TALK2Me Supabase Schema - KOMPLETNA KONFIGURACJA
+-- 
+-- INSTRUKCJA:
+-- 1. Zaloguj się do Supabase (https://app.supabase.com)
+-- 2. Wybierz swój projekt
+-- 3. Kliknij "SQL Editor" w menu po lewej
+-- 4. Wklej CAŁĄ zawartość tego pliku
+-- 5. Kliknij "RUN" (zielony przycisk)
+-- 
 
--- 1. Tabela użytkowników
-CREATE TABLE IF NOT EXISTS users (
+-- KROK 1: Usuń stare tabele (jeśli istnieją)
+DROP TABLE IF EXISTS app_config CASCADE;
+DROP TABLE IF EXISTS chat_history CASCADE;
+DROP TABLE IF EXISTS sessions CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- KROK 2: Utwórz tabele
+
+-- Tabela użytkowników
+CREATE TABLE users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     subscription_type VARCHAR(50) DEFAULT 'free',
-    is_verified BOOLEAN DEFAULT false
+    is_verified BOOLEAN DEFAULT false,
+    auth_provider VARCHAR(50) DEFAULT 'email',
+    google_id VARCHAR(255) UNIQUE,
+    apple_id VARCHAR(255) UNIQUE,
+    avatar_url TEXT,
+    last_login TIMESTAMP WITH TIME ZONE
 );
 
--- 2. Tabela historii czatów
-CREATE TABLE IF NOT EXISTS chat_history (
+-- Tabela historii czatów
+CREATE TABLE chat_history (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     message TEXT NOT NULL,
     response TEXT NOT NULL,
+    ai_model VARCHAR(50) DEFAULT 'openai',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_favorite BOOLEAN DEFAULT false
 );
 
--- 3. Tabela sesji (dla JWT backup)
-CREATE TABLE IF NOT EXISTS sessions (
+-- Tabela sesji
+CREATE TABLE sessions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     token TEXT UNIQUE NOT NULL,
@@ -31,8 +52,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Tabela konfiguracji (dla admin panelu)
-CREATE TABLE IF NOT EXISTS app_config (
+-- Tabela konfiguracji aplikacji
+CREATE TABLE app_config (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     config_key VARCHAR(100) UNIQUE NOT NULL,
     config_value TEXT,
@@ -41,17 +62,32 @@ CREATE TABLE IF NOT EXISTS app_config (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Wstaw domyślną konfigurację
+-- KROK 3: Wstaw KOMPLETNĄ konfigurację z działającymi kluczami
 INSERT INTO app_config (config_key, config_value, config_type, description) VALUES
-('openai_api_key', '', 'secret', 'OpenAI API Key'),
-('groq_api_key', '', 'secret', 'Groq API Key'),
-('claude_api_key', '', 'secret', 'Claude API Key (disabled)'),
+-- API Keys (z działającymi wartościami!)
+('openai_api_key', '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', 'secret', 'OpenAI API Key'),
+('groq_api_key', '', 'secret', 'Groq API Key for fallback'),
+('claude_api_key', '', 'secret', 'Claude API Key (currently disabled)'),
+
+-- Assistant Configuration
+('assistant_id', 'asst_whKO6qzN1Aypy48U1tjnsPv9', 'string', 'OpenAI Assistant ID'),
+('assistant_name', '', 'string', 'Cached assistant name'),
+
+-- Model Settings
 ('active_model', 'openai', 'string', 'Currently active AI model'),
-('system_prompt', 'Jesteś Jamie z TALK2Me – wysoce wykwalifikowanym, emocjonalnie inteligentnym agentem konwersacyjnym specjalizującym się w relacjach...', 'text', 'System prompt for AI'),
+('groq_enabled', 'false', 'boolean', 'Enable Groq as fallback'),
+('claude_enabled', 'false', 'boolean', 'Enable Claude model'),
+
+-- AI Parameters
 ('max_tokens', '1000', 'number', 'Maximum tokens for AI response'),
-('temperature', '0.7', 'number', 'AI creativity level'),
-('claude_enabled', 'false', 'boolean', 'Enable Claude model')
-ON CONFLICT (config_key) DO NOTHING;
+('temperature', '0.7', 'number', 'AI creativity level (0-1)'),
+
+-- Security Settings
+('admin_password', 'qwe123', 'secret', 'Admin panel password'),
+('jwt_secret', 'talk2me-secret-key-2024', 'secret', 'JWT signing secret')
+ON CONFLICT (config_key) DO UPDATE SET
+    config_value = EXCLUDED.config_value,
+    updated_at = NOW();
 
 -- 6. Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
