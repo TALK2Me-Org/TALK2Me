@@ -1325,10 +1325,11 @@
         // Sprawdź autentykację przy starcie
         (function checkAuth() {
             const token = localStorage.getItem('token');
+            const isGuest = localStorage.getItem('guestMode');
             const currentPath = window.location.pathname;
             
-            // Jeśli nie ma tokena i nie jesteśmy na stronie logowania, przekieruj
-            if (!token && currentPath !== '/login' && currentPath !== '/login.html') {
+            // Jeśli nie ma tokena ani trybu gościa i nie jesteśmy na stronie logowania, przekieruj
+            if (!token && !isGuest && currentPath !== '/login' && currentPath !== '/login.html') {
                 window.location.href = '/login.html';
                 return;
             }
