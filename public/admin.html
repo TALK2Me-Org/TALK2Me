@@ -307,6 +307,9 @@
                     }
                 });
                 
+                const responseData = await response.json();
+                console.log('Login response:', response.status, responseData);
+                
                 if (response.ok) {
                     adminToken = password;
                     document.getElementById('loginForm').style.display = 'none';
@@ -314,7 +317,10 @@
                     document.getElementById('logoutBtn').style.display = 'block';
                     loadConfig();
                 } else {
-                    showStatus('loginStatus', 'Invalid password', 'error');
+                    showStatus('loginStatus', responseData.error || 'Invalid password', 'error');
+                    if (responseData.hint) {
+                        console.log('Hint:', responseData.hint);
+                    }
                 }
             } catch (error) {
                 showStatus('loginStatus', 'Login failed: ' + error.message, 'error');

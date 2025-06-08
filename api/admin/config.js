@@ -18,14 +18,6 @@ export default async function handler(req, res) {
     // Sprawdź hasło admin
     const authHeader = req.headers.authorization
     
-    // Debug info - usuń to po naprawieniu!
-    console.log('Admin auth check:', {
-      authHeader: authHeader,
-      expectedAuth: `Bearer ${adminPassword}`,
-      adminPassword: adminPassword,
-      envPassword: process.env.ADMIN_PASSWORD
-    })
-    
     if (!authHeader || authHeader !== `Bearer ${adminPassword}`) {
       return res.status(401).json({ 
         error: 'Unauthorized - wrong admin password',
