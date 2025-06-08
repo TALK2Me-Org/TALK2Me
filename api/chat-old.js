@@ -1,13 +1,12 @@
-// TALK2Me Chat API - Vercel Serverless Function v4.0 - Chat Completions z Streamingiem
+// TALK2Me Chat API - Vercel Serverless Function v3.0 - Assistant API
 import { createClient } from '@supabase/supabase-js'
+import axios from 'axios'
 import { Groq } from 'groq-sdk'
 import OpenAI from 'openai'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Vercel nie wspiera prawdziwego streamingu w serverless functions
-// Ale możemy symulować streaming przez chunked responses
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -51,62 +50,47 @@ export default async function handler(req, res) {
     })
 
     const userMessage = message
+    
+    let aiResponse = null
     const activeModel = configMap.active_model || 'openai'
-    
-    // Przygotuj streaming response
-    res.setHeader('Content-Type', 'text/event-stream')
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('Connection', 'keep-alive')
-    res.setHeader('X-Accel-Buffering', 'no') // Wyłącz buforowanie nginx
-    
-    let fullResponse = ''
-    let streamSuccess = false
 
-    // 1. Próbuj OpenAI z streamingiem
+    // 1. Próbuj OpenAI Chat Completions API
     const openaiKey = configMap.openai_api_key
     if (activeModel === 'openai' && openaiKey) {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })
         
+        // Pobierz system prompt z konfiguracji lub użyj domyślnego
         const systemPrompt = configMap.system_prompt || `Jesteś Jamie, empatyczną przyjaciółką, która pomaga w komunikacji w związkach. 
 Odpowiadasz w sposób ciepły, wspierający i konstruktywny. 
 Unikasz osądzania i zawsze starasz się zrozumieć perspektywę użytkownika.
 Mówisz naturalnie, jak przyjaciółka, używając prostego języka.`
         
-        // Stream response
-        const stream = await openai.chat.completions.create({
+        // Chat Completions z prostym formatem
+        const completion = await openai.chat.completions.create({
           model: "gpt-3.5-turbo",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }
           ],
           temperature: parseFloat(configMap.temperature) || 0.7,
-          max_tokens: parseInt(configMap.max_tokens) || 1000,
-          stream: true
+          max_tokens: parseInt(configMap.max_tokens) || 1000
         })
         
-        // Stream chunks do klienta
-        for await (const chunk of stream) {
-          const content = chunk.choices[0]?.delta?.content || ''
-          if (content) {
-            fullResponse += content
-            // Wyślij chunk do klienta
-            res.write(`data: ${JSON.stringify({ content })}\n\n`)
-          }
+        if (completion.choices[0]?.message?.content) {
+          aiResponse = completion.choices[0].message.content
+          console.log('✅ OpenAI Chat Completions response successful')
         }
         
-        streamSuccess = true
-        console.log('✅ OpenAI streaming completed')
-        
       } catch (error) {
-        console.log('❌ OpenAI streaming failed:', error.message)
-        res.write(`data: ${JSON.stringify({ error: 'OpenAI failed, trying fallback...' })}\n\n`)
+        console.log('❌ OpenAI Chat Completions failed, trying Groq:', error.message)
       }
     }
 
-    // 2. Fallback: Groq (bez streamingu - wyślij całość na raz)
+    // 2. Fallback: Groq (darmowy, szybki) - tylko jeśli włączony
     const groqEnabled = configMap.groq_enabled === 'true'
-    if (!streamSuccess && groqEnabled && configMap.groq_api_key) {
+    if (!aiResponse && groqEnabled && configMap.groq_api_key) {
+      console.log('🔄 OpenAI failed, trying Groq fallback...')
       try {
         const groq = new Groq({ apiKey: configMap.groq_api_key })
         
@@ -119,48 +103,62 @@ Mówisz naturalnie, jak przyjaciółka, używając prostego języka.`
           max_tokens: parseInt(configMap.max_tokens) || 1000
         })
 
-        fullResponse = completion.choices[0].message.content
-        // Wyślij całą odpowiedź jako jeden chunk
-        res.write(`data: ${JSON.stringify({ content: fullResponse })}\n\n`)
-        streamSuccess = true
+        aiResponse = completion.choices[0].message.content
         console.log('✅ Groq response successful (fallback)')
         
       } catch (error) {
         console.log('❌ Groq failed:', error.message)
       }
+    } else if (!aiResponse && !groqEnabled) {
+      console.log('⚠️ Groq is disabled, skipping fallback')
     }
 
-    // 3. Jeśli nic nie zadziałało
-    if (!streamSuccess) {
-      res.write(`data: ${JSON.stringify({ 
-        error: 'Nie udało się uzyskać odpowiedzi od AI. Sprawdź konfigurację kluczy API w panelu administracyjnym.' 
-      })}\n\n`)
+    // 3. Jeśli nic nie zadziałało, zwróć błąd z debug info
+    if (!aiResponse) {
+      return res.status(503).json({
+        error: 'Nie udało się uzyskać odpowiedzi od AI',
+        details: 'Sprawdź konfigurację kluczy API w panelu administracyjnym',
+        debug: {
+          hasOpenAIKey: !!openaiKey,
+          hasGroqKey: !!configMap.groq_api_key,
+          activeModel: activeModel,
+          assistantId: assistantId
+        }
+      })
     }
 
-    // Zapisz historię jeśli user zalogowany i mamy odpowiedź
-    if (userId && fullResponse) {
-      await supabase
+    // Zapisz historię jeśli user zalogowany
+    let chatId = null
+    if (userId) {
+      const { data: chatData, error: chatError } = await supabase
         .from('chat_history')
         .insert({
           user_id: userId,
           message: message,
-          response: fullResponse,
-          ai_model: activeModel
+          response: aiResponse
         })
+        .select('id')
+        .single()
+      
+      if (!chatError) {
+        chatId = chatData.id
+      }
     }
 
-    // Zakończ stream
-    res.write(`data: [DONE]\n\n`)
-    res.end()
+    res.json({
+      success: true,
+      response: aiResponse,
+      provider: activeModel,
+      chatId: chatId,
+      timestamp: new Date().toISOString()
+    })
 
   } catch (error) {
     console.error('Chat API error:', error)
-    // W przypadku błędu też musimy zakończyć jako event stream
-    res.write(`data: ${JSON.stringify({ 
-      error: 'Internal server error', 
-      details: error.message 
-    })}\n\n`)
-    res.write(`data: [DONE]\n\n`)
-    res.end()
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    })
   }
 }

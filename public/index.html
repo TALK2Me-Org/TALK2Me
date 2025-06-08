@@ -339,6 +339,19 @@
             }
         }
 
+        @keyframes typing-cursor {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .streaming-cursor::after {
+            content: '▋';
+            display: inline-block;
+            animation: typing-cursor 1s infinite;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
         /* Overlay dla menu */
         .overlay {
             position: fixed;
@@ -1714,6 +1727,8 @@
                 // Pobierz token jeśli użytkownik jest zalogowany
                 const token = localStorage.getItem('token');
                 console.log('Token przy wysyłaniu:', token ? 'Jest token' : 'Brak tokena');
+                
+                // Najpierw wyślij POST request aby zainicjować streaming
                 const headers = {
                     'Content-Type': 'application/json',
                 };
@@ -1726,63 +1741,100 @@
                 }
                 
                 // Wyślij zapytanie do backendu
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 sekund timeout
-                
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify({
                         message: message,
                         userContext: '' // Możemy dodać kontekst użytkownika później
-                    }),
-                    signal: controller.signal
+                    })
                 });
-                
-                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Błąd API:', errorData);
-                    if (errorData.debug) {
-                        console.log('Debug info:', errorData.debug);
-                    }
                     throw new Error(errorData.error || `Błąd serwera: ${response.status}`);
                 }
 
-                const data = await response.json();
-                console.log('Odpowiedź API:', data);
-                console.log('Chat ID:', data.chatId);
+                // Usuń loading
                 loadingDiv.remove();
                 
-                // Wyświetl czystą odpowiedź AI
-                const aiResponse = data.response;
+                // Przygotuj kontener na odpowiedź
                 const responseDiv = document.createElement('div');
                 responseDiv.className = 'response-container';
                 responseDiv.style.display = 'block';
                 
-                // Dodaj przycisk ulubionego jeśli użytkownik jest zalogowany i mamy chatId
-                const favoriteButton = localStorage.getItem('token') && data.chatId ? 
-                    `<button class="favorite-btn" data-chat-id="${data.chatId}" onclick="toggleFavorite(${data.chatId})" title="Dodaj do ulubionych">🤍</button>` : '';
-                
-                // Konwertuj markdown na HTML (podstawowa konwersja)
-                const formattedResponse = aiResponse
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold**
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic*
-                    .replace(/\n\n/g, '</p><p>')                        // paragraphs
-                    .replace(/\n/g, '<br>');                            // line breaks
-                
+                // Przygotuj strukturę odpowiedzi
                 responseDiv.innerHTML = `
-                    ${favoriteButton}
                     <div class="response-section">
                         <div class="section-content">
-                            <p>${formattedResponse}</p>
+                            <p id="streaming-response" class="streaming-cursor"></p>
                         </div>
                     </div>
                 `;
                 
                 chatContainer.appendChild(responseDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                const streamingParagraph = document.getElementById('streaming-response');
+                
+                // Czytaj stream odpowiedzi
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') {
+                                console.log('Stream zakończony');
+                                streamingParagraph.classList.remove('streaming-cursor');
+                                break;
+                            }
+                            
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (parsed.content) {
+                                    fullResponse += parsed.content;
+                                    // Konwertuj markdown na HTML
+                                    const formattedResponse = fullResponse
+                                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                        .replace(/\n\n/g, '</p><p>')
+                                        .replace(/\n/g, '<br>');
+                                    
+                                    streamingParagraph.innerHTML = formattedResponse;
+                                    
+                                    // Przewiń do dołu
+                                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                                }
+                                if (parsed.error) {
+                                    console.error('Błąd w streamie:', parsed.error);
+                                }
+                            } catch (e) {
+                                console.error('Błąd parsowania:', e);
+                            }
+                        }
+                    }
+                }
+                
+                // Dodaj przycisk ulubionego na końcu (jeśli użytkownik jest zalogowany)
+                if (token && fullResponse) {
+                    const favoriteButton = document.createElement('button');
+                    favoriteButton.className = 'favorite-btn';
+                    favoriteButton.innerHTML = '🤍';
+                    favoriteButton.title = 'Dodaj do ulubionych';
+                    favoriteButton.onclick = function() {
+                        // TODO: Implementacja zapisywania do ulubionych
+                        console.log('Zapisz do ulubionych');
+                    };
+                    responseDiv.insertBefore(favoriteButton, responseDiv.firstChild);
+                }
                 
                 // Odśwież historię czatów po otrzymaniu odpowiedzi
                 if (localStorage.getItem('token')) {
