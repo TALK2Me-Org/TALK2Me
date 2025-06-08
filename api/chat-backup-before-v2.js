@@ -1,4 +1,4 @@
-// TALK2Me Chat API v5.0 - Z obsługą konwersacji (FAZA 2)
+// TALK2Me Chat API - Vercel Serverless Function v4.0 - Chat Completions z Streamingiem
 import { createClient } from '@supabase/supabase-js'
 import { Groq } from 'groq-sdk'
 import OpenAI from 'openai'
@@ -6,13 +6,15 @@ import OpenAI from 'openai'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-// Cache dla promptu Assistant API (współdzielony z poprzednią wersją)
+// Cache dla promptu Assistant API
 export const promptCache = {
   prompt: null,
   timestamp: 0,
   source: 'none'
 }
 
+// Vercel nie wspiera prawdziwego streamingu w serverless functions
+// Ale możemy symulować streaming przez chunked responses
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -28,7 +30,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, userContext, conversationId } = req.body
+    const { message, userContext } = req.body
     const authHeader = req.headers.authorization
     
     if (!message) {
@@ -45,75 +47,6 @@ export default async function handler(req, res) {
       userId = user?.id
     }
 
-    // Jeśli brak userId, nie możemy obsługiwać konwersacji
-    if (!userId && conversationId) {
-      return res.status(401).json({ error: 'Login required for conversations' })
-    }
-
-    // Obsługa konwersacji
-    let activeConversationId = conversationId
-    let conversationMessages = []
-
-    if (userId) {
-      // Jeśli podano conversationId, sprawdź czy należy do użytkownika
-      if (activeConversationId) {
-        const { data: conv } = await supabase
-          .from('conversations')
-          .select('id')
-          .eq('id', activeConversationId)
-          .eq('user_id', userId)
-          .single()
-
-        if (!conv) {
-          return res.status(404).json({ error: 'Conversation not found' })
-        }
-
-        // Pobierz historię konwersacji (ostatnie 20 wiadomości)
-        const { data: messages } = await supabase
-          .from('messages')
-          .select('role, content')
-          .eq('conversation_id', activeConversationId)
-          .order('created_at', { ascending: true })
-          .limit(20)
-
-        conversationMessages = messages || []
-      } else {
-        // Utwórz nową konwersację
-        const { data: newConv, error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            user_id: userId,
-            title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
-            last_message_at: new Date().toISOString()
-          })
-          .select()
-          .single()
-
-        if (convError) {
-          console.error('Failed to create conversation:', convError)
-          // Kontynuuj bez konwersacji
-        } else {
-          activeConversationId = newConv.id
-        }
-      }
-
-      // Zapisz wiadomość użytkownika do konwersacji
-      if (activeConversationId) {
-        const { error: msgError } = await supabase
-          .from('messages')
-          .insert({
-            conversation_id: activeConversationId,
-            user_id: userId,
-            role: 'user',
-            content: message
-          })
-
-        if (msgError) {
-          console.error('Failed to save user message:', msgError)
-        }
-      }
-    }
-
     // Pobierz konfigurację AI
     const { data: config } = await supabase
       .from('app_config')
@@ -124,19 +57,17 @@ export default async function handler(req, res) {
       configMap[item.config_key] = item.config_value
     })
 
+    const userMessage = message
     const activeModel = configMap.active_model || 'openai'
     
     // Przygotuj streaming response
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
-    res.setHeader('X-Accel-Buffering', 'no')
+    res.setHeader('X-Accel-Buffering', 'no') // Wyłącz buforowanie nginx
     
     let fullResponse = ''
     let streamSuccess = false
-
-    // Przygotuj wiadomości dla AI (z kontekstem konwersacji)
-    const aiMessages = []
 
     // 1. Próbuj OpenAI z streamingiem
     const openaiKey = configMap.openai_api_key
@@ -149,49 +80,62 @@ export default async function handler(req, res) {
         // Pobierz prompt z cache lub Assistant API
         let systemPrompt = 'You are a helpful AI assistant.'
         
-        if (promptCache.prompt && Date.now() - promptCache.timestamp < 3600000) {
+        // Sprawdź cache w pamięci
+        if (promptCache.prompt && Date.now() - promptCache.timestamp < 3600000) { // 1h
           systemPrompt = promptCache.prompt
+          console.log('📋 Używam promptu z cache (source: ' + promptCache.source + ')')
         } else if (assistantId) {
+          // Pobierz świeży prompt z Assistant API
           try {
+            console.log('📥 Pobieram prompt z Assistant API...')
             const assistant = await openai.beta.assistants.retrieve(assistantId)
             systemPrompt = assistant.instructions || systemPrompt
             
+            // Zapisz do cache
             promptCache.prompt = systemPrompt
             promptCache.timestamp = Date.now()
             promptCache.source = 'Assistant API'
+            
+            console.log('✅ Prompt pobrany i zapisany do cache (długość: ' + systemPrompt.length + ' znaków)')
           } catch (err) {
-            console.error('Failed to fetch assistant:', err)
+            console.log('⚠️ Nie udało się pobrać promptu z Assistant API:', err.message)
           }
         }
-
-        // Buduj wiadomości
-        aiMessages.push({ role: 'system', content: systemPrompt })
         
-        // Dodaj kontekst konwersacji
-        if (conversationMessages.length > 0) {
-          aiMessages.push(...conversationMessages)
-        }
+        // Wybierz model z konfiguracji (domyślnie gpt-4o)
+        const modelName = configMap.openai_model || 'gpt-4o';
+        console.log('🤖 Używam modelu:', modelName);
+        console.log('📊 Pełna konfiguracja:', {
+          model: modelName,
+          temperature: configMap.temperature,
+          max_tokens: configMap.max_tokens,
+          promptSource: promptCache.source,
+          promptLength: systemPrompt.length
+        });
         
-        // Dodaj aktualną wiadomość
-        aiMessages.push({ role: 'user', content: message })
-
-        const openaiModel = configMap.openai_model || 'gpt-3.5-turbo'
-        
-        let stream
+        // Stream response
+        let stream;
         try {
           stream = await openai.chat.completions.create({
-            model: openaiModel,
-            messages: aiMessages,
+            model: modelName,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMessage }
+            ],
             temperature: parseFloat(configMap.temperature) || 0.7,
             max_tokens: parseInt(configMap.max_tokens) || 1000,
             stream: true
           })
         } catch (modelError) {
-          if (modelError.code === 'model_not_found' && openaiModel.includes('gpt-4')) {
-            console.log('Model not available, falling back to gpt-3.5-turbo')
+          // Jeśli model nie istnieje, spróbuj z gpt-4o
+          if (modelError.message?.includes('model') || modelError.status === 404) {
+            console.log(`⚠️ Model ${modelName} niedostępny, używam gpt-4o`)
             stream = await openai.chat.completions.create({
-              model: 'gpt-3.5-turbo',
-              messages: aiMessages,
+              model: 'gpt-4o',
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userMessage }
+              ],
               temperature: parseFloat(configMap.temperature) || 0.7,
               max_tokens: parseInt(configMap.max_tokens) || 1000,
               stream: true
@@ -206,6 +150,7 @@ export default async function handler(req, res) {
           const content = chunk.choices[0]?.delta?.content || ''
           if (content) {
             fullResponse += content
+            // Wyślij chunk do klienta
             res.write(`data: ${JSON.stringify({ content })}\n\n`)
           }
         }
@@ -219,25 +164,23 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Fallback: Groq
+    // 2. Fallback: Groq (bez streamingu - wyślij całość na raz)
     const groqEnabled = configMap.groq_enabled === 'true'
     if (!streamSuccess && groqEnabled && configMap.groq_api_key) {
       try {
         const groq = new Groq({ apiKey: configMap.groq_api_key })
         
-        // Groq nie obsługuje system messages, więc użyj tylko user message
-        const groqMessages = conversationMessages.length > 0 
-          ? [...conversationMessages, { role: 'user', content: message }]
-          : [{ role: 'user', content: message }]
-        
         const completion = await groq.chat.completions.create({
-          messages: groqMessages,
+          messages: [
+            { role: 'user', content: userMessage }
+          ],
           model: 'llama3-8b-8192',
           temperature: parseFloat(configMap.temperature) || 0.7,
           max_tokens: parseInt(configMap.max_tokens) || 1000
         })
 
         fullResponse = completion.choices[0].message.content
+        // Wyślij całą odpowiedź jako jeden chunk
         res.write(`data: ${JSON.stringify({ content: fullResponse })}\n\n`)
         streamSuccess = true
         console.log('✅ Groq response successful (fallback)')
@@ -254,24 +197,7 @@ export default async function handler(req, res) {
       })}\n\n`)
     }
 
-    // Zapisz odpowiedź AI do konwersacji
-    if (userId && fullResponse && activeConversationId) {
-      const { error: msgError } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: activeConversationId,
-          user_id: userId,
-          role: 'assistant',
-          content: fullResponse,
-          ai_model: activeModel
-        })
-
-      if (msgError) {
-        console.error('Failed to save AI response:', msgError)
-      }
-    }
-
-    // Zapisz także do starej tabeli chat_history dla kompatybilności
+    // Zapisz historię jeśli user zalogowany i mamy odpowiedź
     if (userId && fullResponse) {
       await supabase
         .from('chat_history')
@@ -283,17 +209,13 @@ export default async function handler(req, res) {
         })
     }
 
-    // Zwróć ID konwersacji w odpowiedzi
-    if (activeConversationId) {
-      res.write(`data: ${JSON.stringify({ conversationId: activeConversationId })}\n\n`)
-    }
-
     // Zakończ stream
     res.write(`data: [DONE]\n\n`)
     res.end()
 
   } catch (error) {
     console.error('Chat API error:', error)
+    // W przypadku błędu też musimy zakończyć jako event stream
     res.write(`data: ${JSON.stringify({ 
       error: 'Internal server error', 
       details: error.message 
