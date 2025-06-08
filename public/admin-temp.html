@@ -348,14 +348,14 @@
                 <div class="config-item">
                     <div class="config-label">OpenAI API Key:</div>
                     <div class="config-value">
-                        <input type="password" id="openai_api_key" placeholder="sk-proj-...">
+                        <input type="text" id="openai_api_key" placeholder="sk-proj-..." style="font-family: monospace; font-size: 12px;">
                         <button class="btn-save" onclick="saveConfig('openai_api_key')">Save</button>
                     </div>
                 </div>
                 <div class="config-item">
                     <div class="config-label">OpenAI Assistant ID:</div>
                     <div class="config-value">
-                        <input type="text" id="assistant_id" placeholder="asst_...">
+                        <input type="text" id="assistant_id" placeholder="asst_..." style="font-family: monospace;">
                         <button class="btn-save" onclick="saveConfig('assistant_id')">Save</button>
                     </div>
                 </div>
@@ -451,6 +451,14 @@
                             element.value = item.config_value || '';
                         }
                     });
+                    
+                    // Jeśli niektóre pola są puste, wypełnij domyślnymi wartościami
+                    if (!document.getElementById('openai_api_key').value) {
+                        document.getElementById('openai_api_key').value = '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';
+                    }
+                    if (!document.getElementById('assistant_id').value) {
+                        document.getElementById('assistant_id').value = 'asst_whKO6qzN1Aypy48U1tjnsPv9';
+                    }
                     
                     // Set active model
                     const activeModel = data.config.find(c => c.config_key === 'active_model')?.config_value || 'openai';
