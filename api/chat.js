@@ -6,6 +6,13 @@ import OpenAI from 'openai'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+// Cache dla promptu Assistant API
+export const promptCache = {
+  prompt: null,
+  timestamp: 0,
+  source: 'none'
+}
+
 // Vercel nie wspiera prawdziwego streamingu w serverless functions
 // Ale możemy symulować streaming przez chunked responses
 export default async function handler(req, res) {
@@ -70,29 +77,29 @@ export default async function handler(req, res) {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })
         
-        // Pobierz prompt z Assistant API
-        let systemPrompt = configMap.cached_assistant_prompt
-        let shouldUpdateCache = false
+        // Pobierz prompt z cache lub Assistant API
+        let systemPrompt = 'You are a helpful AI assistant.'
         
-        // Sprawdź czy mamy assistant_id i czy cache jest stary (>1h)
-        if (assistantId) {
-          const lastPromptUpdate = configMap.cached_prompt_timestamp
-          const cacheAge = lastPromptUpdate ? Date.now() - new Date(lastPromptUpdate).getTime() : Infinity
-          
-          if (!systemPrompt || cacheAge > 3600000) { // 1 godzina
-            try {
-              console.log('📥 Pobieram prompt z Assistant API...')
-              const assistant = await openai.beta.assistants.retrieve(assistantId)
-              systemPrompt = assistant.instructions || 'You are a helpful AI assistant.'
-              shouldUpdateCache = true
-              console.log('✅ Prompt pobrany z OpenAI Assistant')
-            } catch (err) {
-              console.log('⚠️ Nie udało się pobrać promptu z Assistant API:', err.message)
-              systemPrompt = configMap.system_prompt || 'You are a helpful AI assistant.'
-            }
+        // Sprawdź cache w pamięci
+        if (promptCache.prompt && Date.now() - promptCache.timestamp < 3600000) { // 1h
+          systemPrompt = promptCache.prompt
+          console.log('📋 Używam promptu z cache (source: ' + promptCache.source + ')')
+        } else if (assistantId) {
+          // Pobierz świeży prompt z Assistant API
+          try {
+            console.log('📥 Pobieram prompt z Assistant API...')
+            const assistant = await openai.beta.assistants.retrieve(assistantId)
+            systemPrompt = assistant.instructions || systemPrompt
+            
+            // Zapisz do cache
+            promptCache.prompt = systemPrompt
+            promptCache.timestamp = Date.now()
+            promptCache.source = 'Assistant API'
+            
+            console.log('✅ Prompt pobrany i zapisany do cache (długość: ' + systemPrompt.length + ' znaków)')
+          } catch (err) {
+            console.log('⚠️ Nie udało się pobrać promptu z Assistant API:', err.message)
           }
-        } else {
-          systemPrompt = configMap.system_prompt || 'You are a helpful AI assistant.'
         }
         
         // Wybierz model z konfiguracji (domyślnie gpt-4o)
@@ -102,7 +109,7 @@ export default async function handler(req, res) {
           model: modelName,
           temperature: configMap.temperature,
           max_tokens: configMap.max_tokens,
-          promptSource: shouldUpdateCache ? 'OpenAI Assistant API' : 'Cache',
+          promptSource: promptCache.source,
           promptLength: systemPrompt.length
         });
         
@@ -150,31 +157,6 @@ export default async function handler(req, res) {
         
         streamSuccess = true
         console.log('✅ OpenAI streaming completed')
-        
-        // Zapisz cache promptu jeśli trzeba
-        if (shouldUpdateCache && systemPrompt) {
-          try {
-            await supabase
-              .from('app_config')
-              .upsert([
-                {
-                  config_key: 'cached_assistant_prompt',
-                  config_value: systemPrompt,
-                  updated_at: new Date().toISOString()
-                },
-                {
-                  config_key: 'cached_prompt_timestamp',
-                  config_value: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                }
-              ], {
-                onConflict: 'config_key'
-              })
-            console.log('💾 Cache promptu zaktualizowany')
-          } catch (err) {
-            console.log('⚠️ Nie udało się zapisać cache promptu:', err.message)
-          }
-        }
         
       } catch (error) {
         console.log('❌ OpenAI streaming failed:', error.message)
