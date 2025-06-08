@@ -33,7 +33,8 @@ export default async function handler(req, res) {
       { config_key: 'jwt_secret', config_value: 'talk2me-secret-key-2024' },
       { config_key: 'groq_enabled', config_value: 'false' },
       { config_key: 'claude_enabled', config_value: 'false' },
-      { config_key: 'assistant_name', config_value: '' }
+      { config_key: 'assistant_name', config_value: '' },
+      { config_key: 'system_prompt', config_value: '' }
     ]
 
     // Upsert konfiguracji

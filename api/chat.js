@@ -68,10 +68,7 @@ export default async function handler(req, res) {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })
         
-        const systemPrompt = configMap.system_prompt || `Jesteś Jamie, empatyczną przyjaciółką, która pomaga w komunikacji w związkach. 
-Odpowiadasz w sposób ciepły, wspierający i konstruktywny. 
-Unikasz osądzania i zawsze starasz się zrozumieć perspektywę użytkownika.
-Mówisz naturalnie, jak przyjaciółka, używając prostego języka.`
+        const systemPrompt = configMap.system_prompt || 'You are a helpful AI assistant.'
         
         // Wybierz model z konfiguracji (domyślnie gpt-4o)
         const modelName = configMap.openai_model || 'gpt-4o';

@@ -455,6 +455,13 @@
                         <button class="btn-save" onclick="saveConfig('temperature')">Save</button>
                     </div>
                 </div>
+                <div class="config-item">
+                    <div class="config-label">System Prompt:</div>
+                    <div class="config-value">
+                        <textarea id="system_prompt" rows="6" placeholder="Wpisz prompt dla AI..." style="font-family: inherit; resize: vertical;"></textarea>
+                        <button class="btn-save" onclick="saveConfig('system_prompt')">Save</button>
+                    </div>
+                </div>
             </div>
             
             <!-- System Security Section -->
@@ -577,6 +584,8 @@
                         if (element) {
                             if (element.tagName === 'SELECT') {
                                 element.value = item.config_value || element.options[0].value;
+                            } else if (element.tagName === 'TEXTAREA') {
+                                element.value = item.config_value || '';
                             } else {
                                 element.value = item.config_value || '';
                             }
@@ -635,6 +644,13 @@
                     const currentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
                     document.getElementById('current_model_display').textContent = currentModel;
                     document.getElementById('current_model_name').textContent = currentModel;
+                    
+                    // Upewnij się że select pokazuje właściwy model
+                    const modelSelect = document.getElementById('openai_model');
+                    if (modelSelect && currentModel) {
+                        modelSelect.value = currentModel;
+                        updateModelInfo();
+                    }
                     
                     showStatus('adminStatus', 'Configuration loaded successfully', 'success');
                 } else {
