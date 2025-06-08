@@ -1788,7 +1788,12 @@
                 }
                 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Chat API Error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    status: error.status,
+                    response: error.response
+                });
                 loadingDiv.remove();
                 
                 // Pokaż błąd
@@ -1799,7 +1804,7 @@
                     <div class="response-section" style="background: #fff3cd; border-left: 4px solid #ff6b6b;">
                         <div class="section-content">
                             Przepraszam, wystąpił błąd podczas łączenia z serwerem. 
-                            Upewnij się, że backend działa na porcie 3001.
+                            ${error.message || 'Spróbuj ponownie za chwilę.'}
                         </div>
                     </div>
                 `;
