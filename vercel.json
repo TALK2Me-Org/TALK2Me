@@ -6,7 +6,7 @@
     },
     {
       "source": "/admin",
-      "destination": "/admin.html"
+      "destination": "/admin-temp.html"
     },
     {
       "source": "/login",
