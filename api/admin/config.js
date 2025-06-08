@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         // Zwróć informacje o cache promptu
         return res.json({
           success: true,
-          prompt: promptCache.prompt ? promptCache.prompt.substring(0, 1000) + '...' : null,
+          prompt: promptCache.prompt ? promptCache.prompt.substring(0, 10000) + '...' : null,
           timestamp: promptCache.timestamp,
           source: promptCache.source,
           length: promptCache.prompt ? promptCache.prompt.length : 0
