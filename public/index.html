@@ -1341,10 +1341,18 @@
             const isGuest = localStorage.getItem('guestMode');
             const currentPath = window.location.pathname;
             
+            console.log('🔑 Token status:', token ? 'Found' : 'Not found');
+            console.log('👤 Guest mode:', isGuest ? 'Yes' : 'No');
+            
             // Jeśli nie ma tokena ani trybu gościa i nie jesteśmy na stronie logowania, przekieruj
             if (!token && !isGuest && currentPath !== '/login' && currentPath !== '/login.html') {
                 window.location.href = '/login.html';
                 return;
+            }
+            
+            // Jeśli jest token, upewnij się że jest prawidłowy
+            if (token) {
+                console.log('✅ User is logged in with token');
             }
         })();
         
@@ -1353,7 +1361,10 @@
         // Sprawdź czy użytkownik jest zalogowany i zaktualizuj UI
         function updateUserUI() {
             const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
             console.log('updateUserUI - dane użytkownika:', user);
+            console.log('updateUserUI - token:', token ? 'exists' : 'missing');
+            
             if (user) {
                 const userData = JSON.parse(user);
                 console.log('Aktualizuję UI dla:', userData);

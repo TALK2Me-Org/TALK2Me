@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Czyszczenie danych - TALK2Me</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 14px;
+            text-align: left;
+        }
+        button {
+            background: #FF69B4;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #FF1493;
+            transform: scale(1.05);
+        }
+        .success {
+            color: #4CAF50;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .storage-item {
+            background: #fff3cd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Czyszczenie danych</h1>
+        
+        <div class="info">
+            <strong>Znalezione dane w localStorage:</strong>
+            <div id="storageData"></div>
+        </div>
+        
+        <button onclick="clearAll()">🗑️ Wyczyść wszystkie dane</button>
+        <button onclick="goToLogin()">🔐 Przejdź do logowania</button>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // Pokaż co jest w localStorage
+        function showStorageData() {
+            const container = document.getElementById('storageData');
+            const items = [];
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                items.push(`<div class="storage-item"><strong>${key}:</strong> ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}</div>`);
+            }
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="storage-item">Brak danych</div>';
+            } else {
+                container.innerHTML = items.join('');
+            }
+        }
+        
+        // Wyczyść wszystko
+        function clearAll() {
+            localStorage.clear();
+            document.getElementById('message').innerHTML = '<div class="success">✅ Wszystkie dane zostały wyczyszczone!</div>';
+            showStorageData();
+            
+            // Przekieruj do logowania po 2 sekundach
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 2000);
+        }
+        
+        // Przejdź do logowania
+        function goToLogin() {
+            window.location.href = '/login.html';
+        }
+        
+        // Pokaż dane przy starcie
+        showStorageData();
+    </script>
+</body>
+</html>
