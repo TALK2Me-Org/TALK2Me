@@ -1,4 +1,4 @@
-// Database Check - sprawdza status bazy danych
+// Database Check v2 - sprawdza status bazy danych
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cfnrhwgaevbltaflrvpz.supabase.co'
