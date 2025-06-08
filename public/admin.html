@@ -455,13 +455,6 @@
                         <button class="btn-save" onclick="saveConfig('temperature')">Save</button>
                     </div>
                 </div>
-                <div class="config-item">
-                    <div class="config-label">System Prompt:</div>
-                    <div class="config-value">
-                        <textarea id="system_prompt" rows="6" placeholder="Wpisz prompt dla AI..." style="font-family: inherit; resize: vertical;"></textarea>
-                        <button class="btn-save" onclick="saveConfig('system_prompt')">Save</button>
-                    </div>
-                </div>
             </div>
             
             <!-- System Security Section -->
@@ -490,6 +483,10 @@
                     <p>OpenAI Assistant API is configured. The assistant's prompt and behavior are managed directly in the OpenAI platform.</p>
                     <br>
                     <p><strong>Current Assistant ID:</strong> <span id="current_assistant_id" style="font-family: monospace;">Not configured</span></p>
+                    <p><strong>Prompt Cache Status:</strong> <span id="prompt_cache_status">Not loaded</span></p>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                        System automatycznie pobiera prompt z OpenAI Assistant API. Cache odświeża się co godzinę.
+                    </p>
                 </div>
             </div>
         </div>
@@ -629,6 +626,20 @@
                     } else {
                         // Jeśli nie ma zapisanej nazwy, pokaż domyślną
                         document.getElementById('assistant_name').textContent = 'Jamie (Relationship Coach)';
+                    }
+                    
+                    // Display prompt cache status
+                    const cachedPromptTimestamp = data.config.find(c => c.config_key === 'cached_prompt_timestamp')?.config_value;
+                    const promptCacheStatus = document.getElementById('prompt_cache_status');
+                    if (cachedPromptTimestamp) {
+                        const cacheDate = new Date(cachedPromptTimestamp);
+                        const ageMinutes = Math.floor((Date.now() - cacheDate.getTime()) / 60000);
+                        promptCacheStatus.innerHTML = `✅ Loaded ${ageMinutes} minutes ago`;
+                        if (ageMinutes > 60) {
+                            promptCacheStatus.innerHTML += ' (will refresh on next chat)';
+                        }
+                    } else {
+                        promptCacheStatus.innerHTML = '⏳ Will load on first chat';
                     }
                     
                     // Set toggle states for models

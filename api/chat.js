@@ -64,11 +64,36 @@ export default async function handler(req, res) {
 
     // 1. Próbuj OpenAI z streamingiem
     const openaiKey = configMap.openai_api_key
+    const assistantId = configMap.assistant_id
+    
     if (activeModel === 'openai' && openaiKey) {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })
         
-        const systemPrompt = configMap.system_prompt || 'You are a helpful AI assistant.'
+        // Pobierz prompt z Assistant API
+        let systemPrompt = configMap.cached_assistant_prompt
+        let shouldUpdateCache = false
+        
+        // Sprawdź czy mamy assistant_id i czy cache jest stary (>1h)
+        if (assistantId) {
+          const lastPromptUpdate = configMap.cached_prompt_timestamp
+          const cacheAge = lastPromptUpdate ? Date.now() - new Date(lastPromptUpdate).getTime() : Infinity
+          
+          if (!systemPrompt || cacheAge > 3600000) { // 1 godzina
+            try {
+              console.log('📥 Pobieram prompt z Assistant API...')
+              const assistant = await openai.beta.assistants.retrieve(assistantId)
+              systemPrompt = assistant.instructions || 'You are a helpful AI assistant.'
+              shouldUpdateCache = true
+              console.log('✅ Prompt pobrany z OpenAI Assistant')
+            } catch (err) {
+              console.log('⚠️ Nie udało się pobrać promptu z Assistant API:', err.message)
+              systemPrompt = configMap.system_prompt || 'You are a helpful AI assistant.'
+            }
+          }
+        } else {
+          systemPrompt = configMap.system_prompt || 'You are a helpful AI assistant.'
+        }
         
         // Wybierz model z konfiguracji (domyślnie gpt-4o)
         const modelName = configMap.openai_model || 'gpt-4o';
@@ -76,7 +101,9 @@ export default async function handler(req, res) {
         console.log('📊 Pełna konfiguracja:', {
           model: modelName,
           temperature: configMap.temperature,
-          max_tokens: configMap.max_tokens
+          max_tokens: configMap.max_tokens,
+          promptSource: shouldUpdateCache ? 'OpenAI Assistant API' : 'Cache',
+          promptLength: systemPrompt.length
         });
         
         // Stream response
@@ -123,6 +150,31 @@ export default async function handler(req, res) {
         
         streamSuccess = true
         console.log('✅ OpenAI streaming completed')
+        
+        // Zapisz cache promptu jeśli trzeba
+        if (shouldUpdateCache && systemPrompt) {
+          try {
+            await supabase
+              .from('app_config')
+              .upsert([
+                {
+                  config_key: 'cached_assistant_prompt',
+                  config_value: systemPrompt,
+                  updated_at: new Date().toISOString()
+                },
+                {
+                  config_key: 'cached_prompt_timestamp',
+                  config_value: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                }
+              ], {
+                onConflict: 'config_key'
+              })
+            console.log('💾 Cache promptu zaktualizowany')
+          } catch (err) {
+            console.log('⚠️ Nie udało się zapisać cache promptu:', err.message)
+          }
+        }
         
       } catch (error) {
         console.log('❌ OpenAI streaming failed:', error.message)
