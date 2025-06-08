@@ -8,20 +8,29 @@ const adminPassword = process.env.ADMIN_PASSWORD || 'qwe123'
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Password')
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
 
   try {
-    // Sprawdź hasło admin
+    // Sprawdź hasło admin - akceptuj różne sposoby
     const authHeader = req.headers.authorization
+    const xAdminPassword = req.headers['x-admin-password']
+    const queryPassword = req.query.password
     
-    if (!authHeader || authHeader !== `Bearer ${adminPassword}`) {
+    // Sprawdź hasło z różnych źródeł
+    const providedPassword = authHeader?.replace('Bearer ', '') || xAdminPassword || queryPassword
+    
+    if (!providedPassword || providedPassword !== adminPassword) {
       return res.status(401).json({ 
         error: 'Unauthorized - wrong admin password',
-        hint: 'Hasło to: qwe123'
+        hint: 'Hasło to: qwe123',
+        debug: {
+          receivedPassword: providedPassword ? '***' : 'none',
+          expectedPassword: 'qwe123'
+        }
       })
     }
 

@@ -303,7 +303,7 @@
             try {
                 const response = await fetch('/api/admin/config', {
                     headers: {
-                        'Authorization': `Bearer ${password}`
+                        'X-Admin-Password': password
                     }
                 });
                 
@@ -320,6 +320,9 @@
                     showStatus('loginStatus', responseData.error || 'Invalid password', 'error');
                     if (responseData.hint) {
                         console.log('Hint:', responseData.hint);
+                    }
+                    if (responseData.debug) {
+                        console.log('Debug:', responseData.debug);
                     }
                 }
             } catch (error) {
@@ -341,7 +344,7 @@
             try {
                 const response = await fetch('/api/admin/config', {
                     headers: {
-                        'Authorization': `Bearer ${adminToken}`
+                        'X-Admin-Password': adminToken
                     }
                 });
                 
@@ -389,7 +392,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${adminToken}`
+                        'X-Admin-Password': adminToken
                     },
                     body: JSON.stringify({
                         config_key: configKey,
