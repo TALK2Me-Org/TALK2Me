@@ -20,9 +20,9 @@ export default async function handler(req, res) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Domyślna konfiguracja
+    // Domyślna konfiguracja z działającymi kluczami
     const defaultConfig = [
-      { config_key: 'openai_api_key', config_value: '' },
+      { config_key: 'openai_api_key', config_value: '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' },
       { config_key: 'groq_api_key', config_value: '' },
       { config_key: 'assistant_id', config_value: 'asst_whKO6qzN1Aypy48U1tjnsPv9' },
       { config_key: 'active_model', config_value: 'openai' },
