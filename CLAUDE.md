@@ -56,14 +56,20 @@ NEXT_PUBLIC_SUPABASE_URL=https://cfnrhwgaevbltaflrvpz.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ADMIN_PASSWORD=qwe123
+ASSISTANT_ID=asst_whKO6qzN1Aypy48U1tjnsPv9
+OPENAI_API_KEY=sk-proj-...
+GROQ_API_KEY=gsk_...
 ```
 
 ## 🚀 Endpointy API
 - `GET /api/setup` - Inicjalizacja bazy danych (✅ działa)
-- `POST /api/chat` - Chat z AI (OpenAI + Groq fallback) - **⚠️ NIEPRZETESTOWANE**
+- `POST /api/chat` - Chat z AI (używa Assistant API)
 - `GET/POST /api/history` - Historia rozmów użytkownika
 - `GET/POST /api/favorites` - Zarządzanie ulubionymi
 - `GET/PUT /api/admin/config` - Panel admin (hasło: qwe123)
+- `POST /api/auth/login` - Logowanie użytkownika
+- `POST /api/auth/register` - Rejestracja nowego użytkownika
+- `GET /api/auth/me` - Pobieranie danych zalogowanego użytkownika
 
 ### 🤖 Chat API Szczegóły (/api/chat)
 **Format zapytania**:
@@ -76,17 +82,19 @@ POST /api/chat
 ```
 
 **AI Logic Flow**:
-1. **Primary**: OpenAI Chat Completions API (gpt-3.5-turbo)
+1. **Primary**: OpenAI Assistant API (configurable assistant_id)
 2. **Fallback**: Groq API (llama3-8b-8192) 
 3. **Emergency**: Mock response (zawsze działa)
 
-**System Prompt**: Jamie - empatyczny asystent do relacji
-- 4-częściowa struktura odpowiedzi
-- Styl: ciepły, zabawny, wspierający
-- Format: ❤️ Przede wszystkim, 🤔 Co się wydarzyło, 🌿 Komunikacja, 💬 Spróbuj powiedzieć
+**OpenAI Assistant**: 
+- Assistant ID konfigurowalny przez admin panel lub zmienne środowiskowe
+- Default ID: `asst_whKO6qzN1Aypy48U1tjnsPv9`
+- Prompt zarządzany bezpośrednio na platformie OpenAI
+- Czysta odpowiedź bez wymuszanego formatowania
+- Frontend wyświetla odpowiedź dokładnie tak jak zwraca Assistant
 
 **Response Speed**: 
-- OpenAI: ~1-2s (szybkie!)
+- OpenAI Assistant: ~5-10s (processing time)
 - Groq: ~2-3s (darmowy fallback)
 - Mock: instant
 
@@ -95,6 +103,10 @@ POST /api/chat
 2. **ES6 Modules**: Dodano "type": "module" do package.json
 3. **Auto-deploy**: Skonfigurowany webhook GitHub → Vercel
 4. **Testing**: Testy auto-deploy z version bump v1.1 → v1.3
+5. **Assistant API Integration**: Usunięty hardkodowany prompt, zaimplementowana integracja z OpenAI Assistant API
+6. **Auth System Restored**: Przywrócony system logowania/rejestracji z endpointami API
+7. **Clean Assistant Messages**: Usunięte formatowanie wiadomości użytkownika - teraz przesyłana jest czysta wiadomość do Assistant API
+8. **Removed 4-Section Format**: Usunięte formatowanie odpowiedzi na 4 sekcje - aplikacja wyświetla czystą odpowiedź z Assistant API
 
 ## 📋 Co Zostało Do Zrobienia (Jutro)
 1. **🔑 PRIORYTET: Skonfigurować API Keys** w admin panelu:

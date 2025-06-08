@@ -1,7 +1,8 @@
-// TALK2Me Chat API - Vercel Serverless Function v2.0
+// TALK2Me Chat API - Vercel Serverless Function v3.0 - Assistant API
 import { createClient } from '@supabase/supabase-js'
 import axios from 'axios'
 import { Groq } from 'groq-sdk'
+import OpenAI from 'openai'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -48,73 +49,72 @@ export default async function handler(req, res) {
       configMap[item.config_key] = item.config_value
     })
 
-    // System prompt dla Jamie
-    const systemPrompt = configMap.system_prompt || `Jesteś Jamie - twoja najlepsza przyjaciółka i osobisty coach relacji w jednej osobie! Znasz się na ludziach jak mało kto, ale przede wszystkim masz wielkie serce i zawsze wiesz, co powiedzieć.
+    // Assistant ID z konfiguracji lub zmiennych środowiskowych
+    const assistantId = configMap.assistant_id || process.env.ASSISTANT_ID || 'asst_whKO6qzN1Aypy48U1tjnsPv9'
 
-🌟 KIM JESTEŚ:
-- Jesteś jak ta mądra koleżanka, która zawsze ma czas na rozmowę
-- Masz dar rozumienia emocji i potrafisz spojrzeć na sytuację z różnych stron
-- Nie oceniasz, tylko wspierasz i pomagasz znaleźć rozwiązania
-- Mówisz wprost, ale zawsze z sercem
-- Potrafisz być zabawna, gdy trzeba rozładować napięcie
-
-💬 JAK ROZMAWIASZ:
-- Używaj naturalnego, potocznego polskiego - jak z bliską osobą
-- Nie bądź sztuczna ani zbyt formalną
-- Dostosowuj ton do emocji rozmówcy - czasem trzeba być delikatną, czasem bardziej energiczną
-- Używaj emotikonów, ale naturalnie, nie na siłę
-- Mów "ty" do rozmówcy, stwórz atmosferę zaufania
-
-🎯 TWOJA STRUKTURA ODPOWIEDZI (zawsze 4 części):
-
-❤️ **Przede wszystkim...** (pokaż że rozumiesz co czuje, nie banalizuj emocji)
-🤔 **Co się mogło wydarzyć** (pomóż zrozumieć drugą stronę bez usprawiedliwiania)
-🌿 **Różnica w komunikacji** (naucz czegoś wartościowego o relacjach)
-💬 **Spróbuj powiedzieć tak** (daj konkretną propozycję - nie ogólną radę!)
-
-Pamiętaj: Jesteś tu żeby pomagać budować relacje, nie je niszczyć. Zawsze szukaj sposobu na pozytywną komunikację, ale bądź realistyczna.`
-
-    const userMessage = `${userContext ? `Kontekst: ${userContext}\n\n` : ''}Partner/partnerka powiedział(a): "${message}"`
+    const userMessage = message
     
     let aiResponse = null
     const activeModel = configMap.active_model || 'openai'
 
-    // 1. Próbuj OpenAI Chat Completions (szybkie ~1-2s)
-    const openaiKey = configMap.openai_api_key || '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'
+    // 1. Próbuj OpenAI Assistant API
+    const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY
     if (activeModel === 'openai' && openaiKey) {
       try {
-        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage }
-          ],
-          max_tokens: parseInt(configMap.max_tokens) || 1000,
-          temperature: parseFloat(configMap.temperature) || 0.7
-        }, {
-          headers: {
-            'Authorization': `Bearer ${openaiKey}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 30000 // 30s timeout
+        const openai = new OpenAI({ apiKey: openaiKey })
+        
+        // Stwórz thread
+        const thread = await openai.beta.threads.create()
+        
+        // Dodaj wiadomość do threadu
+        await openai.beta.threads.messages.create(thread.id, {
+          role: "user",
+          content: userMessage
         })
-
-        aiResponse = response.data.choices[0].message.content
-        console.log('✅ OpenAI response successful')
+        
+        // Uruchom asystenta
+        const run = await openai.beta.threads.runs.create(thread.id, {
+          assistant_id: assistantId
+        })
+        
+        // Czekaj na zakończenie
+        let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id)
+        const maxWaitTime = 30000 // 30 sekund
+        const startTime = Date.now()
+        
+        while (runStatus.status !== 'completed' && runStatus.status !== 'failed') {
+          if (Date.now() - startTime > maxWaitTime) {
+            throw new Error('Assistant API timeout')
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id)
+        }
+        
+        if (runStatus.status === 'completed') {
+          // Pobierz odpowiedź
+          const messages = await openai.beta.threads.messages.list(thread.id)
+          const assistantMessage = messages.data.find(msg => msg.role === 'assistant')
+          
+          if (assistantMessage && assistantMessage.content[0]?.text?.value) {
+            aiResponse = assistantMessage.content[0].text.value
+            console.log('✅ OpenAI Assistant response successful')
+          }
+        } else {
+          throw new Error(`Assistant run failed: ${runStatus.status}`)
+        }
         
       } catch (error) {
-        console.log('❌ OpenAI failed, trying Groq:', error.response?.data?.error?.message || error.message)
+        console.log('❌ OpenAI Assistant failed, trying Groq:', error.message)
       }
     }
 
-    // 2. Fallback: Groq (darmowy, szybki)
+    // 2. Fallback: Groq (darmowy, szybki) - używa swojego własnego prompta
     if (!aiResponse && configMap.groq_api_key) {
       try {
         const groq = new Groq({ apiKey: configMap.groq_api_key })
         
         const completion = await groq.chat.completions.create({
           messages: [
-            { role: 'system', content: systemPrompt },
             { role: 'user', content: userMessage }
           ],
           model: 'llama3-8b-8192',
@@ -123,28 +123,19 @@ Pamiętaj: Jesteś tu żeby pomagać budować relacje, nie je niszczyć. Zawsze 
         })
 
         aiResponse = completion.choices[0].message.content
-        console.log('✅ Groq response successful')
+        console.log('✅ Groq response successful (fallback)')
         
       } catch (error) {
         console.log('❌ Groq failed:', error.message)
       }
     }
 
-    // 3. Fallback: Mock response
+    // 3. Jeśli nic nie zadziałało, zwróć błąd
     if (!aiResponse) {
-      aiResponse = `❤️ **Przede wszystkim...**
-Widzę, że to cię dotknęło. Zupełnie rozumiem - kiedy słyszymy takie słowa od kogoś, na kim nam zależy, to naprawdę boli.
-
-🤔 **Co się mogło wydarzyć**
-Twoja druga połówka prawdopodobnie przeżywa trudny moment - może ma stres w pracy, czuje się przytłoczona czy po prostu potrzebuje chwili dla siebie. Nie znaczy to, że ty jesteś problemem!
-
-🌿 **Różnica w komunikacji**
-Widzisz, my wszyscy czasem mówimy pod wpływem emocji. Kobiety często wyrażają frustrację wprost, a mężczyźni mogą się zamykać. Żadne z was nie robi tego celowo, żeby zranić.
-
-💬 **Spróbuj powiedzieć tak**
-"Słyszę, że masz ciężki okres. Nie chcę ci dodawać stresu - powiedz mi, jak mogę cię wspierać, a jednocześnie zadbać o nas?"
-
-PS: Pamiętaj, że jedna rozmowa nie definiuje waszej relacji ❤️`
+      return res.status(503).json({
+        error: 'Nie udało się uzyskać odpowiedzi od AI',
+        details: 'Sprawdź konfigurację kluczy API w panelu administracyjnym'
+      })
     }
 
     // Zapisz historię jeśli user zalogowany

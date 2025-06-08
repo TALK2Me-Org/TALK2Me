@@ -94,9 +94,9 @@ export default async function handler(req, res) {
         description: 'AI creativity level (0-1)' 
       },
       { 
-        config_key: 'system_prompt', 
-        config_value: 'Jesteś Jamie z TALK2Me – wysoce wykwalifikowanym, emocjonalnie inteligentnym agentem konwersacyjnym specjalizującym się w relacjach...', 
-        description: 'System prompt for AI responses' 
+        config_key: 'assistant_id', 
+        config_value: '', 
+        description: 'OpenAI Assistant ID for chat responses' 
       }
     ]
 

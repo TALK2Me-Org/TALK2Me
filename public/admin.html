@@ -234,6 +234,13 @@
                     </div>
                 </div>
                 <div class="config-item">
+                    <div class="config-label">OpenAI Assistant ID:</div>
+                    <div class="config-value">
+                        <input type="text" id="assistant_id" placeholder="asst_...">
+                        <button class="btn-save" onclick="saveConfig('assistant_id')">Save</button>
+                    </div>
+                </div>
+                <div class="config-item">
                     <div class="config-label">Groq API Key:</div>
                     <div class="config-value">
                         <input type="password" id="groq_api_key" placeholder="gsk_...">
@@ -268,13 +275,13 @@
                 </div>
             </div>
             
-            <!-- System Prompt Section -->
+            <!-- Assistant Info Section -->
             <div class="config-section">
-                <div class="config-header">📝 System Prompt</div>
+                <div class="config-header">📝 Assistant Information</div>
                 <div style="padding: 20px;">
-                    <textarea id="system_prompt" rows="6" placeholder="System prompt for AI..."></textarea>
-                    <br><br>
-                    <button class="btn-save" onclick="saveConfig('system_prompt')">Save Prompt</button>
+                    <p>OpenAI Assistant API is configured. The assistant's prompt and behavior are managed directly in the OpenAI platform.</p>
+                    <br>
+                    <p><strong>Current Assistant ID:</strong> <span id="current_assistant_id" style="font-family: monospace;">Not configured</span></p>
                 </div>
             </div>
         </div>
@@ -350,6 +357,12 @@
                             card.classList.add('active');
                         }
                     });
+                    
+                    // Display current assistant ID
+                    const assistantId = data.config.find(c => c.config_key === 'assistant_id')?.config_value;
+                    if (assistantId) {
+                        document.getElementById('current_assistant_id').textContent = assistantId;
+                    }
                     
                     showStatus('adminStatus', 'Configuration loaded successfully', 'success');
                 } else {

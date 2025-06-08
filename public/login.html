@@ -355,12 +355,12 @@
         </div>
         
         <div class="guest-link">
-            <a href="/prototype-final.html">Kontynuuj jako gość</a>
+            <a href="/">Kontynuuj jako gość</a>
         </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3001';
+        const API_URL = '';
         
         function showError(message) {
             const errorEl = document.getElementById('errorMessage');
@@ -420,7 +420,7 @@
                     
                     showSuccess('Zalogowano pomyślnie! Przekierowywanie...');
                     setTimeout(() => {
-                        window.location.href = '/prototype-final.html';
+                        window.location.href = '/';
                     }, 1000);
                 } else {
                     showError(data.error || 'Błąd logowania');
@@ -460,7 +460,7 @@
                     
                     showSuccess('Konto utworzone! Przekierowywanie...');
                     setTimeout(() => {
-                        window.location.href = '/prototype-final.html';
+                        window.location.href = '/';
                     }, 1000);
                 } else {
                     showError(data.error || 'Błąd rejestracji');

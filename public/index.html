@@ -1322,6 +1322,18 @@
         }
     </script>
     <script>
+        // Sprawdź autentykację przy starcie
+        (function checkAuth() {
+            const token = localStorage.getItem('token');
+            const currentPath = window.location.pathname;
+            
+            // Jeśli nie ma tokena i nie jesteśmy na stronie logowania, przekieruj
+            if (!token && currentPath !== '/login' && currentPath !== '/login.html') {
+                window.location.href = '/login.html';
+                return;
+            }
+        })();
+        
         let isRecording = false;
         
         // Sprawdź czy użytkownik jest zalogowany i zaktualizuj UI
@@ -1737,100 +1749,29 @@
                 console.log('Chat ID:', data.chatId);
                 loadingDiv.remove();
                 
-                // Parsuj odpowiedź AI na sekcje
+                // Wyświetl czystą odpowiedź AI
                 const aiResponse = data.response;
                 const responseDiv = document.createElement('div');
                 responseDiv.className = 'response-container';
                 responseDiv.style.display = 'block';
                 
-                // Ulepszona parser dla 4 sekcji - obsługuje różne formaty
-                let parsedSections = {
-                    intro: '',
-                    situation: '',
-                    communication: '',
-                    suggestion: ''
-                };
-                
-                // Dzielimy tekst na linie i parsujemy
-                const lines = aiResponse.split('\n');
-                let currentSection = '';
-                let currentContent = [];
-                
-                lines.forEach(line => {
-                    if (line.includes('❤️')) {
-                        if (currentSection && currentContent.length > 0) {
-                            parsedSections[currentSection] = currentContent.join(' ').trim();
-                        }
-                        currentSection = 'intro';
-                        let cleanedLine = line.replace(/❤️\s*\*?\*?Przede wszystkim\.{0,3}\*?\*?:?/i, '').trim();
-                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, ''); // Usuń przecinek lub dwukropek z początku
-                        currentContent = [cleanedLine];
-                    } else if (line.includes('🤔')) {
-                        if (currentSection && currentContent.length > 0) {
-                            parsedSections[currentSection] = currentContent.join(' ').trim();
-                        }
-                        currentSection = 'situation';
-                        let cleanedLine = line.replace(/🤔\s*\*?\*?Co mogło się wydarzyć\*?\*?:?/i, '').trim();
-                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                        currentContent = [cleanedLine];
-                    } else if (line.includes('🌿')) {
-                        if (currentSection && currentContent.length > 0) {
-                            parsedSections[currentSection] = currentContent.join(' ').trim();
-                        }
-                        currentSection = 'communication';
-                        let cleanedLine = line.replace(/🌿\s*\*?\*?Różnica w komunikacji\*?\*?:?/i, '').trim();
-                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                        currentContent = [cleanedLine];
-                    } else if (line.includes('💬')) {
-                        if (currentSection && currentContent.length > 0) {
-                            parsedSections[currentSection] = currentContent.join(' ').trim();
-                        }
-                        currentSection = 'suggestion';
-                        let cleanedLine = line.replace(/💬\s*\*?\*?Spróbuj powiedzieć tak\*?\*?:?/i, '').trim();
-                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                        currentContent = [cleanedLine];
-                    } else if (line.trim() && currentSection) {
-                        currentContent.push(line.trim());
-                    }
-                });
-                
-                // Zapisz ostatnią sekcję
-                if (currentSection && currentContent.length > 0) {
-                    parsedSections[currentSection] = currentContent.join(' ').trim();
-                }
-                
                 // Dodaj przycisk ulubionego jeśli użytkownik jest zalogowany i mamy chatId
                 const favoriteButton = localStorage.getItem('token') && data.chatId ? 
                     `<button class="favorite-btn" data-chat-id="${data.chatId}" onclick="toggleFavorite(${data.chatId})" title="Dodaj do ulubionych">🤍</button>` : '';
                 
+                // Konwertuj markdown na HTML (podstawowa konwersja)
+                const formattedResponse = aiResponse
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold**
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')              // *italic*
+                    .replace(/\n\n/g, '</p><p>')                        // paragraphs
+                    .replace(/\n/g, '<br>');                            // line breaks
+                
                 responseDiv.innerHTML = `
                     ${favoriteButton}
                     <div class="response-section">
-                        <div class="section-header">
-                            <span class="emoji">❤️</span> ${t('firstSection')}
+                        <div class="section-content">
+                            <p>${formattedResponse}</p>
                         </div>
-                        <div class="section-content">${parsedSections.intro}</div>
-                    </div>
-
-                    <div class="response-section">
-                        <div class="section-header">
-                            <span class="emoji">🤔</span> ${t('secondSection')}
-                        </div>
-                        <div class="section-content">${parsedSections.situation}</div>
-                    </div>
-
-                    <div class="response-section">
-                        <div class="section-header">
-                            <span class="emoji">🌿</span> ${t('thirdSection')}
-                        </div>
-                        <div class="section-content">${parsedSections.communication}</div>
-                    </div>
-
-                    <div class="response-section">
-                        <div class="section-header">
-                            <span class="emoji">💬</span> ${t('fourthSection')}
-                        </div>
-                        <div class="section-content">${parsedSections.suggestion}</div>
                     </div>
                 `;
                 
