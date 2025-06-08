@@ -169,17 +169,23 @@ export default async function handler(req, res) {
         
         if (promptCache.prompt && Date.now() - promptCache.timestamp < 3600000) {
           systemPrompt = promptCache.prompt
+          console.log('📋 Using cached prompt (length:', systemPrompt.length, 'chars)')
         } else if (assistantId) {
           try {
+            console.log('🔄 Fetching prompt from Assistant API, ID:', assistantId)
             const assistant = await openai.beta.assistants.retrieve(assistantId)
             systemPrompt = assistant.instructions || systemPrompt
             
             promptCache.prompt = systemPrompt
             promptCache.timestamp = Date.now()
             promptCache.source = 'Assistant API'
+            console.log('✅ Prompt fetched successfully (length:', systemPrompt.length, 'chars)')
           } catch (err) {
-            console.error('Failed to fetch assistant:', err)
+            console.error('❌ Failed to fetch assistant:', err.message)
+            console.error('Using default prompt instead')
           }
+        } else {
+          console.log('⚠️ No assistant_id configured, using default prompt')
         }
 
         // Buduj wiadomości
