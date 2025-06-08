@@ -382,6 +382,14 @@
                     <div class="config-label">OpenAI Model:</div>
                     <div class="config-value">
                         <select id="openai_model" onchange="updateModelInfo()">
+                            <optgroup label="🚀 GPT-4.1 - NAJNOWSZE (1M tokens!)">
+                                <option value="gpt-4.1">GPT-4.1 - Advanced (1M context)</option>
+                                <option value="gpt-4.1-mini">GPT-4.1 Mini - Faster</option>
+                                <option value="gpt-4.1-nano">GPT-4.1 Nano - Ultra Fast</option>
+                            </optgroup>
+                            <optgroup label="🧪 GPT-4.5 - Research Preview">
+                                <option value="gpt-4.5">GPT-4.5 - Best Chat Model</option>
+                            </optgroup>
                             <optgroup label="🆕 O1 - Reasoning Models">
                                 <option value="o1">O1 - Advanced Reasoning</option>
                                 <option value="o1-preview">O1 Preview - Reasoning Model</option>
@@ -498,6 +506,14 @@
             const selectedModel = modelSelect.value;
             
             const modelDescriptions = {
+                // GPT-4.1 - Najnowsze modele (2024)
+                'gpt-4.1': '🚀 NAJNOWSZY! 1M tokenów kontekstu, 21% lepszy od GPT-4o',
+                'gpt-4.1-mini': '⚡ GPT-4.1 Mini - szybsza wersja nowego modelu',
+                'gpt-4.1-nano': '🎯 GPT-4.1 Nano - ultra szybki, idealny do prostych zadań',
+                
+                // GPT-4.5
+                'gpt-4.5': '🧪 Research Preview - najlepszy model do czatu',
+                
                 // O1 Reasoning
                 'o1': '🧠 Najnowszy model z zaawansowanym rozumowaniem',
                 'o1-preview': '🔬 O1 Preview - testowy model reasoning',
