@@ -1742,7 +1742,12 @@
                 clearTimeout(timeoutId);
 
                 if (!response.ok) {
-                    throw new Error(`Błąd serwera: ${response.status}`);
+                    const errorData = await response.json();
+                    console.error('Błąd API:', errorData);
+                    if (errorData.debug) {
+                        console.log('Debug info:', errorData.debug);
+                    }
+                    throw new Error(errorData.error || `Błąd serwera: ${response.status}`);
                 }
 
                 const data = await response.json();

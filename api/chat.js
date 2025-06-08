@@ -70,8 +70,8 @@ export default async function handler(req, res) {
     const activeModel = configMap.active_model || 'openai'
 
     // 1. Próbuj OpenAI Assistant API
-    const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY
-    if (activeModel === 'openai' && openaiKey) {
+    const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY || 'sk-proj-your-api-key-here'
+    if (activeModel === 'openai' && openaiKey && openaiKey !== 'sk-proj-your-api-key-here') {
       try {
         const openai = new OpenAI({ apiKey: openaiKey })
         
@@ -121,9 +121,10 @@ export default async function handler(req, res) {
     }
 
     // 2. Fallback: Groq (darmowy, szybki) - używa swojego własnego prompta
-    if (!aiResponse && configMap.groq_api_key) {
+    const groqKey = configMap.groq_api_key || process.env.GROQ_API_KEY
+    if (!aiResponse && groqKey) {
       try {
-        const groq = new Groq({ apiKey: configMap.groq_api_key })
+        const groq = new Groq({ apiKey: groqKey })
         
         const completion = await groq.chat.completions.create({
           messages: [
@@ -146,7 +147,13 @@ export default async function handler(req, res) {
     if (!aiResponse) {
       return res.status(503).json({
         error: 'Nie udało się uzyskać odpowiedzi od AI',
-        details: 'Sprawdź konfigurację kluczy API w panelu administracyjnym'
+        details: 'Sprawdź konfigurację kluczy API w panelu administracyjnym',
+        debug: {
+          hasOpenAIKey: !!openaiKey,
+          hasGroqKey: !!configMap.groq_api_key,
+          activeModel: activeModel,
+          assistantId: assistantId
+        }
       })
     }
 
