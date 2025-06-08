@@ -304,7 +304,7 @@ ZASADY ZARZĄDZANIA PAMIĘCIĄ:
 - Smooth animations i transitions
 
 ---
-**Ostatnia aktualizacja**: 7 stycznia 2025 20:30  
+**Ostatnia aktualizacja**: 8 stycznia 2025 22:30  
 **Status**: 🚀 LIVE PRODUCTION - Aplikacja działa w chmurze z SUPER SZYBKIM streamingiem!
 
 ## ✅ SESJA 6 - INTEGRACJA ASSISTANT API & CACHE (2025-01-07)
@@ -419,3 +419,61 @@ ZASADY ZARZĄDZANIA PAMIĘCIĄ:
 - [ ] Zmienić emotki na symbole czarno-białe (niska priorytet)
 - [ ] Zintegrować auth system z frontendem  
 - [ ] Testy produkcyjne z prawdziwymi użytkownikami
+
+## ✅ SESJA 7 - FAZA 2: SYSTEM KONWERSACJI (2025-01-08)
+
+### 🎯 PRÓBA IMPLEMENTACJI:
+1. **Utworzono schemat bazy danych**:
+   - Tabele `conversations` i `messages`
+   - Automatyczna migracja z `chat_history`
+   - RLS policies i indeksy
+   
+2. **Backend API**:
+   - `/api/conversations.js` - zarządzanie konwersacjami
+   - Zaktualizowany `/api/chat.js` z obsługą conversationId
+   - Streaming nadal działa
+
+3. **Nowy UI (index-v2)**:
+   - Sidebar z listą konwersacji (jak ChatGPT)
+   - Responsywny design
+   - Niestety brakuje wielu funkcji ze starego UI
+
+### ⚠️ PROBLEMY NAPOTKANE:
+1. **Limit funkcji Vercel** (12 na planie Hobby):
+   - Musieliśmy usunąć niepotrzebne pliki
+   - Rozwiązane przez cleanup
+
+2. **System autoryzacji**:
+   - Mieszanka Supabase Auth i custom JWT
+   - Pętla logowania
+   - Ostatecznie wróciliśmy do custom JWT
+
+3. **UI/UX**:
+   - Nowy interfejs stracił wiele funkcji (menu, dark mode, etc.)
+   - Przywróciliśmy stary działający interfejs
+
+### 📊 AKTUALNY STATUS:
+- ✅ Backend dla konwersacji GOTOWY (tabele, API)
+- ✅ System auth naprawiony (custom JWT)
+- ✅ Tryb gościa działa
+- ❌ Frontend konwersacji wycofany (zbyt dużo zmian naraz)
+
+### 📝 WNIOSKI:
+- System konwersacji wymaga stopniowej integracji
+- Lepiej dodawać funkcje do istniejącego UI niż zastępować całkowicie
+- Backend jest gotowy, frontend do zrobienia jutro
+
+### 🎬 PLAN NA JUTRO (SESJA 8):
+1. **Hybrydowy interfejs**:
+   - Zachować stary działający UI
+   - Dodać przycisk "Historia rozmów"
+   - Opcjonalny sidebar z konwersacjami
+
+2. **Stopniowa integracja**:
+   - Konwersacje tylko dla zalogowanych
+   - Goście używają zwykłego czatu
+   - Bez psucia istniejących funkcji
+
+3. **Poprawki UX**:
+   - Jasne komunikaty o trybie gościa
+   - Łatwiejsze logowanie/rejestracja
