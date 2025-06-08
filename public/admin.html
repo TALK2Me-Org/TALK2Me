@@ -42,11 +42,12 @@
         .login-form {
             padding: 40px;
             text-align: center;
+            display: none; /* TYMCZASOWO - ukryj login */
         }
         
         .admin-panel {
             padding: 40px;
-            display: none;
+            display: block; /* TYMCZASOWO - pokaż panel od razu */
         }
         
         .config-section {
@@ -342,11 +343,7 @@
         // Load configuration
         async function loadConfig() {
             try {
-                const response = await fetch('/api/admin/config', {
-                    headers: {
-                        'X-Admin-Password': adminToken
-                    }
-                });
+                const response = await fetch('/api/admin/config');
                 
                 const data = await response.json();
                 
@@ -391,8 +388,7 @@
                 const response = await fetch('/api/admin/config', {
                     method: 'PUT',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-Admin-Password': adminToken
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         config_key: configKey,
@@ -471,15 +467,9 @@
             }
         });
         
-        // TYMCZASOWO - auto-login bez hasła
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('⚠️ Auto-login bez hasła - tylko do testów!');
-            adminToken = 'temp-no-password';
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('logoutBtn').style.display = 'none';
-            loadConfig();
-        });
+        // TYMCZASOWO - załaduj konfigurację od razu
+        console.log('⚠️ Panel admina bez hasła - tylko do testów!');
+        loadConfig();
     </script>
 </body>
 </html>
