@@ -112,17 +112,148 @@ POST /api/chat
 - 10x szybsze odpowiedzi (1-2s vs 10-30s)
 - Płynne wyświetlanie tekstu
 
-### 🚧 FAZA 2 (W TOKU):
-- System konwersacji (jak ChatGPT)
-- Migracja chat_history → conversations + messages
-- API endpoints dla zarządzania konwersacjami
+### 🚧 FAZA 2 - System Konwersacji (3h):
+#### 2.1 Utworzenie nowych tabel (30min):
+```sql
+-- Tabela konwersacji
+CREATE TABLE conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  title TEXT,
+  last_message_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
-### 📅 NASTĘPNE FAZY:
-- FAZA 3: pgvector + system pamięci
-- FAZA 4: Pełna integracja pamięci z chatem
-- FAZA 5: UI konwersacji (sidebar)
-- FAZA 6: Rozszerzony panel admina
-- FAZA 7: OAuth (Google/Apple)
+-- Tabela wiadomości
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES conversations(id),
+  user_id UUID NOT NULL REFERENCES users(id),
+  role TEXT CHECK (role IN ('user', 'assistant', 'function', 'system')) NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Indeksy
+CREATE INDEX idx_messages_conversation ON messages(conversation_id, created_at);
+CREATE INDEX idx_conversations_user ON conversations(user_id, last_message_at DESC);
+```
+
+#### 2.2 Migracja danych (1h):
+- Backup tabeli chat_history
+- Grupowanie wiadomości po datach
+- Utworzenie konwersacji dla każdego dnia
+- Przeniesienie par message/response do messages
+
+#### 2.3 API Endpoints (1h):
+- `GET /api/conversations` - lista konwersacji
+- `POST /api/conversations` - nowa konwersacja
+- `GET /api/conversations/:id/messages` - wiadomości
+- `PUT /api/conversations/:id/title` - zmiana tytułu
+- `DELETE /api/conversations/:id` - usuwanie
+
+#### 2.4 Update chat.js (30min):
+- Obsługa conversationId w request
+- Auto-tworzenie konwersacji
+- Update last_message_at
+
+### 📅 FAZA 3 - System Pamięci z pgvector (4h):
+#### 3.1 Setup pgvector (30min):
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+#### 3.2 Tabela memories (45min):
+```sql
+CREATE TABLE memories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  conversation_id UUID REFERENCES conversations(id),
+  summary TEXT NOT NULL,
+  embedding VECTOR(1536) NOT NULL,
+  importance INT DEFAULT 5,
+  memory_type TEXT CHECK (memory_type IN ('personal', 'relationship', 'preference', 'event')),
+  entities JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX memories_embedding_idx ON memories 
+USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+```
+
+#### 3.3 MemoryManager (1.5h):
+```javascript
+// api/lib/memory-manager.js
+class MemoryManager {
+  async createEmbedding(text)
+  async saveMemory(userId, summary, importance)
+  async getRelevantMemories(userId, query, limit)
+  async extractEntities(text)
+}
+```
+
+#### 3.4 Function Calling (1h):
+```javascript
+functions: [{
+  name: "remember_this",
+  description: "Zapisz ważne wspomnienie",
+  parameters: {
+    summary: { type: "string" },
+    importance: { type: "number", min: 1, max: 10 }
+  }
+}]
+```
+
+### 📅 FAZA 4 - Nowy Chat API z Pamięcią (4h):
+- Pełna reimplementacja /api/chat
+- Integracja z conversations
+- Pobieranie relevant memories
+- Streaming + function calling
+- System prompt z kontekstem
+
+#### Memory Rules (do system prompt):
+```
+ZASADY ZARZĄDZANIA PAMIĘCIĄ:
+
+1. ZAWSZE zapisuj gdy użytkownik wspomina:
+   - Imiona bliskich (partner, dzieci, rodzice)
+   - Ważne daty (rocznice, urodziny)
+   - Traumatyczne wydarzenia
+   - Preferencje komunikacyjne
+
+2. Używaj funkcji remember_this() gdy dowiesz się czegoś ważnego
+   Przykład: "Mój mąż Maciej..." → remember_this("Mąż ma na imię Maciej", 9)
+
+3. Priorytetyzuj (importance 1-10):
+   - 9-10: Kluczowe relacje, traumy
+   - 7-8: Ważne preferencje, hobby
+   - 5-6: Codzienne fakty
+   - 1-4: Mniej istotne szczegóły
+
+4. NIE zapisuj:
+   - Poufnych danych (hasła, numery)
+   - Tymczasowych stanów emocjonalnych
+   - Informacji z pojedynczej kłótni
+```
+
+### 📅 FAZA 5 - UI Konwersacji (3h):
+- Sidebar z listą konwersacji
+- Ładowanie historii
+- Zarządzanie konwersacjami
+- Auto-generowanie tytułów
+- Mobile responsive
+
+### 📅 FAZA 6 - Panel Admina (2h):
+- Memory Explorer
+- User memories viewer
+- Prompt management
+- Analytics dashboard
+
+### 📅 FAZA 7 - OAuth (3h):
+- Google Sign-In setup
+- Apple Sign-In setup
+- Integracja z Supabase Auth
+- UI dla social login
 
 ## 📞 Kontakt & Komendy
 - **Admin Panel**: https://talk2me2.vercel.app/admin (hasło: qwe123)
@@ -132,13 +263,30 @@ POST /api/chat
   git push            # Auto-deploy via webhook
   ```
 
-## 🐛 Known Issues
+## 🐛 Known Issues & Status
 - ~~Auto-deploy nie działał~~ ✅ FIXED
 - ~~JavaScript syntax errors~~ ✅ FIXED  
 - ~~API endpoints 500 errors~~ ✅ FIXED
-- **⚠️ CRITICAL**: Chat Completions API nieprzetestowane - brak API keys w production
-- **Pending**: Konfiguracja OpenAI/Groq keys w admin panelu
-- **Unknown**: Czy szybkość odpowiedzi rzeczywiście ~1-2s (vs poprzednie 15-30s Assistant API)
+- ~~Limit 12 funkcji Vercel~~ ✅ FIXED (usunięto pliki backup)
+- ~~Chat Completions wolne~~ ✅ FIXED (streaming działa!)
+- **TODO**: System konwersacji (FAZA 2)
+- **TODO**: System pamięci AI (FAZA 3)
+
+## 🔑 Kluczowe Pliki do Edycji:
+### Backend:
+- `/api/chat.js` - główny endpoint czatu (obecnie: streaming SSE)
+- `/api/conversations.js` - TODO: zarządzanie konwersacjami
+- `/api/lib/memory-manager.js` - TODO: system pamięci
+- `/supabase-schema.sql` - schema bazy danych
+
+### Frontend:
+- `/public/index.html` - główna aplikacja (linie 1684-1850: sendMessage)
+- `/public/admin-temp.html` - panel admina bez hasła
+
+### Konfiguracja:
+- Supabase: https://app.supabase.com/project/hpxzhbubvdgxdvwxmhzo
+- Vercel: https://vercel.com/natalias-projects-0df16838/talk2me
+- Live: https://tk2me.vercel.app
 
 ## 💡 Uwagi Techniczne
 - Projekt używa ES6 modules (import/export)
@@ -146,6 +294,8 @@ POST /api/chat
 - Admin panel wymaga Bearer token authorization
 - Chat używa OpenAI jako primary, Groq jako fallback
 - Mobile-first responsive design
+- Streaming przez Server-Sent Events (SSE)
+- Limit Vercel: max 12 funkcji serverless
 
 ## 🎨 Design & UX
 - Kolor główny: #FF69B4 (różowy)
