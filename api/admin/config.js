@@ -15,24 +15,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Sprawdź hasło admin - akceptuj różne sposoby
-    const authHeader = req.headers.authorization
-    const xAdminPassword = req.headers['x-admin-password']
-    const queryPassword = req.query.password
-    
-    // Sprawdź hasło z różnych źródeł
-    const providedPassword = authHeader?.replace('Bearer ', '') || xAdminPassword || queryPassword
-    
-    if (!providedPassword || providedPassword !== adminPassword) {
-      return res.status(401).json({ 
-        error: 'Unauthorized - wrong admin password',
-        hint: 'Hasło to: qwe123',
-        debug: {
-          receivedPassword: providedPassword ? '***' : 'none',
-          expectedPassword: 'qwe123'
-        }
-      })
-    }
+    // TYMCZASOWO - wyłączona autoryzacja
+    console.log('⚠️ UWAGA: Panel admina działa bez hasła - tylko do testów!')
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 

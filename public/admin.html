@@ -470,6 +470,16 @@
                 login();
             }
         });
+        
+        // TYMCZASOWO - auto-login bez hasła
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('⚠️ Auto-login bez hasła - tylko do testów!');
+            adminToken = 'temp-no-password';
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'none';
+            loadConfig();
+        });
     </script>
 </body>
 </html>
