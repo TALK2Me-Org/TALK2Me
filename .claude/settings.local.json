@@ -11,7 +11,9 @@
       "Bash(cp:*)",
       "Bash(mv:*)",
       "Bash(ls:*)",
-      "WebFetch(domain:platform.openai.com)"
+      "WebFetch(domain:platform.openai.com)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

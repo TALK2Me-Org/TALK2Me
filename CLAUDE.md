@@ -5,7 +5,7 @@
 - **Właściciel**: Natalia Rybarczyk (Nat-thelifecreator)
 - **Współpracownik**: Maciej (narzeczony Natalii)
 - **Repo GitHub**: https://github.com/Nat-thelifecreator/TALK2Me
-- **Live URL**: https://talk2me2.vercel.app
+- **Live URL**: https://tk2me.vercel.app
 
 ## 🎯 Aktualny Stan (Grudzień 2024)
 Projekt jest **~90% gotowy** i przeszedł pełną migrację z localhost na cloud:
@@ -256,7 +256,7 @@ ZASADY ZARZĄDZANIA PAMIĘCIĄ:
 - UI dla social login
 
 ## 📞 Kontakt & Komendy
-- **Admin Panel**: https://talk2me2.vercel.app/admin (hasło: qwe123)
+- **Admin Panel**: https://tk2me.vercel.app/admin (hasło: qwe123)
 - **Testowe komendy**:
   ```bash
   npm run dev          # Vercel dev mode
@@ -477,3 +477,100 @@ ZASADY ZARZĄDZANIA PAMIĘCIĄ:
 3. **Poprawki UX**:
    - Jasne komunikaty o trybie gościa
    - Łatwiejsze logowanie/rejestracja
+
+## ✅ SESJA 8 - PLANOWANIE MIGRACJI NA RAILWAY (2025-01-09 23:00)
+
+### 🎯 GŁÓWNE OSIĄGNIĘCIA:
+1. **Analiza ograniczeń Vercel dla LangChain**:
+   - Limit 50MB na funkcję serverless
+   - Max 1GB RAM (za mało dla LangChain)
+   - Cold starts problematyczne dla AI
+
+2. **Wybór Railway.app jako nowej platformy**:
+   - 8GB RAM dostępne
+   - Persistent containers (brak cold starts)
+   - $5/mies start, prosty jak Vercel
+   - Git push = deploy
+
+3. **Decyzja o systemie pamięci z LangChain**:
+   - Personalizacja AI to kluczowa funkcjonalność
+   - LangChain ułatwi semantic search
+   - Integracja z pgvector dla pamięci
+
+4. **Szczegółowy plan migracji (5 etapów)**:
+   - ETAP 1: Express.js server setup
+   - ETAP 2: Railway deployment
+   - ETAP 3: System konwersacji
+   - ETAP 4: LangChain + Memory
+   - ETAP 5: Testing & optymalizacja
+
+### 🔧 TECHNICZNE SZCZEGÓŁY:
+- **Architektura docelowa**: Express.js na Railway (jeden serwer)
+- **Rezygnacja z**: Architektury rozproszonej, Cloudflare CDN
+- **Akceptacja**: ~180ms latencji z US-West dla prostoty
+- **LangChain modules**: Tylko memory, embeddings, vectorstores
+
+### 📊 ANALIZA PLATFORM:
+| Platform | Pros | Cons | Decyzja |
+|----------|------|------|---------|
+| Vercel Pro | Znane środowisko | Limit RAM | ❌ |
+| Railway | 8GB RAM, prosty | Tylko US-West | ✅ |
+| Fly.io | Serwery w PL | Bardziej skomplikowane | ❌ |
+| Render | EU region | Mniej RAM | ❌ |
+
+### 📋 ZADANIA NA JUTRO (SESJA 9):
+1. **Utworzenie struktury Express.js** (45 min)
+   - server.js z wszystkimi routes
+   - Konwersja Vercel functions → Express endpoints
+   - Zachowanie API compatibility
+
+2. **Setup Railway** (30 min)
+   - railway.json config
+   - Environment variables
+   - GitHub integration
+
+3. **Deploy & Test** (30 min)
+   - Podstawowa migracja bez LangChain
+   - Weryfikacja wszystkich endpoints
+   - Performance check
+
+4. **System Konwersacji** (2h)
+   - SQL migration script
+   - API endpoints implementation
+   - Basic UI integration
+
+5. **LangChain Layer** (3h)
+   - Memory Manager implementation
+   - Semantic search setup
+   - Integration z chat.js
+
+### 🎬 PLAN WYKONANIA:
+```
+Dzień 1 (Jutro):
+├── 09:00-10:00: Express setup
+├── 10:00-10:30: Railway deploy
+├── 10:30-12:30: Conversations system
+└── 14:00-17:00: LangChain integration
+
+Dzień 2:
+├── Testing & optimization
+├── Documentation update
+└── Production switch
+```
+
+### 📝 NOTATKI Z DYSKUSJI:
+- Natalia preferuje jeden serwer (prostota)
+- LangChain kluczowy dla personalizacji
+- Railway mimo US lokalizacji (DX > latencja)
+- Migracja stopniowa, bez psucia produkcji
+
+### ⚠️ DO ZAPAMIĘTANIA:
+- **Backup Vercel** przed migracją
+- **Test każdego etapu** osobno
+- **Monitor RAM** z LangChain
+- **Dokumentuj zmiany** w CHANGELOG
+
+---
+**Zakończenie sesji**: 9 stycznia 2025, 23:00
+**Developer**: Claude (AI Assistant)
+**Status**: Plan gotowy, implementacja jutro
