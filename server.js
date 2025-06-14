@@ -19,6 +19,9 @@ import verifyHandler from './api/auth/verify.js';
 import configHandler from './api/admin/config.js';
 import debugHandler from './api/admin/debug.js';
 
+// Test handler
+import testMemoryHandler from './api/test-memory.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -64,6 +67,9 @@ app.post('/api/auth/verify', verifyHandler);
 app.get('/api/admin/config', configHandler);
 app.put('/api/admin/config', configHandler);
 app.get('/api/admin/debug', debugHandler);
+
+// Test route for debugging
+app.post('/api/test-memory', testMemoryHandler);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
