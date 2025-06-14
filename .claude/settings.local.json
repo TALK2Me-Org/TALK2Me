@@ -19,7 +19,8 @@
       "Bash(curl:*)",
       "Bash(psql:*)",
       "Bash(npm run dev:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }
