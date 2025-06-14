@@ -223,8 +223,16 @@ export default async function handler(req, res) {
       if (openaiKey) {
         memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
         await memoryManager.initialize()
-        console.log('🧠 MemoryManager initialized')
+        console.log('🧠 MemoryManager initialized for user:', userId)
+      } else {
+        console.log('⚠️ No OpenAI API key found, MemoryManager not initialized')
       }
+    } else {
+      console.log('🔍 MemoryManager status:', {
+        exists: !!memoryManager,
+        userId: userId,
+        reason: !memoryManager && !userId ? 'No user logged in' : 'Already initialized'
+      })
     }
 
     // Pobierz relevantne wspomnienia dla użytkownika
@@ -370,23 +378,38 @@ export default async function handler(req, res) {
 
           // Check if function call is complete
           if (chunk.choices[0]?.finish_reason === 'function_call') {
+            console.log('✅ Function call completed, processing...')
             try {
               const args = JSON.parse(functionArgs)
               console.log(`🔧 Function call: ${functionName}`, args)
               
-              if (functionName === 'remember_this' && memoryManager && userId) {
-                await memoryManager.saveMemory(
-                  userId,
-                  message, // original content
-                  args.summary,
-                  args.importance,
-                  args.type,
-                  activeConversationId
-                )
-                console.log(`💾 Memory saved: "${args.summary}" (importance: ${args.importance})`)
+              if (functionName === 'remember_this') {
+                console.log('📝 Processing remember_this function', {
+                  hasMemoryManager: !!memoryManager,
+                  hasUserId: !!userId,
+                  userId: userId
+                })
+                
+                if (memoryManager && userId) {
+                  console.log('💾 Saving memory...')
+                  await memoryManager.saveMemory(
+                    userId,
+                    message, // original content
+                    args.summary,
+                    args.importance,
+                    args.type,
+                    activeConversationId
+                  )
+                  console.log(`✅ Memory saved: "${args.summary}" (importance: ${args.importance})`)
+                } else {
+                  console.log('⚠️ Cannot save memory:', {
+                    memoryManager: !!memoryManager,
+                    userId: userId
+                  })
+                }
               }
             } catch (error) {
-              console.error('Failed to process function call:', error)
+              console.error('❌ Failed to process function call:', error)
             }
           }
         }

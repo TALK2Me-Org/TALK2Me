@@ -16,7 +16,10 @@
       "Bash(npm install:*)",
       "WebFetch(domain:talk2me.up.railway.app)",
       "Bash(mkdir:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(psql:*)",
+      "Bash(npm run dev:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
