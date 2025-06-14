@@ -1,4 +1,19 @@
-// TALK2Me Chat API v6.0 - Z systemem pamięci LangChain
+/**
+ * TALK2Me Chat API v6.0 - Z systemem pamięci LangChain
+ * 
+ * Główne funkcjonalności:
+ * - Streaming odpowiedzi przez SSE (Server-Sent Events)
+ * - Function calling dla zapisywania wspomnień
+ * - Integracja z MemoryManager dla personalizacji
+ * - Fallback na Groq gdy OpenAI nie działa
+ * - Obsługa konwersacji (conversations/messages)
+ * 
+ * @author Claude (AI Assistant) - Sesja 10
+ * @date 14.01.2025
+ * 
+ * TODO: Debug dlaczego function calling nie jest wywoływane
+ * TODO: Naprawić Railway deployment issues
+ */
 import { createClient } from '@supabase/supabase-js'
 import { Groq } from 'groq-sdk'
 import OpenAI from 'openai'

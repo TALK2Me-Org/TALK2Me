@@ -13,7 +13,7 @@
 - **Branch**: `railway-migration` ⚠️ (NIE main!)
 - **Platforma**: Railway.app (Express.js server)
 - **Deploy**: Auto-deploy przy każdym push na `railway-migration`
-- **Status**: ✅ Działa, ale wymaga optymalizacji
+- **Status**: ⚠️ Deployment issues - healthcheck failing
 
 ### 🟡 BACKUP (Vercel) - STARE
 - **URL**: https://tk2me.vercel.app
@@ -22,816 +22,262 @@
 - **Deploy**: Auto-deploy z main (obecnie nieużywane)
 - **Status**: ✅ Działa jako backup
 
-## 🎯 Aktualny Stan (Styczeń 2025)
-Projekt jest **~70% gotowy** - podstawowe funkcje działają, ale brakuje kluczowych elementów:
+## 🎯 Aktualny Stan (14 Stycznia 2025, 01:30)
+Projekt jest **~75% gotowy** - podstawowe funkcje działają + system pamięci AI zaimplementowany:
 
 ### ✅ Co Działa
 1. **Chat z AI** - streaming odpowiedzi w czasie rzeczywistym
-2. **Autoryzacja** - logowanie/rejestracja użytkowników
+2. **Autoryzacja** - logowanie/rejestracja użytkowników (custom JWT)
 3. **Admin Panel** - zarządzanie konfiguracją (/admin, hasło: qwe123)
 4. **Historia rozmów** - zapisywanie czatów w bazie
 5. **Ulubione** - oznaczanie ważnych wiadomości
-6. **Dwa środowiska** - Railway (prod) + Vercel (backup)
+6. **System konwersacji** - backend gotowy, frontend w trakcie
+7. **System pamięci AI** - LangChain + pgvector (zaimplementowany, wymaga debugowania)
 
-### ❌ Czego Brakuje (30% projektu)
-1. **System pamięci AI** - personalizacja na podstawie historii użytkownika
-2. **System konwersacji** - grupowanie czatów w wątki (jak ChatGPT)
-3. **Optymalizacja wydajności** - serwer "muli", brak cache'owania
-4. **OAuth** - logowanie przez Google/Apple
-5. **PWA** - instalacja jako aplikacja mobilna
-6. **Testy jednostkowe** - zero coverage
+### ⚠️ W Trakcie Naprawy
+1. **Railway deployment** - healthcheck failures
+2. **Memory system** - nie zapisuje wspomnień (auth działa, ale function calling nie triggeruje)
+3. **LangChain dependencies** - konflikty wersji
 
-### 🔧 Architektura Techniczna
+### ❌ Czego Brakuje (25% projektu)
+1. **UI konwersacji** - frontend dla systemu konwersacji
+2. **Optymalizacja wydajności** - cache'owanie, indeksy
+3. **OAuth** - logowanie przez Google/Apple
+4. **PWA** - instalacja jako aplikacja mobilna
+5. **Testy jednostkowe** - zero coverage
+6. **Semantic search** - pełna integracja pgvector
 
-#### RAILWAY (Produkcja):
-- **Frontend**: Static files served by Express
-- **Backend**: Express.js server (server.js)
-- **Branch**: `railway-migration`
-- **RAM**: 8GB (vs 1GB na Vercel)
-- **Deploy**: Git push → auto-deploy
+## 🏗️ ARCHITEKTURA PROJEKTU
 
-#### VERCEL (Backup):
-- **Frontend**: Static hosting
-- **Backend**: Serverless Functions (/api/)
-- **Branch**: `main`
-- **RAM**: 1GB limit
-- **Deploy**: Git push → auto-deploy
-
-#### WSPÓLNE:
-- **Baza danych**: Supabase (PostgreSQL)
-- **AI Models**: OpenAI GPT-3.5-turbo, Groq Llama
-- **Auth**: Custom JWT (nie Supabase Auth)
-
-## 📁 Struktura Projektu
+### 📁 Struktura Katalogów
 ```
 /Users/nataliarybarczyk/TALK2Me/
-├── server.js              # 🆕 Express server dla Railway
-├── railway.json           # 🆕 Konfiguracja Railway
-├── public/
-│   ├── index.html         # Główna aplikacja 
-│   └── admin.html         # Panel administratora
-├── api/                   # Handlery (używane przez oba środowiska)
-│   ├── chat.js            # Główny endpoint AI chat
-│   ├── history.js         # Historia rozmów
-│   ├── favorites.js       # Ulubione wiadomości
-│   ├── conversations.js   # 🆕 System konwersacji (w budowie)
-│   └── admin/config.js    # Zarządzanie konfiguracją
-├── lib/                   # 🔜 Przyszłe moduły
-│   └── memory-manager.js  # (planowany) LangChain memory
-├── archive/               # 🆕 Stara dokumentacja
-│   ├── README_legacy.md
-│   └── PROJECT_DOCUMENTATION_*.md
-├── supabase-*.sql         # Schematy bazy danych
-├── package.json           # Dependencies + scripts
-├── vercel.json            # Konfiguracja Vercel (backup)
-└── CLAUDE.md              # Ten plik (główna dokumentacja)
+├── 📄 server.js                    # Express.js server dla Railway
+├── 📄 railway.json                 # Konfiguracja Railway deployment
+├── 📄 package.json                 # Dependencies + scripts
+├── 📄 .gitignore                   # Ignorowane pliki (w tym package-lock.json)
+├── 📄 CLAUDE.md                    # Główna dokumentacja projektu (TEN PLIK)
+├── 📄 CHANGELOG.md                 # Historia zmian (NOWY)
+│
+├── 📁 public/                      # Frontend (static files)
+│   ├── 📄 index.html               # Główna aplikacja SPA
+│   ├── 📄 login.html               # Strona logowania/rejestracji
+│   ├── 📄 admin.html               # Panel administratora
+│   ├── 📄 test-memory.html         # Strona testowa dla systemu pamięci
+│   ├── 📄 styles.css               # Główne style aplikacji
+│   ├── 📄 manifest.json            # PWA manifest
+│   └── 📁 icons/                   # Ikony aplikacji
+│
+├── 📁 api/                         # Backend handlers
+│   ├── 📄 chat.js                  # Podstawowy chat endpoint
+│   ├── 📄 chat-with-memory.js      # Chat z systemem pamięci LangChain
+│   ├── 📄 history.js               # Historia rozmów
+│   ├── 📄 favorites.js             # Ulubione wiadomości
+│   ├── 📄 conversations.js         # System konwersacji
+│   ├── 📁 auth/                    # Autoryzacja
+│   │   ├── 📄 login.js             # Endpoint logowania
+│   │   ├── 📄 register.js          # Endpoint rejestracji
+│   │   ├── 📄 me.js                # Dane użytkownika
+│   │   └── 📄 verify.js            # Weryfikacja email
+│   └── 📁 admin/                   # Panel admina
+│       ├── 📄 config.js            # Zarządzanie konfiguracją
+│       └── 📄 debug.js             # Debug info
+│
+├── 📁 lib/                         # Biblioteki pomocnicze
+│   └── 📄 memory-manager.js        # Manager pamięci AI (LangChain)
+│
+├── 📁 archive/                     # Stara dokumentacja
+│   ├── 📄 README_legacy.md
+│   └── 📄 PROJECT_DOCUMENTATION_*.md
+│
+└── 📁 SQL/                         # Schematy bazy danych
+    ├── 📄 supabase-schema.sql      # Podstawowy schemat
+    ├── 📄 supabase-conversations-schema.sql  # System konwersacji
+    └── 📄 supabase-memory-schema.sql         # System pamięci z pgvector
 ```
 
-## 🗃️ Supabase Database Schema
+## 🛠️ STACK TECHNOLOGICZNY
+
+### Frontend
+- **Framework**: Vanilla JavaScript (SPA)
+- **Styling**: Custom CSS z CSS Variables
+- **API Communication**: Fetch API z Server-Sent Events (SSE)
+- **State Management**: LocalStorage + in-memory
+- **Auth**: JWT tokens w localStorage
+
+### Backend
+- **Server**: Express.js na Railway
+- **Database**: Supabase (PostgreSQL)
+- **AI Models**: 
+  - OpenAI GPT-3.5/4 (primary)
+  - Groq Llama3 (fallback)
+- **Memory System**: 
+  - LangChain 0.3.6
+  - pgvector dla embeddings
+  - OpenAI text-embedding-ada-002
+- **Auth**: Custom JWT implementation
+- **Streaming**: Server-Sent Events (SSE)
+
+### External Services
+- **Supabase**: Database + Auth (tylko baza używana)
+- **OpenAI API**: Chat completions + Embeddings + Assistant API
+- **Groq API**: Fallback AI provider
+- **Railway**: Hosting produkcyjny
+- **Vercel**: Backup hosting
+- **GitHub**: Version control + auto-deploy
+
+## 📊 DATABASE SCHEMA
+
+### Główne Tabele
+1. **users** - dane użytkowników
+2. **chat_history** - historia czatów (legacy)
+3. **conversations** - konwersacje (nowy system)
+4. **messages** - wiadomości w konwersacjach
+5. **memories** - wspomnienia AI z embeddings (pgvector)
+6. **app_config** - konfiguracja aplikacji
+7. **sessions** - sesje użytkowników
+
+### pgvector Setup
 ```sql
--- Tabele:
-users (id, email, password, name, subscription_type, is_verified)
-chat_history (id, user_id, message, response, ai_model, created_at)
-app_config (id, config_key, config_value, updated_at)
+-- Extension dla semantic search
+CREATE EXTENSION vector;
+
+-- Tabela memories z 1536-wymiarowymi embeddings
+CREATE TABLE memories (
+  embedding VECTOR(1536),
+  -- ... inne kolumny
+);
 ```
 
-## 🔑 Zmienne Środowiskowe (Vercel)
+## 🔧 KONFIGURACJA
+
+### Zmienne Środowiskowe
 ```bash
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://hpxzhbubvdgxdvwxmhzo.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-**Uwaga**: Wszystkie inne konfiguracje (API keys, assistant ID, etc.) są teraz przechowywane w bazie danych i zarządzane przez panel admina.
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
-## 🚀 Endpointy API
-- `GET /api/setup` - Inicjalizacja bazy danych (✅ działa)
-- `POST /api/chat` - Chat z AI (✅ Chat Completions + Streaming)
-- `GET/POST /api/history` - Historia rozmów użytkownika
-- `GET/POST /api/favorites` - Zarządzanie ulubionymi
-- `GET/PUT /api/admin/config` - Panel admin (hasło: qwe123)
-- `POST /api/auth/login` - Logowanie użytkownika
-- `POST /api/auth/register` - Rejestracja nowego użytkownika
-- `GET /api/auth/me` - Pobieranie danych zalogowanego użytkownika
-
-### 🤖 Chat API Szczegóły (/api/chat)
-**Format zapytania**:
-```json
-POST /api/chat
-{
-  "message": "Partner powiedział: nie mam czasu na rozmowy",
-  "userContext": "opcjonalny kontekst sytuacji"
-}
+# Server
+PORT=3000
+NODE_ENV=production
 ```
 
-**AI Logic Flow**:
-1. **Primary**: OpenAI Chat Completions API (gpt-3.5-turbo)
-2. **Fallback**: Groq API (llama3-8b-8192) 
-3. **Streaming**: Server-Sent Events (SSE) dla płynnego wyświetlania
-
-**Response Format**: 
-- Streaming chunks przez SSE
-- Format: `data: {"content": "tekst"}\n\n`
-- Zakończenie: `data: [DONE]\n\n`
-- Frontend wyświetla tekst w czasie rzeczywistym
-
-**Response Speed**: 
-- OpenAI Chat Completions: ~1-2s (z streamingiem)
-- Groq: ~2-3s (bez streamingu, fallback)
-- Poprzednio Assistant API: ~10-30s ❌
-
-## ⚠️ KLUCZOWE INFORMACJE DLA DEVELOPERÓW
-
-### 🔴 GDZIE PRACUJEMY:
-- **Branch**: `railway-migration` (NIE main!)
-- **Deploy**: Railway z brancha `railway-migration`
-- **URL produkcji**: https://talk2me.up.railway.app
-- **Każdy push** na `railway-migration` = auto-deploy
-
-### 🟡 CO Z VERCEL:
-- Branch `main` nadal działa na Vercel
-- To tylko backup, NIE rozwijamy go
-- URL: https://tk2me.vercel.app
-
-### 🔧 JAK PRACOWAĆ:
-```bash
-# Zawsze sprawdź że jesteś na właściwym branchu!
-git checkout railway-migration
-
-# Twoje zmiany
-git add .
-git commit -m "opis"
-git push origin railway-migration
-
-# NIE pushuj do main!
-```
-
-## 🛠️ Ostatnie Zmiany & Fixes
-1. **JavaScript Error Fix**: Naprawiony błąd w index.html:1891 (duplicate method)
-2. **ES6 Modules**: Dodano "type": "module" do package.json
-3. **Auto-deploy**: Skonfigurowany webhook GitHub → Vercel
-4. **Testing**: Testy auto-deploy z version bump v1.1 → v1.3
-5. **Assistant API Integration**: Usunięty hardkodowany prompt, zaimplementowana integracja z OpenAI Assistant API
-6. **Auth System Restored**: Przywrócony system logowania/rejestracji z endpointami API
-7. **Clean Assistant Messages**: Usunięte formatowanie wiadomości użytkownika - teraz przesyłana jest czysta wiadomość do Assistant API
-8. **Removed 4-Section Format**: Usunięte formatowanie odpowiedzi na 4 sekcje - aplikacja wyświetla czystą odpowiedź z Assistant API
-9. **🚀 CHAT COMPLETIONS + STREAMING**: Zamieniono wolne Assistant API na szybkie Chat Completions z SSE streamingiem (10x szybsze!)
-10. **📝 Dokumentacja URL**: Zaktualizowano Supabase URL w dokumentacji na nowy projekt
-
-## 📋 W Trakcie Realizacji
-### ✅ FAZA 1 (UKOŃCZONA):
-- Chat Completions z streamingiem
-- 10x szybsze odpowiedzi (1-2s vs 10-30s)
-- Płynne wyświetlanie tekstu
-
-### 🚧 FAZA 2 - System Konwersacji (3h):
-#### 2.1 Utworzenie nowych tabel (30min):
-```sql
--- Tabela konwersacji
-CREATE TABLE conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  title TEXT,
-  last_message_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Tabela wiadomości
-CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES conversations(id),
-  user_id UUID NOT NULL REFERENCES users(id),
-  role TEXT CHECK (role IN ('user', 'assistant', 'function', 'system')) NOT NULL,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Indeksy
-CREATE INDEX idx_messages_conversation ON messages(conversation_id, created_at);
-CREATE INDEX idx_conversations_user ON conversations(user_id, last_message_at DESC);
-```
-
-#### 2.2 Migracja danych (1h):
-- Backup tabeli chat_history
-- Grupowanie wiadomości po datach
-- Utworzenie konwersacji dla każdego dnia
-- Przeniesienie par message/response do messages
-
-#### 2.3 API Endpoints (1h):
-- `GET /api/conversations` - lista konwersacji
-- `POST /api/conversations` - nowa konwersacja
-- `GET /api/conversations/:id/messages` - wiadomości
-- `PUT /api/conversations/:id/title` - zmiana tytułu
-- `DELETE /api/conversations/:id` - usuwanie
-
-#### 2.4 Update chat.js (30min):
-- Obsługa conversationId w request
-- Auto-tworzenie konwersacji
-- Update last_message_at
-
-### 📅 FAZA 3 - System Pamięci z pgvector (4h):
-#### 3.1 Setup pgvector (30min):
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
-```
-
-#### 3.2 Tabela memories (45min):
-```sql
-CREATE TABLE memories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  conversation_id UUID REFERENCES conversations(id),
-  summary TEXT NOT NULL,
-  embedding VECTOR(1536) NOT NULL,
-  importance INT DEFAULT 5,
-  memory_type TEXT CHECK (memory_type IN ('personal', 'relationship', 'preference', 'event')),
-  entities JSONB,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX memories_embedding_idx ON memories 
-USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
-```
-
-#### 3.3 MemoryManager (1.5h):
-```javascript
-// api/lib/memory-manager.js
-class MemoryManager {
-  async createEmbedding(text)
-  async saveMemory(userId, summary, importance)
-  async getRelevantMemories(userId, query, limit)
-  async extractEntities(text)
-}
-```
-
-#### 3.4 Function Calling (1h):
-```javascript
-functions: [{
-  name: "remember_this",
-  description: "Zapisz ważne wspomnienie",
-  parameters: {
-    summary: { type: "string" },
-    importance: { type: "number", min: 1, max: 10 }
-  }
-}]
-```
-
-### 📅 FAZA 4 - Nowy Chat API z Pamięcią (4h):
-- Pełna reimplementacja /api/chat
-- Integracja z conversations
-- Pobieranie relevant memories
-- Streaming + function calling
-- System prompt z kontekstem
-
-#### Memory Rules (do system prompt):
-```
-ZASADY ZARZĄDZANIA PAMIĘCIĄ:
-
-1. ZAWSZE zapisuj gdy użytkownik wspomina:
-   - Imiona bliskich (partner, dzieci, rodzice)
-   - Ważne daty (rocznice, urodziny)
-   - Traumatyczne wydarzenia
-   - Preferencje komunikacyjne
-
-2. Używaj funkcji remember_this() gdy dowiesz się czegoś ważnego
-   Przykład: "Mój mąż Maciej..." → remember_this("Mąż ma na imię Maciej", 9)
-
-3. Priorytetyzuj (importance 1-10):
-   - 9-10: Kluczowe relacje, traumy
-   - 7-8: Ważne preferencje, hobby
-   - 5-6: Codzienne fakty
-   - 1-4: Mniej istotne szczegóły
-
-4. NIE zapisuj:
-   - Poufnych danych (hasła, numery)
-   - Tymczasowych stanów emocjonalnych
-   - Informacji z pojedynczej kłótni
-```
-
-### 📅 FAZA 5 - UI Konwersacji (3h):
-- Sidebar z listą konwersacji
-- Ładowanie historii
-- Zarządzanie konwersacjami
-- Auto-generowanie tytułów
-- Mobile responsive
-
-### 📅 FAZA 6 - Panel Admina (2h):
-- Memory Explorer
-- User memories viewer
-- Prompt management
-- Analytics dashboard
-
-### 📅 FAZA 7 - OAuth (3h):
-- Google Sign-In setup
-- Apple Sign-In setup
-- Integracja z Supabase Auth
-- UI dla social login
-
-## 📞 Kontakt & Komendy
-- **Admin Panel**: https://tk2me.vercel.app/admin (hasło: qwe123)
-- **Testowe komendy**:
-  ```bash
-  npm run dev          # Vercel dev mode
-  git push            # Auto-deploy via webhook
-  ```
-
-## 🐛 Known Issues & Status
-- ~~Auto-deploy nie działał~~ ✅ FIXED
-- ~~JavaScript syntax errors~~ ✅ FIXED  
-- ~~API endpoints 500 errors~~ ✅ FIXED
-- ~~Limit 12 funkcji Vercel~~ ✅ FIXED (usunięto pliki backup)
-- ~~Chat Completions wolne~~ ✅ FIXED (streaming działa!)
-- **TODO**: System konwersacji (FAZA 2)
-- **TODO**: System pamięci AI (FAZA 3)
-
-## 🔑 Kluczowe Pliki do Edycji:
-### Backend:
-- `/api/chat.js` - główny endpoint czatu (obecnie: streaming SSE)
-- `/api/conversations.js` - TODO: zarządzanie konwersacjami
-- `/api/lib/memory-manager.js` - TODO: system pamięci
-- `/supabase-schema.sql` - schema bazy danych
-
-### Frontend:
-- `/public/index.html` - główna aplikacja (linie 1684-1850: sendMessage)
-- `/public/admin-temp.html` - panel admina bez hasła
-
-### Konfiguracja:
-- Supabase: https://app.supabase.com/project/hpxzhbubvdgxdvwxmhzo
-- Vercel: https://vercel.com/natalias-projects-0df16838/talk2me
-- Live: https://tk2me.vercel.app
-
-## 💡 Uwagi Techniczne
-- Projekt używa ES6 modules (import/export)
-- Wszystkie endpointy używają Supabase RLS (Row Level Security)
-- Admin panel wymaga Bearer token authorization
-- Chat używa OpenAI jako primary, Groq jako fallback
-- Mobile-first responsive design
-- Streaming przez Server-Sent Events (SSE)
-- Limit Vercel: max 12 funkcji serverless
-
-## 🎨 Design & UX
-- Kolor główny: #FF69B4 (różowy)
-- Mobile-optimized (iOS/Android)
-- PWA ready (Apple Web App capable)
-- Smooth animations i transitions
-
----
-**Ostatnia aktualizacja**: 8 stycznia 2025 22:30  
-**Status**: 🚀 LIVE PRODUCTION - Aplikacja działa w chmurze z SUPER SZYBKIM streamingiem!
-
-## ✅ SESJA 6 - INTEGRACJA ASSISTANT API & CACHE (2025-01-07)
-
-### 🚀 GŁÓWNE OSIĄGNIĘCIA:
-1. **Dodanie modeli GPT-4.1** - najnowsze modele OpenAI z 1M tokenów kontekstu!
-   - GPT-4.1, GPT-4.1 mini, GPT-4.1 nano
-   - GPT-4.5 Research Preview
-   
-2. **Naprawienie zapisywania modelu** - zmiana UPDATE na UPSERT w admin/config.js
-   - Teraz model się zapisuje poprawnie po odświeżeniu strony
-   
-3. **Integracja Chat Completions z Assistant API**:
-   - Chat pobiera prompt z OpenAI Assistant API
-   - Używa go w Chat Completions dla szybkich odpowiedzi
-   
-4. **Cache promptu w pamięci RAM**:
-   - Błyskawiczne odpowiedzi (0ms dla cache)
-   - Auto-refresh co 1 godzinę
-   - Brak dodatkowych zapytań do bazy
-   
-5. **Panel admina z podglądem promptu**:
-   - Wyświetla do 10k znaków promptu
-   - Przycisk "Refresh Prompt from OpenAI"
-   - Status cache z informacją o wieku
-
-### 🔧 TECHNICZNE SZCZEGÓŁY:
-- **promptCache** w chat.js - obiekt w pamięci serwera
-- **Export/Import** - admin/config.js importuje cache z chat.js
-- **Brak nowych endpointów** - wykorzystanie istniejących (limit 12)
-- **Streaming nadal działa** - SSE bez zmian
-
-### 📊 FLOW DZIAŁANIA:
-1. **Pierwszy chat po deploy** → pobiera prompt z Assistant API (~1s)
-2. **Kolejne chaty** → używają cache z RAM (0ms!)
-3. **Po 1 godzinie** → automatyczne odświeżenie
-4. **Manual refresh** → przycisk w panelu admina
-
-### 🎯 AKTUALNY STATUS:
-- ✅ **Chat używa prawdziwego promptu** z OpenAI Assistant
-- ✅ **Wybór modeli działa** - wszystkie modele OpenAI dostępne
-- ✅ **Panel admina ulepszony** - widać prompt i można go odświeżyć
-- ✅ **Zero dodatkowego delay** - cache w pamięci RAM
-
-### 📝 NASTĘPNE KROKI (FAZA 2):
-- [ ] System konwersacji (tabele conversations + messages)
-- [ ] pgvector + semantic memory search
-- [ ] UI dla historii rozmów (sidebar)
-- [ ] Function calling dla zapisywania pamięci
-
-## ✅ SESJA 5 - CHAT COMPLETIONS + STREAMING (2025-06-08)
-
-### 🎯 GŁÓWNE OSIĄGNIĘCIA:
-1. **10x SZYBSZE ODPOWIEDZI**:
-   - Było: Assistant API ~10-30 sekund
-   - Jest: Chat Completions ~1-2 sekundy!
-   
-2. **STREAMING TEKSTU**:
-   - Implementacja Server-Sent Events (SSE)
-   - Płynne wyświetlanie słowo po słowie
-   - Animowany kursor podczas pisania
-   
-3. **ZACHOWANE FUNKCJE**:
-   - Historia czatów dalej działa
-   - Autoryzacja użytkowników OK
-   - System promptów konfigurowalny
-
-### 🔧 TECHNICZNE SZCZEGÓŁY:
-- Zamiana `openai.beta.assistants` → `openai.chat.completions`
-- Streaming przez `stream: true` + chunked responses
-- Frontend: `fetch` → streaming reader z parsowaniem SSE
-- Backup poprzedniej wersji w `chat-backup-assistant-api.js`
-
-### 📊 PORÓWNANIE WYDAJNOŚCI:
-| Metoda | Czas odpowiedzi | Streaming | UX |
-|--------|----------------|-----------|-----|
-| Assistant API | 10-30s | ❌ | 😴 |
-| Chat Completions | 1-2s | ✅ | 🚀 |
-
-### 🎬 NASTĘPNE KROKI:
-- FAZA 2: System konwersacji (w toku)
-- FAZA 3: pgvector + pamięć AI
-- FAZA 4-7: Pełny system jak ChatGPT
-
-## ✅ SESJA 4 - UKOŃCZONA MIGRACJA CLOUD (2025-06-07)
-
-### 🎉 PRZEŁOMOWE OSIĄGNIĘCIE:
-**Aplikacja jest teraz w pełni działająca w produkcji:**
-- **Live URL:** https://tk2me.vercel.app  
-- **Admin Panel:** https://tk2me.vercel.app/admin (qwe123)
-- **Backend:** Vercel Serverless Functions
-- **Database:** Supabase PostgreSQL  
-- **AI:** OpenAI Chat Completions (1-2s response!)
-
-### 🔧 GŁÓWNE TRANSFORMACJE:
-1. **SQLite → Supabase PostgreSQL**
-2. **Express.js localhost → Vercel Serverless**  
-3. **Assistant API → Chat Completions (10x szybsze!)**
-4. **Localhost → Cloud-native production**
-5. **Hardcoded colors → CSS Variables system**
-6. **Menu prawej strony → lewe menu (sliding)**
-7. **Stary prompt → Nowy "Jamie" (jak przyjaciółka)**
-
-### 🎯 CURRENT STATUS:
-- ✅ **Aplikacja LIVE** - działa w internecie
-- ✅ **AI Chat** - OpenAI + Groq fallback  
-- ✅ **Admin Panel** - konfiguracja kluczy API
-- ✅ **UI Naprawione** - personalizacja kolorów
-- ✅ **Auto-deploy** - GitHub → Vercel pipeline
-
-### ❓ TODO POZOSTAŁE:
-- [ ] Zmienić emotki na symbole czarno-białe (niska priorytet)
-- [ ] Zintegrować auth system z frontendem  
-- [ ] Testy produkcyjne z prawdziwymi użytkownikami
-
-## ✅ SESJA 7 - FAZA 2: SYSTEM KONWERSACJI (2025-01-08)
-
-### 🎯 PRÓBA IMPLEMENTACJI:
-1. **Utworzono schemat bazy danych**:
-   - Tabele `conversations` i `messages`
-   - Automatyczna migracja z `chat_history`
-   - RLS policies i indeksy
-   
-2. **Backend API**:
-   - `/api/conversations.js` - zarządzanie konwersacjami
-   - Zaktualizowany `/api/chat.js` z obsługą conversationId
-   - Streaming nadal działa
-
-3. **Nowy UI (index-v2)**:
-   - Sidebar z listą konwersacji (jak ChatGPT)
-   - Responsywny design
-   - Niestety brakuje wielu funkcji ze starego UI
-
-### ⚠️ PROBLEMY NAPOTKANE:
-1. **Limit funkcji Vercel** (12 na planie Hobby):
-   - Musieliśmy usunąć niepotrzebne pliki
-   - Rozwiązane przez cleanup
-
-2. **System autoryzacji**:
-   - Mieszanka Supabase Auth i custom JWT
-   - Pętla logowania
-   - Ostatecznie wróciliśmy do custom JWT
-
-3. **UI/UX**:
-   - Nowy interfejs stracił wiele funkcji (menu, dark mode, etc.)
-   - Przywróciliśmy stary działający interfejs
-
-### 📊 AKTUALNY STATUS:
-- ✅ Backend dla konwersacji GOTOWY (tabele, API)
-- ✅ System auth naprawiony (custom JWT)
-- ✅ Tryb gościa działa
-- ❌ Frontend konwersacji wycofany (zbyt dużo zmian naraz)
-
-### 📝 WNIOSKI:
-- System konwersacji wymaga stopniowej integracji
-- Lepiej dodawać funkcje do istniejącego UI niż zastępować całkowicie
-- Backend jest gotowy, frontend do zrobienia jutro
-
-### 🎬 PLAN NA JUTRO (SESJA 8):
-1. **Hybrydowy interfejs**:
-   - Zachować stary działający UI
-   - Dodać przycisk "Historia rozmów"
-   - Opcjonalny sidebar z konwersacjami
-
-2. **Stopniowa integracja**:
-   - Konwersacje tylko dla zalogowanych
-   - Goście używają zwykłego czatu
-   - Bez psucia istniejących funkcji
-
-3. **Poprawki UX**:
-   - Jasne komunikaty o trybie gościa
-   - Łatwiejsze logowanie/rejestracja
-
-## ✅ SESJA 8 - PLANOWANIE MIGRACJI NA RAILWAY (2025-01-09 23:00)
-
-### 🎯 GŁÓWNE OSIĄGNIĘCIA:
-1. **Analiza ograniczeń Vercel dla LangChain**:
-   - Limit 50MB na funkcję serverless
-   - Max 1GB RAM (za mało dla LangChain)
-   - Cold starts problematyczne dla AI
-
-2. **Wybór Railway.app jako nowej platformy**:
-   - 8GB RAM dostępne
-   - Persistent containers (brak cold starts)
-   - $5/mies start, prosty jak Vercel
-   - Git push = deploy
-
-3. **Decyzja o systemie pamięci z LangChain**:
-   - Personalizacja AI to kluczowa funkcjonalność
-   - LangChain ułatwi semantic search
-   - Integracja z pgvector dla pamięci
-
-4. **Szczegółowy plan migracji (5 etapów)**:
-   - ETAP 1: Express.js server setup
-   - ETAP 2: Railway deployment
-   - ETAP 3: System konwersacji
-   - ETAP 4: LangChain + Memory
-   - ETAP 5: Testing & optymalizacja
-
-### 🔧 TECHNICZNE SZCZEGÓŁY:
-- **Architektura docelowa**: Express.js na Railway (jeden serwer)
-- **Rezygnacja z**: Architektury rozproszonej, Cloudflare CDN
-- **Akceptacja**: ~180ms latencji z US-West dla prostoty
-- **LangChain modules**: Tylko memory, embeddings, vectorstores
-
-### 📊 ANALIZA PLATFORM:
-| Platform | Pros | Cons | Decyzja |
-|----------|------|------|---------|
-| Vercel Pro | Znane środowisko | Limit RAM | ❌ |
-| Railway | 8GB RAM, prosty | Tylko US-West | ✅ |
-| Fly.io | Serwery w PL | Bardziej skomplikowane | ❌ |
-| Render | EU region | Mniej RAM | ❌ |
-
-### 📋 ZADANIA NA JUTRO (SESJA 9):
-1. **Utworzenie struktury Express.js** (45 min)
-   - server.js z wszystkimi routes
-   - Konwersja Vercel functions → Express endpoints
-   - Zachowanie API compatibility
-
-2. **Setup Railway** (30 min)
-   - railway.json config
-   - Environment variables
-   - GitHub integration
-
-3. **Deploy & Test** (30 min)
-   - Podstawowa migracja bez LangChain
-   - Weryfikacja wszystkich endpoints
-   - Performance check
-
-4. **System Konwersacji** (2h)
-   - SQL migration script
-   - API endpoints implementation
-   - Basic UI integration
-
-5. **LangChain Layer** (3h)
-   - Memory Manager implementation
-   - Semantic search setup
-   - Integration z chat.js
-
-### 🎬 PLAN WYKONANIA:
-```
-Dzień 1 (Jutro):
-├── 09:00-10:00: Express setup
-├── 10:00-10:30: Railway deploy
-├── 10:30-12:30: Conversations system
-└── 14:00-17:00: LangChain integration
-
-Dzień 2:
-├── Testing & optimization
-├── Documentation update
-└── Production switch
-```
-
-### 📝 NOTATKI Z DYSKUSJI:
-- Natalia preferuje jeden serwer (prostota)
-- LangChain kluczowy dla personalizacji
-- Railway mimo US lokalizacji (DX > latencja)
-- Migracja stopniowa, bez psucia produkcji
-
-### ⚠️ DO ZAPAMIĘTANIA:
-- **Backup Vercel** przed migracją
-- **Test każdego etapu** osobno
-- **Monitor RAM** z LangChain
-- **Dokumentuj zmiany** w CHANGELOG
-
----
-**Zakończenie sesji**: 9 stycznia 2025, 23:00
+### Admin Panel Config (w bazie)
+- `openai_api_key` - klucz OpenAI
+- `groq_api_key` - klucz Groq
+- `assistant_id` - ID asystenta OpenAI
+- `jwt_secret` - sekret dla JWT
+- `active_model` - aktywny model (openai/groq)
+- `temperature`, `max_tokens` - parametry AI
+
+## 📝 CHANGELOG
+
+### Sesja 10 - System Pamięci z LangChain (14.01.2025, 17:00-01:30)
 **Developer**: Claude (AI Assistant)
-**Status**: Plan gotowy, implementacja jutro
 
-## ✅ SESJA 9 - MIGRACJA NA RAILWAY + PLAN LANGCHAIN (2025-01-10)
+#### ✅ Zrealizowane:
+1. **Schemat bazy danych pgvector**
+   - Utworzono `supabase-memory-schema.sql`
+   - Tabela `memories` z 1536D embeddings
+   - Funkcje SQL dla similarity search
+   - RLS policies dla bezpieczeństwa
 
-### 🎯 GŁÓWNE OSIĄGNIĘCIA:
-1. **Sukces migracji na Railway!** 🚀
-   - Branch `railway-migration` utworzony i wdrożony
-   - Express.js server działa na https://talk2me.up.railway.app
-   - Wszystkie endpointy działają (chat, auth, admin)
-   - SSE streaming działa poprawnie
+2. **MemoryManager z LangChain**
+   - Klasa w `lib/memory-manager.js`
+   - Integracja z OpenAI Embeddings
+   - Ekstrakcja entities (imiona, daty, relacje)
+   - Formatowanie kontekstu dla AI
 
-**⚠️ WAŻNE: Pracujemy teraz na branchu `railway-migration`, NIE na main!**
-- Railway deployuje z brancha `railway-migration`
-- Vercel nadal używa brancha `main` jako backup
-- Wszystkie zmiany robimy na `railway-migration`
+3. **Function Calling w Chat API**
+   - `chat-with-memory.js` z funkcją `remember_this()`
+   - Automatyczne rozpoznawanie ważnych informacji
+   - Zasady zarządzania pamięcią w system prompt
+   - Streaming z obsługą function calls
 
-2. **Minimalna refaktoryzacja**:
-   - Jeden plik `server.js` importuje wszystkie handlery
-   - Zero zmian w kodzie API handlers
-   - Express rozumie format (req, res) z Vercel
+4. **Debugging i Naprawy**
+   - Rozbudowane logowanie dla troubleshootingu
+   - Fix: zmiana z `tools` na `functions` (stary format OpenAI)
+   - Fix: health check dla Railway
+   - Fix: dependencies conflicts (usunięcie package-lock.json)
 
-3. **Railway config**:
-   - 8GB RAM dostępne (vs 1GB na Vercel)
-   - Persistent container (brak cold starts)
-   - Health endpoint dla monitoringu
-   - Auto-deploy z GitHub
+#### ⚠️ Problemy napotkane:
+1. **Railway deployment failures**
+   - Health check timeouts
+   - npm ci conflicts z package-lock.json
+   - LangChain dependencies issues
 
-### 🔧 TECHNICZNE SZCZEGÓŁY MIGRACJI:
-```javascript
-// server.js - klucz do prostej migracji
-import express from 'express';
-import chatHandler from './api/chat.js';
-// ... import wszystkich handlerów
+2. **Memory system nie zapisuje**
+   - Auth działa poprawnie
+   - MemoryManager się nie inicjalizuje
+   - Function calling nie jest wywoływane przez AI
 
-const app = express();
-app.post('/api/chat', chatHandler);
-// ... mapowanie routes
+3. **Tymczasowe rozwiązania**
+   - Usunięto SupabaseVectorStore (problemy z buildem)
+   - package-lock.json dodany do .gitignore
+   - Error handling żeby app działała bez pamięci
+
+#### 🛠️ Użyte narzędzia:
+- **LangChain** - orchestracja AI workflows
+- **pgvector** - PostgreSQL extension dla wektorów
+- **OpenAI Embeddings** - tworzenie embeddings
+- **Railway logs** - debugging deployment
+- **Git** - version control z branch `railway-migration`
+
+#### 📊 Stan końcowy:
+- System pamięci zaimplementowany ale nie działa w produkcji
+- Kod gotowy, wymaga debugowania deployment
+- Dokumentacja zaktualizowana
+- Testy manualne pokazują że auth działa
+
+### 🔮 TODO na następną sesję:
+1. **Naprawić Railway deployment**
+   - Sprawdzić logi build process
+   - Może zmienić na Docker zamiast Nixpacks
+   - Alternatywa: wrócić do Vercel z memory API jako osobny serwis
+
+2. **Debug memory system**
+   - Dlaczego MemoryManager się nie inicjalizuje?
+   - Czy OpenAI API key jest poprawnie przekazywany?
+   - Test function calling w izolacji
+
+3. **UI dla konwersacji**
+   - Sidebar z listą konwersacji
+   - Integracja z istniejącym UI
+
+4. **Optymalizacja**
+   - Cache embeddings
+   - Batch operations dla memory save
+
+## 🚨 WAŻNE DLA KOLEJNYCH DEVELOPERÓW
+
+### Zasady pracy:
+1. **ZAWSZE pracuj na branchu `railway-migration`** (nie main!)
+2. **ZAWSZE aktualizuj CHANGELOG.md** po każdej sesji
+3. **ZAWSZE testuj lokalnie** przed deployem
+4. **ZAWSZE sprawdzaj logi Railway** po deploy
+
+### Jak debugować memory system:
+1. Sprawdź logi w Railway Dashboard
+2. Szukaj: `🧠 MemoryManager initialized`
+3. Sprawdź Admin Panel czy jest OpenAI key
+4. Test z prostą wiadomością: "Mój mąż Maciej jest programistą"
+
+### Struktura commitów:
+```
+🔧 Fix: [opis]
+✨ Feature: [opis]  
+📝 Docs: [opis]
+🐛 Bug: [opis]
+♻️ Refactor: [opis]
 ```
 
-### 📊 STATUS PO MIGRACJI:
-- ✅ Railway deployment live na https://talk2me.up.railway.app
-- ✅ Chat z AI działa (ale "trochę muli") 
-- ✅ Vercel nadal działa jako backup na https://tk2me.vercel.app
-- ⏳ Optymalizacje wstrzymane do po LangChain
-- 🔧 **Branch `railway-migration` jest teraz głównym branchem rozwojowym**
-- 🔄 Auto-deploy z GitHub przy każdym push na `railway-migration`
-
-### 🧠 PLAN IMPLEMENTACJI LANGCHAIN + MEMORY SYSTEM:
-
-#### FAZA 1: SETUP PGVECTOR (30 min)
-```sql
--- Enable pgvector w Supabase
-CREATE EXTENSION IF NOT EXISTS vector;
-
--- Tabela memories z embeddings
-CREATE TABLE memories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  conversation_id UUID REFERENCES conversations(id),
-  content TEXT NOT NULL,
-  summary TEXT NOT NULL,
-  embedding VECTOR(1536) NOT NULL,
-  importance INT DEFAULT 5,
-  memory_type TEXT CHECK (memory_type IN ('personal', 'relationship', 'preference', 'event')),
-  entities JSONB,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Index dla similarity search
-CREATE INDEX memories_embedding_idx ON memories 
-USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
-```
-
-#### FAZA 2: LANGCHAIN SETUP (45 min)
-```javascript
-// lib/memory-manager.js
-import { SupabaseVectorStore } from 'langchain/vectorstores/supabase';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-
-class MemoryManager {
-  async initialize() {
-    this.embeddings = new OpenAIEmbeddings();
-    this.vectorStore = new SupabaseVectorStore(this.embeddings, {
-      client: supabase,
-      tableName: 'memories',
-      queryName: 'match_memories'
-    });
-  }
-
-  async saveMemory(userId, content, importance = 5) {
-    // Create embedding & save to vector store
-  }
-
-  async getRelevantMemories(userId, query, limit = 5) {
-    // Similarity search in vector store
-  }
-}
-```
-
-#### FAZA 3: FUNCTION CALLING (30 min)
-```javascript
-// Funkcja do zapamiętywania ważnych informacji
-const functions = [{
-  name: "remember_this",
-  description: "Zapisz ważne informacje o użytkowniku",
-  parameters: {
-    type: "object",
-    properties: {
-      summary: { 
-        type: "string", 
-        description: "Krótkie podsumowanie do zapamiętania" 
-      },
-      importance: { 
-        type: "number", 
-        minimum: 1, 
-        maximum: 10 
-      },
-      type: { 
-        type: "string", 
-        enum: ["personal", "relationship", "preference", "event"] 
-      }
-    },
-    required: ["summary", "importance"]
-  }
-}];
-```
-
-#### FAZA 4: INTEGRACJA Z CHATEM (1h)
-- Pobieranie relevant memories przed odpowiedzią
-- Dodawanie kontekstu do system prompt
-- Obsługa function calls (remember_this)
-- Streaming z function calling
-
-#### FAZA 5: MEMORY RULES (30 min)
-```
-ZASADY ZAPAMIĘTYWANIA:
-
-1. ZAWSZE zapisuj gdy dowiadujesz się:
-   - Imion bliskich (partner, dzieci, rodzice)
-   - Ważnych dat (rocznice, urodziny)
-   - Traumatycznych wydarzeń
-   - Preferencji komunikacyjnych
-
-2. Priorytetyzacja (1-10):
-   - 9-10: Kluczowe relacje, traumy
-   - 7-8: Ważne preferencje
-   - 5-6: Codzienne fakty
-   
-3. NIE zapisuj:
-   - Danych poufnych (hasła, numery kart)
-   - Chwilowych stanów emocjonalnych
-```
-
-#### FAZA 6: TESTING (30 min)
-- Test zapisywania różnych typów pamięci
-- Test similarity search
-- Test personalizacji odpowiedzi
-- Performance z LangChain
-
-### 📦 NOWE DEPENDENCIES:
-```json
-{
-  "langchain": "^0.1.0",
-  "@langchain/openai": "^0.0.10",
-  "@langchain/community": "^0.0.10",
-  "pgvector": "^0.1.0"
-}
-```
-
-### 🎯 EFEKT KOŃCOWY:
-- **AI pamięta użytkownika** między sesjami
-- **Personalizowane odpowiedzi** bazujące na historii
-- **Automatyczne wyłapywanie** ważnych informacji
-- **Kontekst relacji** w każdej rozmowie
-
-### ⚠️ WAŻNE DECYZJE:
-- **Optymalizacje później** - najpierw funkcjonalności
-- **Nie używać PM2 cluster** - konflikt z LangChain memory
-- **Railway ma dość RAM** - 8GB powinno wystarczyć
-
-### 📝 NEXT STEPS:
-1. Implementacja pgvector schema
-2. MemoryManager class
-3. Integracja z chat.js
-4. Testy z prawdziwymi użytkownikami
+### Kontakt:
+- **Owner**: Natalia Rybarczyk
+- **GitHub**: https://github.com/Nat-thelifecreator/TALK2Me
+- **Production**: https://talk2me.up.railway.app
 
 ---
-**Status sesji**: Railway działa, plan LangChain gotowy
-**Do zrobienia**: Implementacja memory system po powrocie ze spaceru
-**Branch**: `railway-migration` (NIE main!)
-**Deploy**: Railway auto-deploy z brancha `railway-migration`
+**Ostatnia aktualizacja**: 14 stycznia 2025, 01:30
+**Sesja**: #10
+**Status**: 🔴 Deployment issues, memory system implemented but not working
