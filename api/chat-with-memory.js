@@ -227,9 +227,15 @@ export default async function handler(req, res) {
     if (!memoryManager && userId) {
       const openaiKey = configMap.openai_api_key
       if (openaiKey) {
-        memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
-        await memoryManager.initialize()
-        console.log('🧠 MemoryManager initialized for user:', userId)
+        try {
+          memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
+          await memoryManager.initialize()
+          console.log('🧠 MemoryManager initialized for user:', userId)
+        } catch (error) {
+          console.error('❌ Failed to initialize MemoryManager:', error.message)
+          // Continue without memory system
+          memoryManager = null
+        }
       } else {
         console.log('⚠️ No OpenAI API key found, MemoryManager not initialized')
       }
