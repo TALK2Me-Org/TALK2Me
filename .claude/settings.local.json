@@ -13,7 +13,9 @@
       "Bash(ls:*)",
       "WebFetch(domain:platform.openai.com)",
       "Bash(git checkout:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:talk2me.up.railway.app)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
