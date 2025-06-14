@@ -20,7 +20,7 @@ import configHandler from './api/admin/config.js';
 import debugHandler from './api/admin/debug.js';
 
 // Test handler
-import testMemoryHandler from './api/test-memory.js';
+// import testMemoryHandler from './api/test-memory.js'; // Commented out for now
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -69,7 +69,7 @@ app.put('/api/admin/config', configHandler);
 app.get('/api/admin/debug', debugHandler);
 
 // Test route for debugging
-app.post('/api/test-memory', testMemoryHandler);
+// app.post('/api/test-memory', testMemoryHandler); // Commented out for now
 
 // Health check endpoint
 app.get('/health', (req, res) => {
