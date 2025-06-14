@@ -71,13 +71,23 @@ app.get('/api/admin/debug', debugHandler);
 // Test route for debugging
 // app.post('/api/test-memory', testMemoryHandler); // Commented out for now
 
-// Health check endpoint
+// Health check endpoints
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.4.0' // Trigger rebuild
+    version: '1.4.1'
   });
+});
+
+// Root health check (niektóre platformy tego oczekują)
+app.get('/', (req, res, next) => {
+  // Jeśli to health check, odpowiedz
+  if (req.headers['user-agent'] && req.headers['user-agent'].includes('Railway')) {
+    return res.status(200).send('OK');
+  }
+  // W przeciwnym razie przekaż do static files
+  next();
 });
 
 // Catch all - serve index.html for client-side routing
