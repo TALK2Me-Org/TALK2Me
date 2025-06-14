@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 // Import all API handlers
-import chatHandler from './api/chat-with-memory.js'; // Using memory-enabled version
+import chatHandler from './api/chat.js'; // Temporarily reverting to basic version
 import historyHandler from './api/history.js';
 import favoritesHandler from './api/favorites.js';
 import conversationsHandler from './api/conversations.js';
@@ -105,7 +105,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 TALK2Me server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Server is ready to accept connections`);
 });
