@@ -315,6 +315,7 @@ export default async function handler(req, res) {
           if (userId && memoryManager) {
             chatOptions.functions = [MEMORY_FUNCTION]
             chatOptions.function_call = 'auto'
+            console.log('🔧 Function calling enabled for memory system')
           }
 
           stream = await openai.chat.completions.create(chatOptions)
@@ -332,6 +333,7 @@ export default async function handler(req, res) {
             if (userId && memoryManager) {
               chatOptions.functions = [MEMORY_FUNCTION]
               chatOptions.function_call = 'auto'
+              console.log('🔧 Function calling enabled for memory system (fallback)')
             }
 
             stream = await openai.chat.completions.create(chatOptions)
@@ -352,6 +354,7 @@ export default async function handler(req, res) {
           if (delta?.function_call) {
             if (delta.function_call.name) {
               functionName = delta.function_call.name
+              console.log('🎯 Function call detected:', functionName)
             }
             if (delta.function_call.arguments) {
               functionArgs += delta.function_call.arguments
