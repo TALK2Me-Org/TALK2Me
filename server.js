@@ -73,7 +73,11 @@ app.post('/api/test-memory', testMemoryHandler);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    version: '1.4.0' // Trigger rebuild
+  });
 });
 
 // Catch all - serve index.html for client-side routing
