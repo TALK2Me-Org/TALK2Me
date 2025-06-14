@@ -112,8 +112,11 @@ export default async function handler(req, res) {
     
     // Sprawdź czy user jest zalogowany
     let userId = null
+    console.log('🔍 Auth header:', authHeader ? 'Present' : 'Missing')
+    
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1]
+      console.log('🔐 Token received:', token.substring(0, 20) + '...')
       
       // Weryfikuj JWT token
       try {
@@ -130,10 +133,13 @@ export default async function handler(req, res) {
         const jwt = await import('jsonwebtoken')
         const decoded = jwt.default.verify(token, jwtSecret)
         userId = decoded.id
+        console.log('✅ Token verified, userId:', userId)
       } catch (error) {
-        console.log('Invalid token:', error.message)
+        console.log('❌ Invalid token:', error.message)
         // Kontynuuj jako gość jeśli token nieprawidłowy
       }
+    } else {
+      console.log('⚠️ No auth header or invalid format')
     }
 
     // Jeśli brak userId, nie możemy obsługiwać konwersacji ani pamięci

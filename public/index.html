@@ -1747,6 +1747,7 @@
                 if (token) {
                     headers['Authorization'] = `Bearer ${token}`;
                     console.log('Wysyłam z autoryzacją');
+                    console.log('🔐 Token:', token.substring(0, 20) + '...');
                 } else {
                     console.log('Wysyłam bez autoryzacji - jako gość');
                 }
