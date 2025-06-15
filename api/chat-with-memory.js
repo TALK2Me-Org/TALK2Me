@@ -31,6 +31,7 @@ export const promptCache = {
 
 // Singleton instance of MemoryManager
 let memoryManager = null
+let memorySystemEnabled = false
 
 // Function definition for remember_this
 const MEMORY_FUNCTION = {
@@ -241,18 +242,22 @@ export default async function handler(req, res) {
     // Initialize MemoryManager if needed
     if (!memoryManager && userId) {
       const openaiKey = configMap.openai_api_key
-      if (openaiKey) {
-        try {
-          memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
-          await memoryManager.initialize()
-          console.log('🧠 MemoryManager initialized for user:', userId)
-        } catch (error) {
-          console.error('❌ Failed to initialize MemoryManager:', error.message)
-          // Continue without memory system
-          memoryManager = null
+      try {
+        // Create MemoryManager instance (will work even without OpenAI key)
+        memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
+        await memoryManager.initialize()
+        memorySystemEnabled = memoryManager.enabled
+        
+        if (memorySystemEnabled) {
+          console.log('✅ MemoryManager initialized with full features for user:', userId)
+        } else {
+          console.log('⚠️ MemoryManager initialized without memory features (no OpenAI key)')
         }
-      } else {
-        console.log('⚠️ No OpenAI API key found, MemoryManager not initialized')
+      } catch (error) {
+        console.error('❌ Failed to initialize MemoryManager:', error.message)
+        // Continue without memory system
+        memoryManager = null
+        memorySystemEnabled = false
       }
     } else {
       console.log('🔍 MemoryManager status:', {
