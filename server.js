@@ -71,22 +71,39 @@ app.get('/api/admin/debug', debugHandler);
 // Test route for debugging
 // app.post('/api/test-memory', testMemoryHandler); // Commented out for now
 
-// Health check endpoints
+// Health check endpoints - Railway compatibility
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.status(200).json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    version: '1.4.1'
+    version: '1.5.0',
+    service: 'talk2me',
+    uptime: process.uptime()
   });
 });
 
-// Root health check (niektóre platformy tego oczekują)
+// Alternative health check endpoints
+app.get('/healthz', (req, res) => res.status(200).send('OK'));
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'healthy' }));
+app.get('/api/healthz', (req, res) => res.status(200).send('OK'));
+app.get('/_health', (req, res) => res.status(200).send('OK'));
+
+// Root endpoint - handle both health checks and static files
 app.get('/', (req, res, next) => {
-  // Jeśli to health check, odpowiedz
-  if (req.headers['user-agent'] && req.headers['user-agent'].includes('Railway')) {
+  // Railway health check
+  if (req.headers['user-agent'] && 
+      (req.headers['user-agent'].includes('Railway') || 
+       req.headers['user-agent'].includes('GoogleHC') ||
+       req.headers['user-agent'].includes('kube-probe'))) {
     return res.status(200).send('OK');
   }
-  // W przeciwnym razie przekaż do static files
+  
+  // Health check query parameter
+  if (req.query.health || req.query.healthcheck) {
+    return res.status(200).json({ status: 'ok', service: 'talk2me' });
+  }
+  
+  // Otherwise serve static files
   next();
 });
 
@@ -104,9 +121,37 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
+// Start server with better error handling
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 TALK2Me server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`✅ Server is ready to accept connections`);
+  console.log(`🏥 Health check available at: http://0.0.0.0:${PORT}/health`);
 });
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  }
+  process.exit(1);
+});
+
+// Graceful shutdown
+const gracefulShutdown = () => {
+  console.log('📴 Received shutdown signal, closing server gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+  
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    console.error('❌ Force closing server');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
