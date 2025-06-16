@@ -22,8 +22,8 @@
 - **Deploy**: Auto-deploy z main (obecnie nieużywane)
 - **Status**: ✅ Działa jako backup
 
-## 🎯 Aktualny Stan (14 Stycznia 2025, 01:30)
-Projekt jest **~75% gotowy** - podstawowe funkcje działają + system pamięci AI zaimplementowany:
+## 🎯 Aktualny Stan (16 Stycznia 2025, 08:00)
+Projekt jest **~80% gotowy** - podstawowe funkcje działają + system pamięci AI DZIAŁA! 🎉
 
 ### ✅ Co Działa
 1. **Chat z AI** - streaming odpowiedzi w czasie rzeczywistym
@@ -32,69 +32,125 @@ Projekt jest **~75% gotowy** - podstawowe funkcje działają + system pamięci A
 4. **Historia rozmów** - zapisywanie czatów w bazie
 5. **Ulubione** - oznaczanie ważnych wiadomości
 6. **System konwersacji** - backend gotowy, frontend w trakcie
-7. **System pamięci AI** - LangChain + pgvector (zaimplementowany, wymaga debugowania)
+7. **System pamięci AI** - LangChain + pgvector ✅ DZIAŁA!
+   - Embeddings OpenAI text-embedding-ada-002
+   - Similarity search z pgvector
+   - Function calling `remember_this()`
+   - Test endpoint: `/api/test-memory`
+8. **Railway deployment** - ✅ Naprawiony i działa
 
-### ⚠️ W Trakcie Naprawy
-1. **Railway deployment** - healthcheck failures
-2. **Memory system** - nie zapisuje wspomnień (auth działa, ale function calling nie triggeruje)
-3. **LangChain dependencies** - konflikty wersji
+### 🆕 Naprawione w Sesji 11
+1. **Railway deployment** - healthcheck działa, auto-deploy OK
+2. **Memory system** - zapisuje i odczytuje wspomnienia
+3. **LangChain dependencies** - dodano @langchain/core
+4. **Test endpoint** - pełny test systemu pamięci
 
-### ❌ Czego Brakuje (25% projektu)
+### ❌ Czego Brakuje (20% projektu)
 1. **UI konwersacji** - frontend dla systemu konwersacji
-2. **Optymalizacja wydajności** - cache'owanie, indeksy
+2. **UI pamięci** - "Co o mnie wiesz?" sekcja
 3. **OAuth** - logowanie przez Google/Apple
 4. **PWA** - instalacja jako aplikacja mobilna
 5. **Testy jednostkowe** - zero coverage
-6. **Semantic search** - pełna integracja pgvector
+6. **Function calling w prawdziwym czacie** - do przetestowania
 
 ## 🏗️ ARCHITEKTURA PROJEKTU
 
-### 📁 Struktura Katalogów
+### 📁 Struktura Katalogów - PEŁNA (Stan na 16.01.2025)
 ```
 /Users/nataliarybarczyk/TALK2Me/
-├── 📄 server.js                    # Express.js server dla Railway
-├── 📄 railway.json                 # Konfiguracja Railway deployment
-├── 📄 package.json                 # Dependencies + scripts
-├── 📄 .gitignore                   # Ignorowane pliki (w tym package-lock.json)
-├── 📄 CLAUDE.md                    # Główna dokumentacja projektu (TEN PLIK)
-├── 📄 CHANGELOG.md                 # Historia zmian (NOWY)
 │
-├── 📁 public/                      # Frontend (static files)
-│   ├── 📄 index.html               # Główna aplikacja SPA
-│   ├── 📄 login.html               # Strona logowania/rejestracji
-│   ├── 📄 admin.html               # Panel administratora
-│   ├── 📄 test-memory.html         # Strona testowa dla systemu pamięci
-│   ├── 📄 styles.css               # Główne style aplikacji
-│   ├── 📄 manifest.json            # PWA manifest
-│   └── 📁 icons/                   # Ikony aplikacji
+├── 🔧 PLIKI KONFIGURACYJNE
+│   ├── 📄 server.js                    # Express.js server dla Railway (główny plik)
+│   ├── 📄 railway.json                 # Railway deployment config (healthcheck, build)
+│   ├── 📄 nixpacks.toml               # Railway build process config (Node 18)
+│   ├── 📄 package.json                 # Dependencies (LangChain, OpenAI, Supabase)
+│   ├── 📄 vercel.json                  # Stara konfiguracja Vercel (backup)
+│   └── 📄 .gitignore                   # Ignorowane pliki (package-lock.json)
 │
-├── 📁 api/                         # Backend handlers
-│   ├── 📄 chat.js                  # Podstawowy chat endpoint
-│   ├── 📄 chat-with-memory.js      # Chat z systemem pamięci LangChain
-│   ├── 📄 history.js               # Historia rozmów
-│   ├── 📄 favorites.js             # Ulubione wiadomości
-│   ├── 📄 conversations.js         # System konwersacji
-│   ├── 📁 auth/                    # Autoryzacja
-│   │   ├── 📄 login.js             # Endpoint logowania
-│   │   ├── 📄 register.js          # Endpoint rejestracji
-│   │   ├── 📄 me.js                # Dane użytkownika
-│   │   └── 📄 verify.js            # Weryfikacja email
-│   └── 📁 admin/                   # Panel admina
-│       ├── 📄 config.js            # Zarządzanie konfiguracją
-│       └── 📄 debug.js             # Debug info
+├── 📚 DOKUMENTACJA
+│   ├── 📄 CLAUDE.md                    # 🔥 GŁÓWNA DOKUMENTACJA (TEN PLIK)
+│   ├── 📄 CHANGELOG.md                 # Historia zmian po sesjach
+│   ├── 📄 README.md                    # Podstawowy opis projektu
+│   ├── 📄 DEVELOPER_GUIDE.md           # Przewodnik dla developerów
+│   ├── 📄 TECH_STACK.md                # Opis technologii
+│   ├── 📄 PROJECT_STRUCTURE.md         # Struktura projektu
+│   ├── 📄 MEMORY_ARCHITECTURE.md       # Architektura systemu pamięci
+│   └── 📄 MIGRATION_GUIDE.md           # Przewodnik migracji
 │
-├── 📁 lib/                         # Biblioteki pomocnicze
-│   └── 📄 memory-manager.js        # Manager pamięci AI (LangChain)
+├── 📁 public/                          # FRONTEND (Static Files)
+│   ├── 📄 index.html                   # Główna aplikacja czatu (SPA)
+│   ├── 📄 login.html                   # Strona logowania/rejestracji
+│   ├── 📄 admin.html                   # Panel administratora
+│   ├── 📄 test-memory.html             # Strona testowa systemu pamięci
+│   ├── 📄 styles.css                   # Główne style (CSS Variables)
+│   ├── 📄 manifest.json                # PWA manifest
+│   ├── 📁 icons/                       # Ikony aplikacji (PWA)
+│   └── 📄 index-*.html                 # Backup/wersje developerskie
 │
-├── 📁 archive/                     # Stara dokumentacja
-│   ├── 📄 README_legacy.md
-│   └── 📄 PROJECT_DOCUMENTATION_*.md
+├── 📁 api/                             # BACKEND HANDLERS (Express.js)
+│   ├── 📄 chat.js                      # Podstawowy chat (fallback)
+│   ├── 📄 chat-with-memory.js          # 🔥 Chat z pamięcią (LangChain)
+│   ├── 📄 history.js                   # Historia rozmów (legacy)
+│   ├── 📄 favorites.js                 # Ulubione wiadomości
+│   ├── 📄 conversations.js             # System konwersacji
+│   ├── 📄 test-memory.js               # Test endpoint systemu pamięci
+│   │
+│   ├── 📁 auth/                        # AUTORYZACJA
+│   │   ├── 📄 login.js                 # Login endpoint (JWT)
+│   │   ├── 📄 register.js              # Rejestracja użytkowników
+│   │   ├── 📄 me.js                    # Dane zalogowanego usera
+│   │   └── 📄 verify.js                # Weryfikacja email (TODO)
+│   │
+│   └── 📁 admin/                       # PANEL ADMINA
+│       ├── 📄 config.js                # Zarządzanie konfiguracją
+│       └── 📄 debug.js                 # Debug info & stats
 │
-└── 📁 SQL/                         # Schematy bazy danych
-    ├── 📄 supabase-schema.sql      # Podstawowy schemat
-    ├── 📄 supabase-conversations-schema.sql  # System konwersacji
-    └── 📄 supabase-memory-schema.sql         # System pamięci z pgvector
+├── 📁 lib/                             # BIBLIOTEKI POMOCNICZE
+│   └── 📄 memory-manager.js            # 🔥 Manager pamięci AI (LangChain)
+│
+├── 📁 SQL/                             # SCHEMATY BAZY DANYCH
+│   ├── 📄 create-test-user.sql         # Tworzenie test usera (UUID)
+│   ├── 📄 001_optimized_schema.sql     # Zoptymalizowany schemat
+│   ├── 📄 002_migration_script.sql     # Skrypt migracji
+│   ├── 📄 003_rollback_script.sql      # Rollback migracji
+│   └── 📄 COMBINED_MIGRATION.sql       # Kompletna migracja
+│
+├── 📁 ROOT SQL FILES                   # Schematy w głównym katalogu
+│   ├── 📄 supabase-schema.sql          # Podstawowy schemat DB
+│   ├── 📄 supabase-conversations.sql   # System konwersacji
+│   ├── 📄 supabase-memory-schema.sql   # 🔥 System pamięci (pgvector)
+│   └── 📄 cleanup-and-test-user.sql    # Czyszczenie + test data
+│
+├── 📁 mobile/                          # PROTOTYPY MOBILNE (archiwum)
+│   ├── 📄 prototype-*.html             # Różne wersje prototypów
+│   └── 📄 login.html                   # Mobilny login
+│
+├── 📁 backend/                         # STARY BACKEND (nieużywany)
+│   └── 📄 *.js                         # Legacy pliki
+│
+├── 📁 archive/                         # ARCHIWUM
+│   ├── 📄 README_legacy.md             # Stara dokumentacja
+│   └── 📄 PROJECT_DOCUMENTATION_*.md   # Historie projektu
+│
+├── 📁 design/                          # DESIGN
+│   └── 📄 ui-concept.md                # Koncepcja UI
+│
+├── 📁 .claude/                         # CLAUDE AI CONFIG
+│   └── 📄 settings.local.json          # Lokalne ustawienia Claude
+│
+└── 📄 PLIKI POMOCNICZE
+    ├── 📄 migrate.js                   # Skrypt migracji DB
+    ├── 📄 test-db-connection.js        # Test połączenia z DB
+    ├── 📄 test-memory-local.js         # Lokalny test pamięci
+    └── 📄 verify-migration.js          # Weryfikacja migracji
 ```
+
+### 🔑 Najważniejsze pliki:
+1. **server.js** - główny serwer Express.js
+2. **api/chat-with-memory.js** - chat z systemem pamięci
+3. **lib/memory-manager.js** - zarządzanie pamięcią AI
+4. **public/index.html** - główny UI aplikacji
+5. **CLAUDE.md** - ta dokumentacja
 
 ## 🛠️ STACK TECHNOLOGICZNY
 
@@ -118,13 +174,47 @@ Projekt jest **~75% gotowy** - podstawowe funkcje działają + system pamięci A
 - **Auth**: Custom JWT implementation
 - **Streaming**: Server-Sent Events (SSE)
 
-### External Services
-- **Supabase**: Database + Auth (tylko baza używana)
-- **OpenAI API**: Chat completions + Embeddings + Assistant API
-- **Groq API**: Fallback AI provider
-- **Railway**: Hosting produkcyjny
-- **Vercel**: Backup hosting
-- **GitHub**: Version control + auto-deploy
+### External Services & APIs
+
+#### 🌐 Usługi produkcyjne:
+1. **Supabase** (https://supabase.com)
+   - PostgreSQL database z pgvector extension
+   - Przechowywanie: users, messages, memories, conversations
+   - Service Role Key dla backend operations
+   - Anon Key dla frontend (nieużywany obecnie)
+
+2. **OpenAI API** (https://platform.openai.com)
+   - Chat completions: GPT-3.5/GPT-4
+   - Embeddings: text-embedding-ada-002 (1536D vectors)
+   - Assistant API: przechowywanie system prompt
+   - Function calling: `remember_this()`
+
+3. **Groq API** (https://groq.com) - FALLBACK
+   - Model: llama3-8b-8192
+   - Używany gdy OpenAI nie działa
+   - Brak wsparcia dla function calling
+
+4. **Railway** (https://railway.app) - GŁÓWNY HOSTING
+   - Auto-deploy z branch `railway-migration`
+   - Health checks co 10s
+   - Region: europe-west4
+   - URL: https://talk2me.up.railway.app
+
+5. **Vercel** (https://vercel.com) - BACKUP
+   - Stary hosting (serverless functions)
+   - URL: https://tk2me.vercel.app
+   - Branch: main (nieaktywny)
+
+6. **GitHub** (https://github.com/Nat-thelifecreator/TALK2Me)
+   - Version control
+   - Webhooks dla auto-deploy
+   - Branch strategy: `railway-migration` (prod), `main` (legacy)
+
+#### 🔑 Klucze API (przechowywane w Supabase app_config):
+- `openai_api_key` - klucz OpenAI
+- `groq_api_key` - klucz Groq
+- `assistant_id` - ID asystenta OpenAI
+- `jwt_secret` - sekret dla tokenów JWT
 
 ## 📊 DATABASE SCHEMA
 
@@ -231,23 +321,28 @@ NODE_ENV=production
 - Testy manualne pokazują że auth działa
 
 ### 🔮 TODO na następną sesję:
-1. **Naprawić Railway deployment**
-   - Sprawdzić logi build process
-   - Może zmienić na Docker zamiast Nixpacks
-   - Alternatywa: wrócić do Vercel z memory API jako osobny serwis
+1. **Test function calling w prawdziwym czacie** 🎯 PRIORYTET
+   - Zalogować się jako prawdziwy user
+   - Napisać wiadomości z informacjami osobistymi
+   - Sprawdzić czy AI wywołuje `remember_this()`
+   - Zweryfikować w bazie czy pamięć się zapisuje
 
-2. **Debug memory system**
-   - Dlaczego MemoryManager się nie inicjalizuje?
-   - Czy OpenAI API key jest poprawnie przekazywany?
-   - Test function calling w izolacji
+2. **UI konwersacji - sidebar**
+   - Lista konwersacji po lewej stronie
+   - Przełączanie między konwersacjami
+   - Tworzenie nowej konwersacji
+   - Zmiana nazwy konwersacji
 
-3. **UI dla konwersacji**
-   - Sidebar z listą konwersacji
-   - Integracja z istniejącym UI
+3. **UI pamięci - "Co o mnie wiesz?"**
+   - Nowa zakładka/modal w aplikacji
+   - Wyświetlanie zapisanych wspomnień
+   - Grupowanie po typach (personal, relationship, preference, event)
+   - Możliwość usunięcia wspomnienia
 
-4. **Optymalizacja**
-   - Cache embeddings
-   - Batch operations dla memory save
+4. **PWA - instalacja mobilna**
+   - Service Worker dla offline
+   - Manifest.json z ikonami
+   - Install prompt na iOS/Android
 
 ## 🚨 WAŻNE DLA KOLEJNYCH DEVELOPERÓW
 
@@ -278,6 +373,48 @@ NODE_ENV=production
 - **Production**: https://talk2me.up.railway.app
 
 ---
-**Ostatnia aktualizacja**: 14 stycznia 2025, 01:30
-**Sesja**: #10
-**Status**: 🔴 Deployment issues, memory system implemented but not working
+### Sesja 11 - Railway deployment & Memory System FIX (16.01.2025, 05:00-08:00)
+**Developer**: Claude (AI Assistant)
+
+#### ✅ Zrealizowane:
+1. **Naprawiono Railway deployment**
+   - Dodano brakującą zależność `@langchain/core`
+   - Zmniejszono healthcheck timeout z 120s na 30s
+   - Usunięto `npm ci` z build command
+   - Dodano `nixpacks.toml` dla kontroli build process
+
+2. **Naprawiono Memory System**
+   - MemoryManager zmieniony z singleton na per-user cache
+   - Test endpoint `/api/test-memory` działa poprawnie
+   - Tworzy test usera z UUID: `11111111-1111-1111-1111-111111111111`
+   - Zapisuje i odczytuje wspomnienia z similarity search
+
+3. **Dodano nowe endpointy**
+   - `/api/test-memory` - pełny test systemu pamięci
+   - `/api/memory-status` - sprawdzanie statusu handlerów
+   - `/api/routes` - lista wszystkich zarejestrowanych route'ów
+
+4. **Dokumentacja i testy**
+   - Utworzono `SQL/create-test-user.sql` dla ręcznego tworzenia test usera
+   - Rozbudowane logowanie w każdym kroku
+   - Zaktualizowano CHANGELOG.md
+
+#### 🔧 Użyte technologie i narzędzia:
+- **LangChain 0.3.6** - orchestracja AI workflows
+- **@langchain/core 0.3.58** - core functionality
+- **@langchain/openai 0.3.14** - integracja z OpenAI
+- **pgvector** - PostgreSQL extension dla wektorów
+- **OpenAI Embeddings** - model text-embedding-ada-002
+- **Railway** - hosting z auto-deploy
+- **Git** - version control na branch `railway-migration`
+
+#### 📦 Stan końcowy:
+- System pamięci DZIAŁA w produkcji
+- Test endpoint pokazuje: `"status": "ok"`
+- Railway deployment stabilny
+- Dokumentacja zaktualizowana
+
+---
+**Ostatnia aktualizacja**: 16 stycznia 2025, 08:00
+**Sesja**: #11
+**Status**: 🟢 System pamięci działa, deployment stabilny

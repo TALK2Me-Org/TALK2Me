@@ -1,3 +1,16 @@
+/**
+ * TALK2Me Server - Express.js server dla Railway deployment
+ * 
+ * Główne funkcjonalności:
+ * - Serwowanie static files (SPA)
+ * - API endpoints dla czatu, auth, admin
+ * - Health checks dla Railway
+ * - Dynamiczne ładowanie handlerów z fallback
+ * 
+ * @author Claude (AI Assistant) - Sesja 9-11
+ * @date 12-16.01.2025
+ * @deployment Railway (https://talk2me.up.railway.app)
+ */
 import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';

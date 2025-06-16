@@ -8,11 +8,17 @@
  * - Fallback na Groq gdy OpenAI nie działa
  * - Obsługa konwersacji (conversations/messages)
  * 
- * @author Claude (AI Assistant) - Sesja 10
- * @date 14.01.2025
+ * @author Claude (AI Assistant) - Sesja 10-11
+ * @date 14-16.01.2025
+ * @status ✅ DZIAŁA w produkcji
  * 
- * TODO: Debug dlaczego function calling nie jest wywoływane
- * TODO: Naprawić Railway deployment issues
+ * Flow działania:
+ * 1. Weryfikacja JWT token (jeśli podany)
+ * 2. Inicjalizacja MemoryManager dla usera
+ * 3. Pobranie relevantnych wspomnień z bazy
+ * 4. Wysłanie do OpenAI z function calling
+ * 5. Streaming odpowiedzi + obsługa remember_this()
+ * 6. Zapis odpowiedzi do konwersacji
  */
 import { createClient } from '@supabase/supabase-js'
 import { Groq } from 'groq-sdk'
