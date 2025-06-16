@@ -28,7 +28,7 @@ const __dirname = dirname(__filename);
 // Import handlers with error handling
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
-let configHandler, debugHandler;
+let configHandler, debugHandler, testMemoryHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -73,6 +73,14 @@ try {
   
   debugHandler = (await import('./api/admin/debug.js')).default;
   console.log('✅ Loaded: debug handler');
+  
+  // Test handlers
+  try {
+    testMemoryHandler = (await import('./api/test-memory.js')).default;
+    console.log('✅ Loaded: test-memory handler');
+  } catch (e) {
+    console.log('⚠️ Could not load test-memory handler:', e.message);
+  }
   
   console.log('✅ All handlers loaded successfully');
 } catch (error) {
@@ -180,6 +188,9 @@ if (configHandler) {
   app.put('/api/admin/config', configHandler);
 }
 if (debugHandler) app.get('/api/admin/debug', debugHandler);
+
+// Test endpoints
+if (testMemoryHandler) app.get('/api/test-memory', testMemoryHandler);
 
 // Root endpoint - handle both health checks and static files
 app.get('/', (req, res, next) => {

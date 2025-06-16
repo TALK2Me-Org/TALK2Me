@@ -21,7 +21,9 @@
       "Bash(npm run dev:*)",
       "Bash(node:*)",
       "Bash(git rm:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(npm run test:db:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

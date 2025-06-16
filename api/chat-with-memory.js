@@ -29,9 +29,9 @@ export const promptCache = {
   source: 'none'
 }
 
-// Singleton instance of MemoryManager
-let memoryManager = null
-let memorySystemEnabled = false
+// MemoryManager instances - not using singleton anymore to avoid initialization issues
+// Each request will create its own instance if needed
+const memoryManagerCache = new Map() // userId -> MemoryManager
 
 // Function definition for remember_this
 const MEMORY_FUNCTION = {
@@ -239,32 +239,53 @@ export default async function handler(req, res) {
 
     const activeModel = configMap.active_model || 'openai'
     
-    // Initialize MemoryManager if needed
-    if (!memoryManager && userId) {
+    // Initialize MemoryManager for this user if needed
+    let memoryManager = null
+    let memorySystemEnabled = false
+    
+    if (userId) {
+      // Check cache first
+      memoryManager = memoryManagerCache.get(userId)
+      
+      // Create new instance if not in cache or if OpenAI key changed
       const openaiKey = configMap.openai_api_key
-      try {
-        // Create MemoryManager instance (will work even without OpenAI key)
-        memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
-        await memoryManager.initialize()
-        memorySystemEnabled = memoryManager.enabled
+      if (!memoryManager || memoryManager.openaiKey !== openaiKey) {
+        try {
+          console.log('🧠 Creating new MemoryManager for user:', userId)
+          // Create MemoryManager instance (will work even without OpenAI key)
+          memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
+          await memoryManager.initialize()
+          memorySystemEnabled = memoryManager.enabled
+          
+          // Cache the instance
+          memoryManagerCache.set(userId, memoryManager)
+          
+          // Limit cache size to prevent memory leaks
+          if (memoryManagerCache.size > 100) {
+            const firstKey = memoryManagerCache.keys().next().value
+            memoryManagerCache.delete(firstKey)
+          }
         
-        if (memorySystemEnabled) {
-          console.log('✅ MemoryManager initialized with full features for user:', userId)
-        } else {
-          console.log('⚠️ MemoryManager initialized without memory features (no OpenAI key)')
+          if (memorySystemEnabled) {
+            console.log('✅ MemoryManager initialized with full features for user:', userId)
+          } else {
+            console.log('⚠️ MemoryManager initialized without memory features (no OpenAI key)')
+          }
+        } catch (error) {
+          console.error('❌ Failed to initialize MemoryManager:', error.message)
+          console.error('Stack trace:', error.stack)
+          // Remove from cache so it can be retried next time
+          memoryManagerCache.delete(userId)
+          // Continue without memory system
+          memoryManager = null
+          memorySystemEnabled = false
         }
-      } catch (error) {
-        console.error('❌ Failed to initialize MemoryManager:', error.message)
-        // Continue without memory system
-        memoryManager = null
-        memorySystemEnabled = false
+      } else {
+        memorySystemEnabled = memoryManager?.enabled || false
+        console.log('📦 Using cached MemoryManager for user:', userId, 'enabled:', memorySystemEnabled)
       }
     } else {
-      console.log('🔍 MemoryManager status:', {
-        exists: !!memoryManager,
-        userId: userId,
-        reason: !memoryManager && !userId ? 'No user logged in' : 'Already initialized'
-      })
+      console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
     // Pobierz relevantne wspomnienia dla użytkownika
@@ -352,10 +373,20 @@ export default async function handler(req, res) {
           }
 
           // Dodaj function calling tylko dla zalogowanych użytkowników
-          if (userId && memoryManager) {
+          if (userId && memoryManager && memorySystemEnabled) {
             chatOptions.functions = [MEMORY_FUNCTION]
             chatOptions.function_call = 'auto'
-            console.log('🔧 Function calling enabled for memory system')
+            console.log('🔧 Function calling enabled for memory system', {
+              model: openaiModel,
+              userId: userId,
+              memoryEnabled: memorySystemEnabled
+            })
+          } else {
+            console.log('⚠️ Function calling disabled:', {
+              userId: !!userId,
+              memoryManager: !!memoryManager,
+              memorySystemEnabled
+            })
           }
 
           stream = await openai.chat.completions.create(chatOptions)
@@ -370,10 +401,14 @@ export default async function handler(req, res) {
               stream: true
             }
 
-            if (userId && memoryManager) {
+            if (userId && memoryManager && memorySystemEnabled) {
               chatOptions.functions = [MEMORY_FUNCTION]
               chatOptions.function_call = 'auto'
-              console.log('🔧 Function calling enabled for memory system (fallback)')
+              console.log('🔧 Function calling enabled for memory system (fallback)', {
+                model: 'gpt-3.5-turbo',
+                userId: userId,
+                memoryEnabled: memorySystemEnabled
+              })
             }
 
             stream = await openai.chat.completions.create(chatOptions)
@@ -389,6 +424,11 @@ export default async function handler(req, res) {
 
         for await (const chunk of stream) {
           const delta = chunk.choices[0]?.delta
+          
+          // Debug chunk
+          if (delta?.function_call || chunk.choices[0]?.finish_reason === 'function_call') {
+            console.log('📦 Chunk with function call:', JSON.stringify(chunk, null, 2))
+          }
           
           // Handle function calls
           if (delta?.function_call) {
