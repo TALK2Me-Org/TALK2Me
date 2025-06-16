@@ -53,7 +53,8 @@ export default async function handler(req, res) {
         .insert({
           id: TEST_USER_ID,
           email: 'test@talk2me.app',
-          password_hash: '$2a$10$PJcPrkUeFBGXHvjrfRFQa.vFMOVxdcH8K1CS2lZFlGqmoH3Sq0wl.', // password: test123
+          password: '$2a$10$PJcPrkUeFBGXHvjrfRFQa.vFMOVxdcH8K1CS2lZFlGqmoH3Sq0wl.', // password: test123
+          name: 'Test User',
           created_at: new Date().toISOString()
         })
         .select()
@@ -62,7 +63,9 @@ export default async function handler(req, res) {
       if (createError) {
         testResults.steps[testResults.steps.length - 1].status = 'failed'
         testResults.steps[testResults.steps.length - 1].error = createError.message
+        testResults.steps[testResults.steps.length - 1].note = 'Run SQL/create-test-user.sql in Supabase to create test user manually'
         console.error('❌ Failed to create test user:', createError)
+        console.log('💡 You can create the test user manually using SQL/create-test-user.sql')
       } else {
         testResults.steps[testResults.steps.length - 1].status = 'success'
         testResults.steps[testResults.steps.length - 1].result = 'Test user created'
@@ -72,7 +75,14 @@ export default async function handler(req, res) {
       testResults.steps[testResults.steps.length - 1].status = 'success'
       testResults.steps[testResults.steps.length - 1].result = 'Test user exists'
       console.log('✅ Test user already exists')
+    } else if (userCheckError) {
+      testResults.steps[testResults.steps.length - 1].status = 'failed'
+      testResults.steps[testResults.steps.length - 1].error = userCheckError.message
+      console.error('❌ Failed to check test user:', userCheckError)
     }
+    
+    // Check if we should continue despite user creation failure
+    const userStepFailed = testResults.steps.find(s => s.step === 'Check test user')?.status === 'failed'
     
     // Step 2: Get OpenAI key from config
     testResults.steps.push({ step: 'Get OpenAI API key', status: 'running' })
@@ -115,7 +125,7 @@ export default async function handler(req, res) {
     
     // Step 4: Test saving a memory
     let saveResult = null
-    if (memoryManager.enabled) {
+    if (memoryManager.enabled && !userStepFailed) {
       testResults.steps.push({ step: 'Save test memory', status: 'running' })
       console.log('💾 Testing memory save...')
       
@@ -146,13 +156,13 @@ export default async function handler(req, res) {
       testResults.steps.push({ 
         step: 'Save test memory', 
         status: 'skipped',
-        reason: 'Memory system disabled (no OpenAI key)'
+        reason: userStepFailed ? 'Test user not available' : 'Memory system disabled (no OpenAI key)'
       })
     }
     
     // Step 5: Test retrieving memories
     let memories = []
-    if (memoryManager.enabled) {
+    if (memoryManager.enabled && !userStepFailed) {
       testResults.steps.push({ step: 'Retrieve memories', status: 'running' })
       console.log('🔍 Testing memory retrieval...')
       
@@ -179,7 +189,7 @@ export default async function handler(req, res) {
       testResults.steps.push({ 
         step: 'Retrieve memories', 
         status: 'skipped',
-        reason: 'Memory system disabled (no OpenAI key)'
+        reason: userStepFailed ? 'Test user not available' : 'Memory system disabled (no OpenAI key)'
       })
     }
     
