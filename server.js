@@ -136,7 +136,7 @@ app.get('/api/health', (req, res) => res.status(200).json({ status: 'healthy' })
 app.get('/api/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/_health', (req, res) => res.status(200).send('OK'));
 
-// Test endpoint
+// Test endpoints
 app.get('/api/test', (req, res) => {
   res.json({ 
     message: 'TALK2Me API is running',
@@ -144,8 +144,35 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Simple memory test endpoint
+app.get('/api/memory-status', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    message: 'Memory endpoint reachable',
+    timestamp: new Date().toISOString(),
+    handlers: {
+      testMemory: !!testMemoryHandler,
+      chat: !!chatHandler
+    }
+  });
+});
+
 // Serve static files from public directory
 app.use(express.static(join(__dirname, 'public')));
+
+// Debug route to see all registered routes
+app.get('/api/routes', (req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      routes.push({
+        path: middleware.route.path,
+        methods: Object.keys(middleware.route.methods)
+      });
+    }
+  });
+  res.json({ routes });
+});
 
 // API Routes - only add if handler loaded successfully
 if (chatHandler) {
@@ -190,7 +217,20 @@ if (configHandler) {
 if (debugHandler) app.get('/api/admin/debug', debugHandler);
 
 // Test endpoints
-if (testMemoryHandler) app.get('/api/test-memory', testMemoryHandler);
+if (testMemoryHandler) {
+  app.get('/api/test-memory', testMemoryHandler);
+  console.log('✅ Registered route: GET /api/test-memory');
+} else {
+  // Fallback if handler didn't load
+  app.get('/api/test-memory', (req, res) => {
+    res.json({ 
+      status: 'error', 
+      message: 'Test memory handler not loaded',
+      timestamp: new Date().toISOString()
+    });
+  });
+  console.log('⚠️ Registered fallback route: GET /api/test-memory');
+}
 
 // Root endpoint - handle both health checks and static files
 app.get('/', (req, res, next) => {
