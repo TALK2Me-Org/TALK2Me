@@ -7,6 +7,60 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.0] - 2025-01-17
+
+### Sesja 12 - Memory Viewer w panelu admina (17.01.2025)
+**Developer**: Claude (AI Assistant)
+
+### 🚀 Added
+- **Memory Management Panel** w admin.html - profesjonalny interfejs do zarządzania wspomnieniami
+- **Backend API** `/api/admin/memory.js` - CRUD operations dla wspomnień
+- **User Selector** - dropdown z użytkownikami posortowanymi alfabetycznie (max 100)
+- **Memory Table** - responsywna tabela z kolumnami: summary, type, importance, created_at, actions
+- **Inline Editing** - edycja summary i importance bezpośrednio w tabeli
+- **Type Filtering** - filtrowanie wspomnień po typach (personal, relationship, preference, event)
+- **Memory Statistics** - licznik wspomnień per user w selektorze
+- **Confirmation Dialogs** - przed usunięciem wspomnienia
+- **Loading States** - animowane loading podczas API calls
+- **Type Badges** - kolorowe oznaczenia typów wspomnień
+
+### 🎨 UI/UX Features
+- **Editable Summary** - kliknij aby edytować, Enter/Escape shortcuts
+- **Importance Slider** - wizualny editor importance (1-10) ze słupkami ★
+- **Real-time Updates** - optymistyczne updates w UI
+- **Error Handling** - profesjonalne komunikaty błędów używając `showStatus()`
+- **Responsive Design** - działa na desktop i mobile
+- **Profesjonalne Style** - konsystentne z obecnym admin panelem
+
+### 🔧 Technical Implementation
+- **Express.js Routes** - GET/PUT/DELETE endpoints w server.js
+- **Supabase Integration** - używa tabeli `memories_v2` z service role key
+- **Data Validation** - backend walidacja importance (1-10) i summary
+- **Security** - admin-only access, RLS policies
+- **Performance** - pagination ready, memory count optimization
+
+### 📋 API Endpoints
+- `GET /api/admin/memory?action=users` - lista użytkowników ze wspomnieniami
+- `GET /api/admin/memory?user_id=xxx` - wspomnienia dla usera
+- `PUT /api/admin/memory?id=xxx` - edycja wspomnienia (summary/importance)
+- `DELETE /api/admin/memory?id=xxx` - usuwanie wspomnienia
+
+### 🔍 Tested
+- Memory viewer ładuje się poprawnie w panelu admina
+- Backend API endpoints działają (GET/PUT/DELETE)
+- Server.js poprawnie importuje i rejestruje memory handler
+- Wszystkie handlery ładują się bez błędów
+
+### 📋 Ready for Production
+Panel Memory Viewer jest gotowy do użycia produkcyjnego:
+- ✅ Bezpieczny backend z walidacją
+- ✅ Profesjonalny UI zgodny z obecnym designem
+- ✅ Obsługa błędów i loading states
+- ✅ Responsywny design
+- ✅ Inline editing z keyboard shortcuts
+
+---
+
 ## [1.5.0] - 2025-01-16
 
 ### Sesja 11 - Naprawienie Railway deployment i systemu pamięci (16.01.2025, 05:00-08:00)

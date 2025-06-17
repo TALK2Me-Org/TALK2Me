@@ -273,6 +273,160 @@
             cursor: not-allowed;
             opacity: 0.6;
         }
+        
+        /* Memory Management Styles */
+        .memory-type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: white;
+        }
+        
+        .memory-type-personal { background: #007bff; }
+        .memory-type-relationship { background: #dc3545; }
+        .memory-type-preference { background: #28a745; }
+        .memory-type-event { background: #ffc107; color: #333; }
+        
+        .memory-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+        
+        .memory-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .memory-summary {
+            max-width: 300px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        
+        .memory-summary.editable {
+            cursor: pointer;
+            border: 1px solid transparent;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .memory-summary.editable:hover {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        
+        .memory-summary.editing {
+            background: white;
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        .importance-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .importance-display:hover {
+            background: #f8f9fa;
+        }
+        
+        .importance-stars {
+            color: #ffc107;
+        }
+        
+        .importance-editor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .importance-slider {
+            width: 80px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+        
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #0056b3;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        
+        .btn-save {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-save:hover {
+            background: #218838;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        
+        .memory-date {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+        }
+        
+        .memory-loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .memory-loading::after {
+            content: "...";
+            animation: dots 1s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: #666; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 #666, .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 #666, .5em 0 0 #666; }
+        }
     </style>
 </head>
 <body>
@@ -489,6 +643,57 @@
                 </div>
             </div>
             
+            <!-- Memory Management Section -->
+            <div class="config-section">
+                <div class="config-header">🧠 Memory Management</div>
+                <div style="padding: 20px;">
+                    <div style="margin-bottom: 20px;">
+                        <label for="user_selector" style="display: block; margin-bottom: 10px; font-weight: 600;">Select User:</label>
+                        <select id="user_selector" onchange="loadUserMemories()" style="width: 100%; max-width: 400px; margin-bottom: 15px;">
+                            <option value="">Loading users...</option>
+                        </select>
+                        <div id="user_info" style="font-size: 13px; color: #666; margin-bottom: 20px;"></div>
+                    </div>
+                    
+                    <div id="memory_container" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="margin: 0;">User Memories</h4>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="memory_filter" onchange="filterMemories()" style="font-size: 12px;">
+                                    <option value="">All Types</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="relationship">Relationship</option>
+                                    <option value="preference">Preference</option>
+                                    <option value="event">Event</option>
+                                </select>
+                                <span id="memory_count" style="font-size: 12px; color: #666;"></span>
+                            </div>
+                        </div>
+                        
+                        <div id="memory_table_container">
+                            <table id="memory_table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                        <th style="padding: 12px 8px; text-align: left; width: 40%;">Summary</th>
+                                        <th style="padding: 12px 8px; text-align: left; width: 15%;">Type</th>
+                                        <th style="padding: 12px 8px; text-align: center; width: 10%;">Importance</th>
+                                        <th style="padding: 12px 8px; text-align: left; width: 20%;">Created</th>
+                                        <th style="padding: 12px 8px; text-align: center; width: 15%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="memory_table_body">
+                                    <!-- Memories will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="no_memories" style="display: none; text-align: center; padding: 40px; color: #666;">
+                            <p>No memories found for this user.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Assistant Prompt Section -->
             <div class="config-section">
                 <div class="config-header">🤖 Assistant Prompt</div>
@@ -843,10 +1048,374 @@ Loading prompt...
             }
         }
         
+        // Memory Management Functions
+        let currentMemories = [];
+        let currentUserId = null;
+        
+        // Load users for memory management
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/memory?action=users');
+                const data = await response.json();
+                
+                const userSelector = document.getElementById('user_selector');
+                
+                if (data.success && data.users.length > 0) {
+                    userSelector.innerHTML = '<option value="">Select user...</option>';
+                    data.users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = `${user.email} (${user.memory_count} memories)`;
+                        userSelector.appendChild(option);
+                    });
+                } else {
+                    userSelector.innerHTML = '<option value="">No users with memories found</option>';
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('user_selector').innerHTML = '<option value="">Error loading users</option>';
+            }
+        }
+        
+        // Load memories for selected user
+        async function loadUserMemories() {
+            const userSelector = document.getElementById('user_selector');
+            const userId = userSelector.value;
+            const memoryContainer = document.getElementById('memory_container');
+            const userInfo = document.getElementById('user_info');
+            
+            if (!userId) {
+                memoryContainer.style.display = 'none';
+                userInfo.textContent = '';
+                return;
+            }
+            
+            currentUserId = userId;
+            memoryContainer.style.display = 'block';
+            
+            // Show loading
+            const tableBody = document.getElementById('memory_table_body');
+            tableBody.innerHTML = '<tr><td colspan="5" class="memory-loading">Loading memories</td></tr>';
+            
+            try {
+                const response = await fetch(`/api/admin/memory?user_id=${userId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentMemories = data.memories || [];
+                    const user = data.user;
+                    
+                    // Update user info
+                    if (user) {
+                        userInfo.textContent = `User: ${user.full_name || user.email} | Total memories: ${currentMemories.length}`;
+                    }
+                    
+                    renderMemories();
+                } else {
+                    showStatus('adminStatus', 'Failed to load memories: ' + data.error, 'error');
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #dc3545;">Error loading memories</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading memories:', error);
+                showStatus('adminStatus', 'Error loading memories: ' + error.message, 'error');
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #dc3545;">Error loading memories</td></tr>';
+            }
+        }
+        
+        // Render memories table
+        function renderMemories() {
+            const tableBody = document.getElementById('memory_table_body');
+            const memoryCount = document.getElementById('memory_count');
+            const noMemories = document.getElementById('no_memories');
+            const memoryFilter = document.getElementById('memory_filter');
+            
+            // Filter memories
+            let filteredMemories = currentMemories;
+            if (memoryFilter.value) {
+                filteredMemories = currentMemories.filter(memory => memory.memory_type === memoryFilter.value);
+            }
+            
+            memoryCount.textContent = `Showing ${filteredMemories.length} of ${currentMemories.length} memories`;
+            
+            if (filteredMemories.length === 0) {
+                tableBody.innerHTML = '';
+                noMemories.style.display = 'block';
+                return;
+            }
+            
+            noMemories.style.display = 'none';
+            
+            tableBody.innerHTML = filteredMemories.map(memory => `
+                <tr class="memory-table" data-memory-id="${memory.id}">
+                    <td>
+                        <div class="memory-summary editable" onclick="editSummary('${memory.id}')" title="Click to edit">
+                            ${escapeHtml(memory.summary || 'No summary')}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="memory-type-badge memory-type-${memory.memory_type}">
+                            ${memory.memory_type}
+                        </span>
+                    </td>
+                    <td style="text-align: center;">
+                        <div class="importance-display" onclick="editImportance('${memory.id}')" title="Click to edit">
+                            <span class="importance-stars">${'★'.repeat(Math.min(memory.importance || 5, 10))}</span>
+                            <span>${memory.importance || 5}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="memory-date">
+                            ${formatDate(memory.created_at)}
+                        </div>
+                        ${memory.updated_at !== memory.created_at ? `
+                            <div class="memory-date" style="font-style: italic;">
+                                Updated: ${formatDate(memory.updated_at)}
+                            </div>
+                        ` : ''}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-delete" onclick="deleteMemory('${memory.id}')" title="Delete memory">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Filter memories by type
+        function filterMemories() {
+            renderMemories();
+        }
+        
+        // Edit summary inline
+        function editSummary(memoryId) {
+            const memory = currentMemories.find(m => m.id === memoryId);
+            if (!memory) return;
+            
+            const summaryElement = document.querySelector(`[data-memory-id="${memoryId}"] .memory-summary`);
+            const originalText = memory.summary || '';
+            
+            // Create textarea for editing
+            const textarea = document.createElement('textarea');
+            textarea.value = originalText;
+            textarea.className = 'memory-summary editing';
+            textarea.style.width = '100%';
+            textarea.style.minHeight = '60px';
+            textarea.style.resize = 'vertical';
+            
+            // Replace content
+            summaryElement.innerHTML = '';
+            summaryElement.appendChild(textarea);
+            
+            // Add save/cancel buttons
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.marginTop = '5px';
+            buttonContainer.innerHTML = `
+                <button class="btn-small btn-save" onclick="saveSummary('${memoryId}', this)">Save</button>
+                <button class="btn-small btn-cancel" onclick="cancelEdit('${memoryId}')">Cancel</button>
+            `;
+            summaryElement.appendChild(buttonContainer);
+            
+            textarea.focus();
+            textarea.select();
+            
+            // Handle Enter key (with Shift for new line)
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveSummary(memoryId, buttonContainer.firstElementChild);
+                } else if (e.key === 'Escape') {
+                    cancelEdit(memoryId);
+                }
+            });
+        }
+        
+        // Save summary
+        async function saveSummary(memoryId, button) {
+            const summaryElement = document.querySelector(`[data-memory-id="${memoryId}"] .memory-summary`);
+            const textarea = summaryElement.querySelector('textarea');
+            const newSummary = textarea.value.trim();
+            
+            if (!newSummary) {
+                showStatus('adminStatus', 'Summary cannot be empty', 'error');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Saving...';
+            
+            try {
+                const response = await fetch(`/api/admin/memory?id=${memoryId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ summary: newSummary })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update memory in array
+                    const memory = currentMemories.find(m => m.id === memoryId);
+                    if (memory) {
+                        memory.summary = newSummary;
+                        memory.updated_at = data.memory.updated_at;
+                    }
+                    
+                    // Re-render table
+                    renderMemories();
+                    showStatus('adminStatus', 'Summary updated successfully', 'success');
+                } else {
+                    showStatus('adminStatus', 'Failed to update summary: ' + data.error, 'error');
+                    cancelEdit(memoryId);
+                }
+            } catch (error) {
+                console.error('Error saving summary:', error);
+                showStatus('adminStatus', 'Error saving summary: ' + error.message, 'error');
+                cancelEdit(memoryId);
+            }
+        }
+        
+        // Cancel edit
+        function cancelEdit(memoryId) {
+            renderMemories(); // Just re-render to restore original state
+        }
+        
+        // Edit importance
+        function editImportance(memoryId) {
+            const memory = currentMemories.find(m => m.id === memoryId);
+            if (!memory) return;
+            
+            const importanceElement = document.querySelector(`[data-memory-id="${memoryId}"] .importance-display`);
+            const originalImportance = memory.importance || 5;
+            
+            // Create slider editor
+            const editor = document.createElement('div');
+            editor.className = 'importance-editor';
+            editor.innerHTML = `
+                <input type="range" min="1" max="10" value="${originalImportance}" class="importance-slider" />
+                <span>${originalImportance}</span>
+                <div style="margin-top: 5px;">
+                    <button class="btn-small btn-save" onclick="saveImportance('${memoryId}', this)">Save</button>
+                    <button class="btn-small btn-cancel" onclick="cancelEdit('${memoryId}')">Cancel</button>
+                </div>
+            `;
+            
+            const slider = editor.querySelector('input[type="range"]');
+            const valueSpan = editor.querySelector('span');
+            
+            slider.addEventListener('input', () => {
+                valueSpan.textContent = slider.value;
+            });
+            
+            importanceElement.innerHTML = '';
+            importanceElement.appendChild(editor);
+        }
+        
+        // Save importance
+        async function saveImportance(memoryId, button) {
+            const importanceElement = document.querySelector(`[data-memory-id="${memoryId}"] .importance-display`);
+            const slider = importanceElement.querySelector('input[type="range"]');
+            const newImportance = parseInt(slider.value);
+            
+            button.disabled = true;
+            button.textContent = 'Saving...';
+            
+            try {
+                const response = await fetch(`/api/admin/memory?id=${memoryId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ importance: newImportance })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update memory in array
+                    const memory = currentMemories.find(m => m.id === memoryId);
+                    if (memory) {
+                        memory.importance = newImportance;
+                        memory.updated_at = data.memory.updated_at;
+                    }
+                    
+                    // Re-render table
+                    renderMemories();
+                    showStatus('adminStatus', 'Importance updated successfully', 'success');
+                } else {
+                    showStatus('adminStatus', 'Failed to update importance: ' + data.error, 'error');
+                    cancelEdit(memoryId);
+                }
+            } catch (error) {
+                console.error('Error saving importance:', error);
+                showStatus('adminStatus', 'Error saving importance: ' + error.message, 'error');
+                cancelEdit(memoryId);
+            }
+        }
+        
+        // Delete memory
+        async function deleteMemory(memoryId) {
+            const memory = currentMemories.find(m => m.id === memoryId);
+            if (!memory) return;
+            
+            if (!confirm(`Are you sure you want to delete this memory?\n\n"${memory.summary}"\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/memory?id=${memoryId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Remove from array
+                    currentMemories = currentMemories.filter(m => m.id !== memoryId);
+                    
+                    // Re-render table
+                    renderMemories();
+                    
+                    // Update user info
+                    const userInfo = document.getElementById('user_info');
+                    const currentText = userInfo.textContent;
+                    userInfo.textContent = currentText.replace(/Total memories: \d+/, `Total memories: ${currentMemories.length}`);
+                    
+                    showStatus('adminStatus', 'Memory deleted successfully', 'success');
+                } else {
+                    showStatus('adminStatus', 'Failed to delete memory: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting memory:', error);
+                showStatus('adminStatus', 'Error deleting memory: ' + error.message, 'error');
+            }
+        }
+        
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
         // Load config on page load
         console.log('⚠️ Panel admina bez hasła - tylko do testów!');
         loadConfig();
         loadPrompt();
+        
+        // Load users for memory management
+        loadUsers();
     </script>
 </body>
 </html>

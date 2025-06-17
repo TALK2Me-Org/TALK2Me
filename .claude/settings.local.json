@@ -23,7 +23,8 @@
       "Bash(git rm:*)",
       "Bash(touch:*)",
       "Bash(npm run test:db:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(npm start)"
     ],
     "deny": []
   }

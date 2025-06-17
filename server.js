@@ -41,7 +41,7 @@ const __dirname = dirname(__filename);
 // Import handlers with error handling
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
-let configHandler, debugHandler, testMemoryHandler;
+let configHandler, debugHandler, testMemoryHandler, memoryHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -86,6 +86,9 @@ try {
   
   debugHandler = (await import('./api/admin/debug.js')).default;
   console.log('✅ Loaded: debug handler');
+  
+  memoryHandler = (await import('./api/admin/memory.js')).default;
+  console.log('✅ Loaded: memory handler');
   
   // Test handlers
   try {
@@ -138,7 +141,8 @@ app.get('/health', (req, res) => {
       history: !!historyHandler,
       favorites: !!favoritesHandler,
       conversations: !!conversationsHandler,
-      auth: !!loginHandler
+      auth: !!loginHandler,
+      memory: !!memoryHandler
     }
   });
 });
@@ -226,8 +230,17 @@ if (verifyHandler) app.post('/api/auth/verify', verifyHandler);
 if (configHandler) {
   app.get('/api/admin/config', configHandler);
   app.put('/api/admin/config', configHandler);
+  app.post('/api/admin/config', configHandler);
 }
 if (debugHandler) app.get('/api/admin/debug', debugHandler);
+
+// Memory management routes
+if (memoryHandler) {
+  app.get('/api/admin/memory', memoryHandler);
+  app.put('/api/admin/memory', memoryHandler);
+  app.delete('/api/admin/memory', memoryHandler);
+  console.log('✅ Registered memory admin routes');
+}
 
 // Test endpoints
 if (testMemoryHandler) {
