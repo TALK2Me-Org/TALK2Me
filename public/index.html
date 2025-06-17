@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="TALK2Me">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
+    
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-128x128.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png">
+    
     <title>TALK2Me - Bo miłość potrzebuje zrozumienia v1.3</title>
     <style>
         :root {
@@ -2891,6 +2904,118 @@
             'balanced': 'Zbalansowany'
         };
         document.getElementById('dictionaryStatus').textContent = dictNames[savedDictionary];
+        
+        // ============ PWA Support ============
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Install prompt
+        let deferredPrompt;
+        const installButton = document.createElement('button');
+        installButton.textContent = '📱 Zainstaluj aplikację';
+        installButton.style.cssText = `
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+        `;
+        document.body.appendChild(installButton);
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (installButton.style.display === 'block') {
+                    installButton.style.display = 'none';
+                }
+            }, 10000);
+        });
+        
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installButton.style.display = 'none';
+            }
+        });
+        
+        // iOS Install Instructions
+        function showIOSInstallInstructions() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isStandalone = window.navigator.standalone;
+            
+            if (isIOS && !isStandalone) {
+                const iosPrompt = document.createElement('div');
+                iosPrompt.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    right: 20px;
+                    background: white;
+                    border: 2px solid var(--accent-color);
+                    border-radius: 15px;
+                    padding: 15px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                    z-index: 1000;
+                    font-size: 14px;
+                    text-align: center;
+                `;
+                
+                iosPrompt.innerHTML = `
+                    <div style="margin-bottom: 10px;">📱 <strong>Zainstaluj TALK2Me</strong></div>
+                    <div style="color: #666; margin-bottom: 15px;">
+                        Kliknij <strong>Udostępnij</strong> ⬆️ <br>
+                        następnie <strong>"Dodaj do ekr. głównego"</strong> ➕
+                    </div>
+                    <button onclick="this.parentNode.remove()" 
+                            style="background: var(--accent-color); color: white; border: none; 
+                                   padding: 8px 15px; border-radius: 20px; cursor: pointer;">
+                        OK
+                    </button>
+                `;
+                
+                document.body.appendChild(iosPrompt);
+                
+                // Auto-hide after 15 seconds
+                setTimeout(() => {
+                    if (iosPrompt.parentNode) {
+                        iosPrompt.remove();
+                    }
+                }, 15000);
+            }
+        }
+        
+        // Show iOS instructions after 3 seconds
+        setTimeout(showIOSInstallInstructions, 3000);
+        
     </script>
 </body>
 </html>

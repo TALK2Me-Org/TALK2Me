@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generator Ikon PWA dla TALK2Me</title>
+</head>
+<body>
+    <h1>Generator Ikon PWA</h1>
+    <button onclick="generateIcons()">Generuj Ikony</button>
+    <div id="preview"></div>
+
+    <script>
+        function generateIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+
+            sizes.forEach(size => {
+                // Tworzenie canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // Gradient tło
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#FF69B4');
+                gradient.addColorStop(1, '#FF1493');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+
+                // Białe kółko w środku
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/3, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Tekst T2M
+                ctx.fillStyle = '#FF69B4';
+                ctx.font = `bold ${size/6}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('T2M', size/2, size/2);
+
+                // Dodanie do preview
+                const img = new Image();
+                img.src = canvas.toDataURL('image/png');
+                img.style.width = '64px';
+                img.style.height = '64px';
+                img.style.margin = '5px';
+                img.title = `${size}x${size}`;
+                preview.appendChild(img);
+
+                // Download link
+                const link = document.createElement('a');
+                link.download = `icon-${size}x${size}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.textContent = `Pobierz ${size}x${size}`;
+                link.style.display = 'block';
+                link.style.margin = '2px';
+                preview.appendChild(link);
+            });
+        }
+
+        // Auto-generuj przy załadowaniu
+        window.onload = generateIcons;
+    </script>
+</body>
+</html>
