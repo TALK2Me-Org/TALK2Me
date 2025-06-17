@@ -1,4 +1,20 @@
-// Admin API - zarządzanie wspomnieniami użytkowników
+/**
+ * Admin Memory API - zarządzanie wspomnieniami użytkowników w panelu admina
+ * 
+ * Główne funkcje:
+ * - GET ?action=users - pobiera listę użytkowników z licznikiem wspomnień
+ * - GET ?user_id=xxx - pobiera wspomnienia konkretnego użytkownika
+ * - PUT ?id=xxx - edytuje wspomnienie (summary/importance)
+ * - DELETE ?id=xxx - usuwa wspomnienie
+ * 
+ * Bezpieczeństwo:
+ * - Używa Supabase Service Role Key (pełne uprawnienia)
+ * - Tylko dla panelu admina (nie ma autoryzacji user-level)
+ * 
+ * @author Claude (AI Assistant) - Sesja 12-13
+ * @date 17.06.2025
+ * @status ✅ DZIAŁA w produkcji
+ */
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -19,7 +35,8 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { user_id, action } = req.query
 
-      // Pobierz listę użytkowników
+      // Pobierz listę użytkowników z licznikiem wspomnień
+      // Używane w Memory Viewer dropdown do selekcji użytkownika
       if (action === 'users') {
         console.log('🔍 Admin Memory: Fetching users...')
         const { data: users, error } = await supabase
@@ -36,6 +53,7 @@ export default async function handler(req, res) {
         console.log(`📊 Found ${users.length} users total`)
 
         // Dodaj licznik wspomnień dla każdego użytkownika
+        // To pozwala pokazać tylko userów którzy mają zapisane wspomnienia
         console.log('🧠 Checking memory counts for each user...')
         const usersWithMemoryCount = await Promise.all(
           users.map(async (user) => {
@@ -72,6 +90,7 @@ export default async function handler(req, res) {
       }
 
       // Pobierz wspomnienia dla konkretnego użytkownika
+      // Sortowane od najnowszych, z pełnymi danymi do wyświetlenia w tabeli
       if (user_id) {
         const { data: memories, error } = await supabase
           .from('memories_v2')
@@ -110,7 +129,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'user_id or action=users is required' })
 
     } else if (req.method === 'PUT') {
-      // Aktualizuj wspomnienie
+      // Aktualizuj wspomnienie - używane przez inline editing w Memory Viewer
+      // Pozwala edytować summary i importance bezpośrednio w tabeli
       const { id } = req.query
       const { summary, importance } = req.body
 
@@ -149,7 +169,8 @@ export default async function handler(req, res) {
       })
 
     } else if (req.method === 'DELETE') {
-      // Usuń wspomnienie
+      // Usuń wspomnienie - używane przez przycisk Delete w Memory Viewer
+      // Wymaga potwierdzenia w UI przed wykonaniem
       const { id } = req.query
 
       if (!id) {

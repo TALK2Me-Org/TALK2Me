@@ -8,8 +8,8 @@
  * - Fallback na Groq gdy OpenAI nie działa
  * - Obsługa konwersacji (conversations/messages)
  * 
- * @author Claude (AI Assistant) - Sesja 10-11
- * @date 14-16.01.2025
+ * @author Claude (AI Assistant) - Sesja 10-13
+ * @date 14-17.06.2025
  * @status ✅ DZIAŁA w produkcji
  * 
  * Flow działania:
@@ -233,7 +233,9 @@ export default async function handler(req, res) {
       }
     }
 
-    // Pobierz konfigurację AI
+    // 1. POBIERZ KONFIGURACJĘ Z BAZY
+    // Konfiguracja zawiera OpenAI API key, temperature, max_tokens itp.
+    // Jeśli brak klucza w bazie, fallback na process.env.OPENAI_API_KEY
     const { data: config } = await supabase
       .from('app_config')
       .select('config_key, config_value')
@@ -245,7 +247,9 @@ export default async function handler(req, res) {
 
     const activeModel = configMap.active_model || 'openai'
     
-    // Initialize MemoryManager for this user if needed
+    // 2. INICJALIZUJ MEMORY MANAGER
+    // MemoryManager odpowiada za zapisywanie i odczytywanie wspomnień
+    // Używa OpenAI embeddings + pgvector do semantic search
     let memoryManager = null
     let memorySystemEnabled = false
     
@@ -300,7 +304,9 @@ export default async function handler(req, res) {
       console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
-    // Pobierz relevantne wspomnienia dla użytkownika
+    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ
+    // Wyszukuje podobne wspomnienia do aktualnej wiadomości użytkownika
+    // Używa similarity search na embeddingach (cosine similarity)
     let memoryContext = ''
     if (memoryManager && userId) {
       try {
@@ -384,7 +390,9 @@ export default async function handler(req, res) {
             stream: true
           }
 
-          // Dodaj function calling tylko dla zalogowanych użytkowników
+          // 4. PRZYGOTUJ FUNKCJĘ remember_this
+          // AI może wywołać tę funkcję aby zapisać ważną informację do pamięci
+          // Automatycznie wykrywa imiona, daty, relacje i inne entities
           if (userId && memoryManager && memorySystemEnabled) {
             chatOptions.functions = [MEMORY_FUNCTION]
             chatOptions.function_call = 'auto'
@@ -468,6 +476,8 @@ export default async function handler(req, res) {
               console.log(`🔧 Function call: ${functionName}`, args)
               
               if (functionName === 'remember_this') {
+                // 5. OBSŁUGA FUNCTION CALLING
+                // Gdy AI wywołuje remember_this(), zapisujemy do memories_v2
                 console.log('📝 Processing remember_this function', {
                   hasMemoryManager: !!memoryManager,
                   hasUserId: !!userId,
