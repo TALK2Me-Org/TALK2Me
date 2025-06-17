@@ -41,7 +41,7 @@ const __dirname = dirname(__filename);
 // Import handlers with error handling
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
-let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
+let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -104,6 +104,13 @@ try {
     console.log('✅ Loaded: debug-tables handler');
   } catch (e) {
     console.log('⚠️ Could not load debug-tables handler:', e.message);
+  }
+  
+  try {
+    testMemoriesV2Handler = (await import('./api/test-memories-v2.js')).default;
+    console.log('✅ Loaded: test-memories-v2 handler');
+  } catch (e) {
+    console.log('⚠️ Could not load test-memories-v2 handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -270,6 +277,11 @@ if (testMemoryHandler) {
 if (debugTablesHandler) {
   app.get('/api/debug-tables', debugTablesHandler);
   console.log('✅ Registered route: GET /api/debug-tables');
+}
+
+if (testMemoriesV2Handler) {
+  app.get('/api/test-memories-v2', testMemoriesV2Handler);
+  console.log('✅ Registered route: GET /api/test-memories-v2');
 }
 
 // Root endpoint - handle both health checks and static files
