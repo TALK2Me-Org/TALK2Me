@@ -1107,7 +1107,7 @@ Loading prompt...
                     
                     // Update user info
                     if (user) {
-                        userInfo.textContent = `User: ${user.full_name || user.email} | Total memories: ${currentMemories.length}`;
+                        userInfo.textContent = `User: ${user.name || user.email} | Total memories: ${currentMemories.length}`;
                     }
                     
                     renderMemories();

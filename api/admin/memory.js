@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         console.log('🔍 Admin Memory: Fetching users...')
         const { data: users, error } = await supabase
           .from('users')
-          .select('id, email, full_name, created_at')
+          .select('id, email, name, created_at')
           .order('email')
           .limit(100)
 
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
         // Pobierz też dane użytkownika
         const { data: user } = await supabase
           .from('users')
-          .select('email, full_name')
+          .select('email, name')
           .eq('id', user_id)
           .single()
 
