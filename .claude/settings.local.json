@@ -24,7 +24,8 @@
       "Bash(touch:*)",
       "Bash(npm run test:db:*)",
       "Bash(pkill:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

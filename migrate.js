@@ -1,4 +1,5 @@
-// Automated migration script for TALK2Me
+// DEPRECATED: Automated migration script for TALK2Me - legacy memories table
+// Modern system uses memories_v2, this kept for archival purposes
 // Run: node migrate.js
 
 import { config } from 'dotenv';

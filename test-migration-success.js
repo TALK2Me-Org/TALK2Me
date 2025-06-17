@@ -1,4 +1,5 @@
-// Quick test to verify migration success
+// DEPRECATED: Quick test to verify migration success - legacy memories table
+// Modern system uses memories_v2, this kept for archival purposes
 import { createClient } from '@supabase/supabase-js';
 
 // Use environment variables or Railway config

@@ -71,7 +71,7 @@ BEGIN
     m.entities,
     1 - (m.embedding <=> query_embedding) AS similarity,
     m.created_at
-  FROM memories m
+  FROM memories_v2 m
   WHERE m.user_id = match_user_id
     AND 1 - (m.embedding <=> query_embedding) > match_threshold
   ORDER BY 
@@ -106,7 +106,7 @@ BEGIN
     m.importance,
     m.entities,
     m.created_at
-  FROM memories m
+  FROM memories_v2 m
   WHERE m.user_id = p_user_id
     AND m.memory_type = p_memory_type
   ORDER BY m.importance DESC, m.created_at DESC
@@ -205,7 +205,7 @@ SELECT
   COUNT(*) FILTER (WHERE memory_type = 'preference') as preference_count,
   COUNT(*) FILTER (WHERE memory_type = 'event') as event_count,
   MAX(created_at) as last_memory_at
-FROM memories
+FROM memories_v2
 GROUP BY user_id;
 
 -- Grant access to statistics view

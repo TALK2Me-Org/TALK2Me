@@ -7,6 +7,37 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.1] - 2025-01-17
+
+### Sesja 12b - Migracja systemu pamięci do memories_v2 (17.01.2025)
+**Developer**: Claude (AI Assistant)
+
+### 🎯 Migration to memories_v2 - Unified Memory System
+- **lib/memory-manager.js**: migracja z `memories` → `memories_v2`
+- **supabase-memory-schema.sql**: funkcje SQL zaktualizowane do `memories_v2`
+- **Legacy files**: oznaczone jako DEPRECATED z komentarzami
+- **Single source of truth**: `memories_v2` to jedyna aktywna tabela pamięci
+
+### 🔧 Technical Changes
+- **saveMemory()**: `.from('memories')` → `.from('memories_v2')`
+- **match_memories()**: `FROM memories m` → `FROM memories_v2 m`
+- **get_memories_by_type()**: `FROM memories m` → `FROM memories_v2 m`
+- **memory_statistics**: `FROM memories` → `FROM memories_v2`
+
+### 🚫 Deprecated Files
+- `test-memory-local.js` - legacy local tests
+- `migrate.js` - legacy migration script  
+- `test-migration-success.js` - legacy migration test
+- All marked with `// DEPRECATED: replaced by memories_v2`
+
+### ✅ Expected Results
+- `/api/test-memory` zapisuje do `memories_v2`
+- Admin panel czyta z `memories_v2`
+- `GET /api/admin/memory?action=users` powinien działać poprawnie
+- `memories` tabela pozostaje jako archiwum/backup
+
+---
+
 ## [1.6.0] - 2025-01-17
 
 ### Sesja 12 - Memory Viewer w panelu admina (17.01.2025)

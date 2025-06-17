@@ -1,4 +1,5 @@
-// Local test suite for memory system
+// DEPRECATED: Local test suite for memory system - replaced by memories_v2
+// This file uses legacy memories table, kept for archival purposes
 // Run with: node test-memory-local.js
 
 import { config } from 'dotenv';
