@@ -35,6 +35,15 @@ if (missingEnvVars.length > 0) {
   console.log('✅ All required environment variables present');
 }
 
+// Check OpenAI API key
+console.log('🔑 OpenAI API Key check:');
+if (process.env.OPENAI_API_KEY) {
+  console.log(`✅ OPENAI_API_KEY present, length: ${process.env.OPENAI_API_KEY.length}`);
+  console.log(`🔍 Key preview: ${process.env.OPENAI_API_KEY.substring(0, 10)}...`);
+} else {
+  console.warn('❌ OPENAI_API_KEY not found in environment variables');
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 

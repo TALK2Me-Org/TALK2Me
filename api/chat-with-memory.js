@@ -254,7 +254,13 @@ export default async function handler(req, res) {
       memoryManager = memoryManagerCache.get(userId)
       
       // Create new instance if not in cache or if OpenAI key changed
-      const openaiKey = configMap.openai_api_key
+      const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY
+      console.log('🔑 OpenAI key source in chat:', {
+        fromConfig: !!configMap.openai_api_key,
+        fromEnv: !!process.env.OPENAI_API_KEY,
+        finalKey: openaiKey ? `${openaiKey.substring(0, 10)}...` : 'missing'
+      })
+      
       if (!memoryManager || memoryManager.openaiKey !== openaiKey) {
         try {
           console.log('🧠 Creating new MemoryManager for user:', userId)
@@ -321,7 +327,7 @@ export default async function handler(req, res) {
     const aiMessages = []
 
     // 1. Próbuj OpenAI z streamingiem i function calling
-    const openaiKey = configMap.openai_api_key
+    const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY
     const assistantId = configMap.assistant_id
     
     if (activeModel === 'openai' && openaiKey) {

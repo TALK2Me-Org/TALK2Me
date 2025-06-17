@@ -103,7 +103,14 @@ export default async function handler(req, res) {
       testResults.steps[testResults.steps.length - 1].result = config?.config_value ? 'API key found' : 'No API key'
     }
     
-    const openaiKey = config?.config_value
+    // Use key from config or fallback to environment variable
+    const openaiKey = config?.config_value || process.env.OPENAI_API_KEY
+    
+    console.log('🔑 OpenAI key source:', {
+      fromConfig: !!config?.config_value,
+      fromEnv: !!process.env.OPENAI_API_KEY,
+      finalKey: openaiKey ? `${openaiKey.substring(0, 10)}...` : 'missing'
+    })
     
     // Step 3: Initialize MemoryManager
     testResults.steps.push({ step: 'Initialize MemoryManager', status: 'running' })
