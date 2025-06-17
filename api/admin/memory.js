@@ -21,6 +21,7 @@ export default async function handler(req, res) {
 
       // Pobierz listę użytkowników
       if (action === 'users') {
+        console.log('🔍 Admin Memory: Fetching users...')
         const { data: users, error } = await supabase
           .from('users')
           .select('id, email, full_name, created_at')
@@ -28,16 +29,26 @@ export default async function handler(req, res) {
           .limit(100)
 
         if (error) {
+          console.error('❌ Failed to fetch users:', error)
           return res.status(500).json({ error: 'Failed to fetch users', details: error })
         }
 
+        console.log(`📊 Found ${users.length} users total`)
+
         // Dodaj licznik wspomnień dla każdego użytkownika
+        console.log('🧠 Checking memory counts for each user...')
         const usersWithMemoryCount = await Promise.all(
           users.map(async (user) => {
-            const { count } = await supabase
+            const { count, error: countError } = await supabase
               .from('memories_v2')
               .select('*', { count: 'exact', head: true })
               .eq('user_id', user.id)
+            
+            if (countError) {
+              console.error(`❌ Error counting memories for user ${user.email}:`, countError)
+            } else {
+              console.log(`📝 User ${user.email}: ${count || 0} memories`)
+            }
             
             return {
               ...user,
@@ -46,9 +57,17 @@ export default async function handler(req, res) {
           })
         )
 
+        const usersWithMemories = usersWithMemoryCount.filter(u => u.memory_count > 0)
+        console.log(`✅ Found ${usersWithMemories.length} users with memories`)
+        
         return res.json({ 
           success: true, 
-          users: usersWithMemoryCount.filter(u => u.memory_count > 0) // Tylko użytkownicy ze wspomnieniami
+          users: usersWithMemories,
+          debug: {
+            totalUsers: users.length,
+            usersWithMemories: usersWithMemories.length,
+            allUsers: usersWithMemoryCount.map(u => ({ email: u.email, memoryCount: u.memory_count }))
+          }
         })
       }
 
