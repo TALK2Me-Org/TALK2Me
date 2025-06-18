@@ -50,7 +50,7 @@ const __dirname = dirname(__filename);
 // Import handlers with error handling
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
-let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler;
+let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -120,6 +120,13 @@ try {
     console.log('✅ Loaded: test-memories-v2 handler');
   } catch (e) {
     console.log('⚠️ Could not load test-memories-v2 handler:', e.message);
+  }
+  
+  try {
+    alterMemoriesV2Handler = (await import('./api/alter-memories-v2.js')).default;
+    console.log('✅ Loaded: alter-memories-v2 handler');
+  } catch (e) {
+    console.log('⚠️ Could not load alter-memories-v2 handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -291,6 +298,11 @@ if (debugTablesHandler) {
 if (testMemoriesV2Handler) {
   app.get('/api/test-memories-v2', testMemoriesV2Handler);
   console.log('✅ Registered route: GET /api/test-memories-v2');
+}
+
+if (alterMemoriesV2Handler) {
+  app.post('/api/alter-memories-v2', alterMemoriesV2Handler);
+  console.log('✅ Registered route: POST /api/alter-memories-v2');
 }
 
 // Root endpoint - handle both health checks and static files
