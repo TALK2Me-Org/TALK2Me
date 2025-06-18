@@ -9,7 +9,7 @@
  * @body {string} memory.user_id - UUID użytkownika (wymagane)
  * @body {string} memory.summary - Treść wspomnienia, max 300 znaków (wymagane)
  * @body {string} memory.memory_type - Typ: personal/relationship/preference/event/schemat (wymagane)
- * @body {number} memory.importance - Ważność 1-10, domyślnie 5
+ * @body {number} memory.importance - Ważność 1-5 (liczba całkowita), domyślnie 5
  * @body {string} memory.memory_layer - Warstwa: short_term/long_term/core
  * @body {string} memory.actor - Kto dodał: user/ai/system
  * @body {boolean} memory.visible_to_user - Czy widoczne dla użytkownika
@@ -91,9 +91,11 @@ export default async (req, res) => {
       errors.push(`Invalid memory_type. Must be one of: ${validMemoryTypes.join(', ')}`);
     }
     
-    // Validate importance range
-    if (importance < 1 || importance > 10) {
-      errors.push('Importance must be between 1 and 10');
+    // Validate importance - must be an integer between 1 and 5
+    if (!Number.isInteger(importance)) {
+      errors.push('Importance must be an integer between 1 and 5');
+    } else if (importance < 1 || importance > 5) {
+      errors.push('Importance must be an integer between 1 and 5');
     }
     
     // Validate memory_layer
