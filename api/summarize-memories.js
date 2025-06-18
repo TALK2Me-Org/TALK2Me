@@ -1,3 +1,33 @@
+/**
+ * POST /api/summarize-memories
+ * 
+ * Endpoint wykorzystujący AI do analizy wspomnień użytkownika
+ * i automatycznego generowania profilu psychologicznego.
+ * 
+ * @route POST /api/summarize-memories
+ * @body {Object} request - Obiekt żądania
+ * @body {string} request.user_id - UUID użytkownika do analizy (wymagane)
+ * 
+ * @process
+ * 1. Pobiera wszystkie wspomnienia z memories_v2 dla user_id
+ * 2. Grupuje wspomnienia po typach (personal, relationship, preference, event)
+ * 3. Generuje prompt dla OpenAI GPT-3.5 z kontekstem wspomnień
+ * 4. AI analizuje wspomnienia i generuje profil psychologiczny
+ * 5. Parsuje odpowiedź AI do strukturyzowanego JSON
+ * 6. Wykonuje UPSERT profilu do tabeli user_profile
+ * 
+ * @returns {Object} 200 - { status: "success", message, summary: {...} }
+ * @returns {Object} 400 - { error: "Validation error" }
+ * @returns {Object} 404 - { error: "No memories found for this user" }
+ * @returns {Object} 500 - { error: "Server/AI error", details: "..." }
+ * 
+ * @uses OpenAI GPT-3.5-turbo dla analizy psychologicznej
+ * @uses Supabase Service Role Key dla pełnego dostępu do danych
+ * 
+ * @author Claude (AI Assistant)
+ * @date 18.06.2025
+ * @session 15
+ */
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 

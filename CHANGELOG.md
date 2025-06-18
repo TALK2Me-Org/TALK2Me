@@ -7,6 +7,115 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.0] - 2025-06-18
+
+### Sesja 15 - Backend API dla Memory & Profile Management (18.06.2025, 22:00-02:00)
+**Developer**: Claude (AI Assistant)
+
+### 🚀 KOMPLETNY BACKEND DLA ZARZĄDZANIA PAMIĘCIĄ I PROFILAMI! 🧠✅
+
+#### 📦 **Nowe endpointy API utworzone:**
+
+##### **1. TASK 1 - Rozszerzenie tabeli memories_v2**
+- **SQL**: `/alter-memories-v2.sql` - dodaje nowe kolumny do tabeli
+- **API**: `POST /api/alter-memories-v2` - endpoint informacyjny
+- **API**: `GET /api/execute-alter-table` - executor dla ALTER TABLE
+- **Nowe kolumny**:
+  - `memory_layer` (text) - warstwa pamięci: short_term/long_term/core
+  - `date` (date) - data zdarzenia
+  - `location` (text) - lokalizacja
+  - `repeat` (text) - powtarzalność
+  - `actor` (text) - kto dodał: user/ai/system
+  - `visible_to_user` (boolean) - widoczność dla użytkownika
+
+##### **2. TASK 2 - Tabela user_profile**
+- **SQL**: `/create-user-profile.sql` - kompletny schemat tabeli
+- **API**: `POST /api/create-user-profile-table` - tworzy tabelę
+- **API**: `GET/POST /api/test-user-profile` - testowanie tabeli
+- **Struktura tabeli**:
+  ```sql
+  user_id (UUID PK)
+  attachment_style (TEXT)
+  dominujące_schematy (TEXT[])
+  język_miłości (TEXT[])
+  styl_komunikacji (TEXT)
+  rola (TEXT)
+  dzieciństwo (TEXT)
+  aktualne_wyzywania (TEXT)
+  cykliczne_wzorce (TEXT[])
+  last_updated (TIMESTAMP)
+  ```
+
+##### **3. TASK 3 - Zapisywanie wspomnień**
+- **API**: `POST /api/save-memory` - zapisuje wspomnienie do memories_v2
+- **Test**: `/test-save-memory.js` - skrypt testowy
+- **Funkcjonalności**:
+  - Walidacja wszystkich pól (UUID, długość summary, typy)
+  - Generowanie embeddings OpenAI (text-embedding-ada-002)
+  - Obsługa metadanych (tags, actor, status)
+  - Mapowanie typów (schemat → personal)
+  - Error handling z detalami
+
+##### **4. TASK 4 - Aktualizacja profilu**
+- **API**: `POST /api/update-profile` - UPSERT profilu użytkownika
+- **Test**: `/test-update-profile.js` - skrypt testowy
+- **Funkcjonalności**:
+  - Logika UPSERT (update lub insert)
+  - Walidacja typów pól (arrays, strings)
+  - Walidacja wartości (attachment_style, styl_komunikacji)
+  - Automatyczne last_updated
+  - Obsługa wszystkich pól user_profile
+
+##### **5. TASK 5 - AI analiza wspomnień**
+- **API**: `POST /api/summarize-memories` - generuje profil z AI
+- **Test**: `/test-summarize-memories.js` - rozbudowany test
+- **Funkcjonalności**:
+  - Pobiera wszystkie wspomnienia użytkownika
+  - Grupuje po typach (personal, relationship, preference, event)
+  - Generuje prompt dla OpenAI GPT-3.5
+  - Parsuje odpowiedź AI do JSON
+  - UPSERT profilu z dodanymi polami
+  - Analiza dzieciństwa, wyzwań, wzorców
+
+#### 🛠️ **Technologie użyte:**
+- **Node.js 18+** - ES modules, built-in fetch
+- **Express.js** - routing i middleware
+- **Supabase** - PostgreSQL + pgvector
+- **OpenAI API**:
+  - GPT-3.5-turbo - analiza psychologiczna
+  - text-embedding-ada-002 - embeddings 1536D
+- **UUID validation** - regex pattern matching
+- **JSON parsing** - structured AI responses
+
+#### 📊 **Stan bazy danych:**
+- **memories_v2** - rozszerzona o 6 nowych kolumn
+- **user_profile** - nowa tabela z profilem psychologicznym
+- **Indeksy** - dodane dla wydajności
+- **Triggery** - auto-update timestamps
+- **Komentarze** - dokumentacja kolumn
+
+#### 🔧 **Narzędzia użyte:**
+- **Git** - version control, systematyczne commity
+- **curl** - testowanie API endpoints
+- **VS Code** - edycja kodu z AI assistance
+- **Railway logs** - monitoring deploymentu
+- **Supabase Dashboard** - weryfikacja tabel
+
+#### ✅ **Wszystkie zadania ukończone:**
+1. ✅ TASK 1 - ALTER TABLE memories_v2
+2. ✅ TASK 2 - CREATE TABLE user_profile  
+3. ✅ TASK 3 - POST /api/save-memory
+4. ✅ TASK 4 - POST /api/update-profile
+5. ✅ TASK 5 - POST /api/summarize-memories
+
+#### 📝 **Dokumentacja dodana:**
+- JSDoc komentarze w każdym endpoint
+- Opisy parametrów i zwracanych wartości
+- Przykłady użycia w skryptach testowych
+- Zaktualizowane README i CLAUDE.md
+
+---
+
 ## [1.8.0] - 2025-06-17
 
 ### Sesja 14 - PWA Implementation (17.06.2025, 23:00-23:30)

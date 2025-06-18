@@ -22,8 +22,8 @@
 - **Deploy**: Auto-deploy z main (obecnie nieużywane)
 - **Status**: ✅ Działa jako backup
 
-## 🎯 Aktualny Stan (17 Czerwca 2025, 23:30)
-Projekt jest **~90% gotowy** - SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉📱🧠
+## 🎯 Aktualny Stan (18 Czerwca 2025, 02:00)
+Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉🚀🧠
 
 ### ✅ Co Działa
 1. **Chat z AI** - streaming odpowiedzi w czasie rzeczywistym
@@ -38,28 +38,38 @@ Projekt jest **~90% gotowy** - SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉📱🧠
    - Function calling `remember_this()` automatycznie zapisuje wspomnienia
    - MemoryManager z per-user cache
    - Test endpoint: `/api/test-memory` - status: OK
-8. **Memory Viewer** - profesjonalny panel w admin.html ✅ NOWY!
+8. **Memory Viewer** - profesjonalny panel w admin.html ✅
    - Zarządzanie wspomnieniami użytkowników
    - Inline editing (summary, importance)
    - Type filtering (personal/relationship/preference/event)
    - Real-time updates i responsive design
 9. **Railway deployment** - ✅ Naprawiony i działa stabilnie
-10. **PWA (Progressive Web App)** - ✅ NOWY! W pełni funkcjonalna instalacja mobilna
-   - Service Worker z offline cache
-   - Manifest.json z kompletną konfiguracją
-   - 8 rozmiarów ikon PWA (72px-512px)
-   - Install prompt dla Android/Desktop
-   - Instrukcje instalacji dla iOS
-   - Auto-deploy na Railway
+10. **PWA (Progressive Web App)** - ✅ W pełni funkcjonalna instalacja mobilna
+    - Service Worker z offline cache
+    - Manifest.json z kompletną konfiguracją
+    - 8 rozmiarów ikon PWA (72px-512px)
+    - Install prompt dla Android/Desktop
+    - Instrukcje instalacji dla iOS
+    - Auto-deploy na Railway
+11. **Memory Management API** - ✅ NOWY! Kompletne API do zarządzania pamięcią
+    - POST /api/save-memory - zapisywanie wspomnień z embeddingami
+    - POST /api/update-profile - UPSERT profilu psychologicznego
+    - POST /api/summarize-memories - AI analiza i generowanie profilu
+12. **User Profile System** - ✅ NOWY! System profili psychologicznych
+    - Tabela user_profile z pełną strukturą
+    - Attachment styles, schematy, języki miłości
+    - AI-powered profile generation
 
-### 🆕 Dodane w Sesji 14 (17.06.2025, 23:00-23:30)
-1. **PWA Support** - kompletna implementacja Progressive Web App
-2. **Service Worker** - offline cache i background sync
-3. **Install Prompts** - automatyczne wykrywanie i instrukcje instalacji
-4. **PWA Manifest** - konfiguracja dla app store-like experience
-5. **PWA Icons** - 8 rozmiarów ikon z generatorem
+### 🆕 Dodane w Sesji 15 (18.06.2025, 22:00-02:00)
+1. **ALTER TABLE memories_v2** - 6 nowych kolumn (memory_layer, date, location, repeat, actor, visible_to_user)
+2. **CREATE TABLE user_profile** - kompletna tabela profili psychologicznych
+3. **POST /api/save-memory** - endpoint do zapisywania wspomnień z walidacją i embeddingami
+4. **POST /api/update-profile** - UPSERT profilu użytkownika z walidacją
+5. **POST /api/summarize-memories** - AI generowanie profilu na podstawie wspomnień
+6. **Test scripts** - kompletne skrypty testowe dla każdego endpointu
+7. **JSDoc comments** - pełna dokumentacja w kodzie
 
-### ❌ Czego Brakuje (10% projektu)
+### ❌ Czego Brakuje (5% projektu)
 1. **UI konwersacji** - frontend dla systemu konwersacji (sidebar)
 2. **UI pamięci** - "Co o mnie wiesz?" sekcja dla użytkowników  
 3. **OAuth** - logowanie przez Google/Apple
@@ -68,7 +78,7 @@ Projekt jest **~90% gotowy** - SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉📱🧠
 
 ## 🏗️ ARCHITEKTURA PROJEKTU
 
-### 📁 Struktura Katalogów - KOMPLETNA (Stan na 17.06.2025)
+### 📁 Struktura Katalogów - KOMPLETNA (Stan na 18.06.2025)
 ```
 /Users/nataliarybarczyk/TALK2Me/
 │
@@ -119,10 +129,17 @@ Projekt jest **~90% gotowy** - SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉📱🧠
 │   ├── 📄 favorites.js                 # Ulubione wiadomości
 │   ├── 📄 conversations.js             # System konwersacji
 │   ├── 📄 test-memory.js               # Test endpoint systemu pamięci
-│   ├── 📄 debug-tables.js              # 🆕 Debug tabel Supabase
-│   ├── 📄 test-memories-v2.js          # 🆕 Test dostępu do memories_v2
-│   ├── 📄 create-test-user.js          # 🆕 Tworzenie test usera
-│   ├── 📄 setup-openai-key.js          # 🆕 Setup klucza OpenAI
+│   ├── 📄 debug-tables.js              # Debug tabel Supabase
+│   ├── 📄 test-memories-v2.js          # Test dostępu do memories_v2
+│   ├── 📄 create-test-user.js          # Tworzenie test usera
+│   ├── 📄 setup-openai-key.js          # Setup klucza OpenAI
+│   ├── 📄 alter-memories-v2.js         # 🆕 TASK 1 - Info o ALTER TABLE
+│   ├── 📄 execute-alter-table.js       # 🆕 TASK 1 - Executor dla ALTER
+│   ├── 📄 create-user-profile-table.js # 🆕 TASK 2 - Tworzenie tabeli user_profile
+│   ├── 📄 test-user-profile.js         # 🆕 TASK 2 - Test tabeli user_profile
+│   ├── 📄 save-memory.js               # 🆕 TASK 3 - Zapisywanie wspomnień z embeddingami
+│   ├── 📄 update-profile.js            # 🆕 TASK 4 - UPSERT profilu psychologicznego
+│   ├── 📄 summarize-memories.js        # 🆕 TASK 5 - AI generowanie profilu
 │   │
 │   ├── 📁 auth/                        # AUTORYZACJA
 │   │   ├── 📄 login.js                 # Login endpoint (JWT)
@@ -150,7 +167,10 @@ Projekt jest **~90% gotowy** - SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉📱🧠
 │   ├── 📄 supabase-conversations.sql   # System konwersacji
 │   ├── 📄 supabase-memory-schema.sql   # System pamięci (legacy memories)
 │   ├── 📄 create-memories-v2.sql       # 🔥 PRODUKCYJNY schema memories_v2
-│   └── 📄 cleanup-and-test-user.sql    # Czyszczenie + test data
+│   ├── 📄 cleanup-and-test-user.sql    # Czyszczenie + test data
+│   ├── 📄 alter-memories-v2.sql        # 🆕 TASK 1 - ALTER TABLE dla nowych kolumn
+│   ├── 📄 TASK_1_EXECUTE.sql           # 🆕 TASK 1 - Skrypt wykonawczy ALTER
+│   ├── 📄 create-user-profile.sql      # 🆕 TASK 2 - Schema tabeli user_profile
 │
 ├── 📁 mobile/                          # PROTOTYPY MOBILNE (archiwum)
 │   ├── 📄 prototype-*.html             # Różne wersje prototypów
@@ -173,20 +193,36 @@ Projekt jest **~90% gotowy** - SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉📱🧠
     ├── 📄 migrate.js                   # Skrypt migracji DB
     ├── 📄 test-db-connection.js        # Test połączenia z DB
     ├── 📄 test-memory-local.js         # Lokalny test pamięci
-    └── 📄 verify-migration.js          # Weryfikacja migracji
+    ├── 📄 verify-migration.js          # Weryfikacja migracji
+    ├── 📄 test-save-memory.js          # 🆕 TASK 3 - Test script dla save-memory
+    ├── 📄 test-update-profile.js       # 🆕 TASK 4 - Test script dla update-profile
+    └── 📄 test-summarize-memories.js   # 🆕 TASK 5 - Test script dla AI summarization
 ```
 
 ### 🔑 Najważniejsze pliki:
-1. **server.js** - główny serwer Express.js z routingiem
+1. **server.js** - główny serwer Express.js z routingiem (rozszerzony o 5 nowych endpointów)
 2. **api/chat-with-memory.js** - chat z systemem pamięci i function calling
 3. **lib/memory-manager.js** - zarządzanie pamięcią AI (LangChain + pgvector)
 4. **api/admin/memory.js** - Memory Viewer CRUD API
 5. **public/admin.html** - admin panel z Memory Management
 6. **create-memories-v2.sql** - schema produkcyjnej tabeli pamięci
-7. **public/index.html** - główny UI aplikacji
-8. **CLAUDE.md** - ta dokumentacja
+7. **create-user-profile.sql** - schema tabeli profili psychologicznych
+8. **api/save-memory.js** - endpoint do zapisywania wspomnień
+9. **api/update-profile.js** - endpoint do aktualizacji profilu
+10. **api/summarize-memories.js** - AI analiza wspomnień
+11. **public/index.html** - główny UI aplikacji
+12. **CLAUDE.md** - ta dokumentacja
 
-### 🆕 Nowe endpointy debug (Sesja 13):
+### 🆕 Endpointy API (Sesja 15):
+- **POST /api/alter-memories-v2** - informacje o ALTER TABLE dla memories_v2
+- **GET /api/execute-alter-table** - wykonanie ALTER TABLE
+- **POST /api/create-user-profile-table** - tworzenie tabeli user_profile
+- **GET/POST /api/test-user-profile** - testowanie tabeli user_profile
+- **POST /api/save-memory** - zapisywanie wspomnień z embeddingami
+- **POST /api/update-profile** - UPSERT profilu psychologicznego
+- **POST /api/summarize-memories** - AI generowanie profilu ze wspomnień
+
+### 🔧 Endpointy debug i admin:
 - **GET /api/debug-tables** - sprawdzanie tabel w Supabase
 - **GET /api/test-memories-v2** - test bezpośredniego dostępu do memories_v2
 - **POST /api/create-test-user** - tworzenie test usera
@@ -402,8 +438,8 @@ NODE_ENV=production
    - Manifest.json z ikonami
    - Install prompt na iOS/Android
 
-### 📊 AKTUALNY STAN PROJEKTU (17.06.2025):
-**Projekt jest w ~85% gotowy** - system pamięci w pełni funkcjonalny!
+### 📊 AKTUALNY STAN PROJEKTU (18.06.2025):
+**Projekt jest w ~95% gotowy** - backend API kompletny + system pamięci w pełni funkcjonalny!
 
 #### ✅ GOTOWE:
 - ✅ Chat z AI + streaming odpowiedzi (SSE)
@@ -414,13 +450,16 @@ NODE_ENV=production
 - ✅ Railway deployment z auto-deploy
 - ✅ Admin panel z konfiguracją AI
 - ✅ Test endpoints dla debugowania
+- ✅ PWA - Progressive Web App (instalacja mobilna)
+- ✅ Complete Memory Management API (save, update, AI analysis)
+- ✅ User Profile System z AI generowaniem
 
-#### 🔄 DO ZROBIENIA (15%):
+#### 🔄 DO ZROBIENIA (5%):
 - 🔄 UI systemu konwersacji (sidebar z listą)
 - 🔄 UI sekcji "Co o mnie wiesz?" dla użytkowników
 - 🔄 OAuth (Google/Apple login)
-- 🔄 PWA (instalacja mobilna)
 - 🔄 Testy jednostkowe
+- 🔄 Lepsze ikony PWA (design)
 
 ## 🚨 WAŻNE DLA KOLEJNYCH DEVELOPERÓW
 
@@ -667,21 +706,22 @@ NODE_ENV=production
 - **Admin Panel**: https://talk2me.up.railway.app/admin.html (hasło: qwe123)
 
 ---
-**Ostatnia aktualizacja**: 17 czerwca 2025, 23:30  
-**Sesja**: #14  
-**Status**: 🟢 System pamięci ✅ + PWA ✅ w pełni funkcjonalne  
-**Kompletność projektu**: ~90% (system pamięci ✅, PWA ✅, brakuje UI konwersacji i OAuth)
+**Ostatnia aktualizacja**: 18 czerwca 2025, 02:00  
+**Sesja**: #15  
+**Status**: 🟢 Backend API ✅ + System pamięci ✅ + PWA ✅ w pełni funkcjonalne  
+**Kompletność projektu**: ~95% (backend kompletny, brakuje tylko UI konwersacji i OAuth)
 
-### 🎯 **NASTĘPNE PRIORYTETY** (dla Sesji #15):
-1. **UI systemu konwersacji** - sidebar z listą rozmów (5% projektu)
-2. **UI sekcji "Co o mnie wiesz?"** - przeglądanie wspomnień dla użytkowników (3% projektu)  
-3. **OAuth logowanie** - Google/Apple integration (2% projektu)
+### 🎯 **NASTĘPNE PRIORYTETY** (dla Sesji #16):
+1. **UI systemu konwersacji** - sidebar z listą rozmów (3% projektu)
+2. **UI sekcji "Co o mnie wiesz?"** - przeglądanie wspomnień dla użytkowników (1% projektu)  
+3. **OAuth logowanie** - Google/Apple integration (1% projektu)
 4. **Lepsze ikony PWA** - profesjonalny design zamiast placeholder
 
-### 🏆 **OSIĄGNIĘCIA SESJI #14**:
-✅ **PWA w pełni zaimplementowana** - aplikacja instalowalna na telefony i desktop  
-✅ **Service Worker** - offline cache i ready dla notifications  
-✅ **Install prompts** - automatyczne na Android, instrukcje na iOS  
-✅ **Manifest + ikony** - kompletna konfiguracja PWA  
+### 🏆 **OSIĄGNIĘCIA SESJI #15**:
+✅ **5 zadań backend wykonanych** - wszystkie TASK 1-5 ukończone  
+✅ **Tabela user_profile** - kompletna struktura profili psychologicznych  
+✅ **Memory Management API** - save, update, AI analysis  
+✅ **AI Profile Generation** - automatyczne generowanie profili ze wspomnień  
+✅ **Pełna dokumentacja** - JSDoc w kodzie + test scripts  
 
-**Projekt gotowy w 90%! Pozostało tylko UI konwersacji i OAuth!** 🎉📱
+**Projekt gotowy w 95%! Backend kompletny, pozostało tylko UI!** 🎉🚀🧠

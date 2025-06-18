@@ -1,3 +1,31 @@
+/**
+ * POST /api/save-memory
+ * 
+ * Endpoint do zapisywania wspomnień użytkownika w tabeli memories_v2
+ * z automatycznym generowaniem embeddings dla semantic search.
+ * 
+ * @route POST /api/save-memory
+ * @body {Object} memory - Obiekt wspomnienia do zapisania
+ * @body {string} memory.user_id - UUID użytkownika (wymagane)
+ * @body {string} memory.summary - Treść wspomnienia, max 300 znaków (wymagane)
+ * @body {string} memory.memory_type - Typ: personal/relationship/preference/event/schemat (wymagane)
+ * @body {number} memory.importance - Ważność 1-10, domyślnie 5
+ * @body {string} memory.memory_layer - Warstwa: short_term/long_term/core
+ * @body {string} memory.actor - Kto dodał: user/ai/system
+ * @body {boolean} memory.visible_to_user - Czy widoczne dla użytkownika
+ * @body {Array} memory.tags - Tagi wspomnienia
+ * @body {string} memory.date - Data zdarzenia (YYYY-MM-DD)
+ * @body {string} memory.location - Lokalizacja
+ * @body {string} memory.source_context - Kontekst źródłowy
+ * 
+ * @returns {Object} 200 - { success: true, memory_id, data }
+ * @returns {Object} 400 - { error: "Validation failed", details: [...] }
+ * @returns {Object} 500 - { error: "Server error", details: "..." }
+ * 
+ * @author Claude (AI Assistant)
+ * @date 18.06.2025
+ * @session 15
+ */
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 

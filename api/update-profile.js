@@ -1,3 +1,29 @@
+/**
+ * POST /api/update-profile
+ * 
+ * Endpoint do aktualizacji profilu psychologicznego użytkownika.
+ * Wykonuje operację UPSERT - tworzy nowy profil lub aktualizuje istniejący.
+ * 
+ * @route POST /api/update-profile
+ * @body {Object} profile - Obiekt profilu do zapisania
+ * @body {string} profile.user_id - UUID użytkownika (wymagane)
+ * @body {string} profile.attachment_style - Styl przywiązania: bezpieczny/lękowy/unikający/zdezorganizowany
+ * @body {Array<string>} profile.dominujące_schematy - Lista dominujących schematów psychologicznych
+ * @body {Array<string>} profile.język_miłości - Preferowane języki miłości
+ * @body {string} profile.styl_komunikacji - Styl komunikacji: asertywny/pasywny/agresywny/emocjonalny/logiczny
+ * @body {string} profile.rola - Rola życiowa użytkownika
+ * @body {string} profile.dzieciństwo - Opis doświadczeń z dzieciństwa
+ * @body {string} profile.aktualne_wyzywania - Obecne wyzwania życiowe
+ * @body {Array<string>} profile.cykliczne_wzorce - Powtarzające się wzorce zachowań
+ * 
+ * @returns {Object} 200 - { success: true, message, data }
+ * @returns {Object} 400 - { error: "Validation error" }
+ * @returns {Object} 500 - { error: "Server error", details: "..." }
+ * 
+ * @author Claude (AI Assistant)
+ * @date 18.06.2025
+ * @session 15
+ */
 import { createClient } from '@supabase/supabase-js';
 
 export default async (req, res) => {
