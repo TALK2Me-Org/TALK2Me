@@ -51,7 +51,7 @@ const __dirname = dirname(__filename);
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler, executeAlterTableHandler;
-let createUserProfileTableHandler, testUserProfileHandler;
+let createUserProfileTableHandler, testUserProfileHandler, saveMemoryHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -150,6 +150,14 @@ try {
     console.log('✅ Loaded: test-user-profile handler');
   } catch (e) {
     console.log('⚠️ Could not load test-user-profile handler:', e.message);
+  }
+  
+  // Memory save handler
+  try {
+    saveMemoryHandler = (await import('./api/save-memory.js')).default;
+    console.log('✅ Loaded: save-memory handler');
+  } catch (e) {
+    console.log('⚠️ Could not load save-memory handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -343,6 +351,12 @@ if (testUserProfileHandler) {
   app.get('/api/test-user-profile', testUserProfileHandler);
   app.post('/api/test-user-profile', testUserProfileHandler);
   console.log('✅ Registered routes: GET/POST /api/test-user-profile');
+}
+
+// Memory save endpoint
+if (saveMemoryHandler) {
+  app.post('/api/save-memory', saveMemoryHandler);
+  console.log('✅ Registered route: POST /api/save-memory');
 }
 
 // Root endpoint - handle both health checks and static files
