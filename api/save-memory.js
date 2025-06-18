@@ -92,6 +92,7 @@ export default async (req, res) => {
     }
     
     // Validate importance - must be an integer between 1 and 5
+    // Updated in Session 16 (19.06.2025) - changed from 1-10 to 1-5 range
     if (!Number.isInteger(importance)) {
       errors.push('Importance must be an integer between 1 and 5');
     } else if (importance < 1 || importance > 5) {

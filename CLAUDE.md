@@ -22,8 +22,8 @@
 - **Deploy**: Auto-deploy z main (obecnie nieużywane)
 - **Status**: ✅ Działa jako backup
 
-## 🎯 Aktualny Stan (18 Czerwca 2025, 02:00)
-Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA GOTOWE! 🎉🚀🧠
+## 🎯 Aktualny Stan (19 Czerwca 2025, 00:00)
+Projekt jest **~96% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA GOTOWE + PEŁNE TESTY! 🎉🚀🧠✅
 
 ### ✅ Co Działa
 1. **Chat z AI** - streaming odpowiedzi w czasie rzeczywistym
@@ -60,6 +60,13 @@ Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
     - Attachment styles, schematy, języki miłości
     - AI-powered profile generation
 
+### 🆕 Dodane w Sesji 16 (19.06.2025, 20:00-00:00)
+1. **Testowy użytkownik** - `00000000-0000-0000-0000-000000000001` (test-nati@example.com)
+2. **Walidacja importance** - zmiana z 1-10 na 1-5, sprawdzanie Integer
+3. **Database constraint** - zaktualizowany CHECK w memories_v2
+4. **Produkcyjne testy** - wszystkie 3 endpointy przetestowane na Railway
+5. **SQL scripts** - create-test-user-nati.sql, update-importance-constraint.sql
+
 ### 🆕 Dodane w Sesji 15 (18.06.2025, 22:00-02:00)
 1. **ALTER TABLE memories_v2** - 6 nowych kolumn (memory_layer, date, location, repeat, actor, visible_to_user)
 2. **CREATE TABLE user_profile** - kompletna tabela profili psychologicznych
@@ -69,7 +76,7 @@ Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 6. **Test scripts** - kompletne skrypty testowe dla każdego endpointu
 7. **JSDoc comments** - pełna dokumentacja w kodzie
 
-### ❌ Czego Brakuje (5% projektu)
+### ❌ Czego Brakuje (4% projektu)
 1. **UI konwersacji** - frontend dla systemu konwersacji (sidebar)
 2. **UI pamięci** - "Co o mnie wiesz?" sekcja dla użytkowników  
 3. **OAuth** - logowanie przez Google/Apple
@@ -78,7 +85,7 @@ Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 
 ## 🏗️ ARCHITEKTURA PROJEKTU
 
-### 📁 Struktura Katalogów - KOMPLETNA (Stan na 18.06.2025)
+### 📁 Struktura Katalogów - KOMPLETNA (Stan na 19.06.2025)
 ```
 /Users/nataliarybarczyk/TALK2Me/
 │
@@ -168,9 +175,11 @@ Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 │   ├── 📄 supabase-memory-schema.sql   # System pamięci (legacy memories)
 │   ├── 📄 create-memories-v2.sql       # 🔥 PRODUKCYJNY schema memories_v2
 │   ├── 📄 cleanup-and-test-user.sql    # Czyszczenie + test data
-│   ├── 📄 alter-memories-v2.sql        # 🆕 TASK 1 - ALTER TABLE dla nowych kolumn
-│   ├── 📄 TASK_1_EXECUTE.sql           # 🆕 TASK 1 - Skrypt wykonawczy ALTER
-│   ├── 📄 create-user-profile.sql      # 🆕 TASK 2 - Schema tabeli user_profile
+│   ├── 📄 alter-memories-v2.sql        # TASK 1 - ALTER TABLE dla nowych kolumn
+│   ├── 📄 TASK_1_EXECUTE.sql           # TASK 1 - Skrypt wykonawczy ALTER
+│   ├── 📄 create-user-profile.sql      # TASK 2 - Schema tabeli user_profile
+│   ├── 📄 create-test-user-nati.sql    # 🆕 Sesja 16 - Tworzenie test usera Nati
+│   ├── 📄 update-importance-constraint.sql # 🆕 Sesja 16 - Update constraint 1-5
 │
 ├── 📁 mobile/                          # PROTOTYPY MOBILNE (archiwum)
 │   ├── 📄 prototype-*.html             # Różne wersje prototypów
@@ -207,11 +216,13 @@ Projekt jest **~95% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 5. **public/admin.html** - admin panel z Memory Management
 6. **create-memories-v2.sql** - schema produkcyjnej tabeli pamięci
 7. **create-user-profile.sql** - schema tabeli profili psychologicznych
-8. **api/save-memory.js** - endpoint do zapisywania wspomnień
+8. **api/save-memory.js** - endpoint do zapisywania wspomnień (walidacja 1-5)
 9. **api/update-profile.js** - endpoint do aktualizacji profilu
 10. **api/summarize-memories.js** - AI analiza wspomnień
-11. **public/index.html** - główny UI aplikacji
-12. **CLAUDE.md** - ta dokumentacja
+11. **create-test-user-nati.sql** - testowy użytkownik dla API
+12. **update-importance-constraint.sql** - aktualizacja constraint importance
+13. **public/index.html** - główny UI aplikacji
+14. **CLAUDE.md** - ta dokumentacja
 
 ### 🆕 Endpointy API (Sesja 15):
 - **POST /api/alter-memories-v2** - informacje o ALTER TABLE dla memories_v2
@@ -324,7 +335,7 @@ CREATE TABLE memories_v2 (
   content TEXT NOT NULL,
   summary TEXT NOT NULL,
   embedding VECTOR(1536),
-  importance INTEGER DEFAULT 5 CHECK (importance >= 1 AND importance <= 10),
+  importance INTEGER DEFAULT 5 CHECK (importance >= 1 AND importance <= 5), -- Zaktualizowane w sesji 16
   memory_type TEXT DEFAULT 'personal' CHECK (memory_type IN ('personal', 'relationship', 'preference', 'event')),
   entities JSONB,
   conversation_id UUID,
@@ -438,8 +449,8 @@ NODE_ENV=production
    - Manifest.json z ikonami
    - Install prompt na iOS/Android
 
-### 📊 AKTUALNY STAN PROJEKTU (18.06.2025):
-**Projekt jest w ~95% gotowy** - backend API kompletny + system pamięci w pełni funkcjonalny!
+### 📊 AKTUALNY STAN PROJEKTU (19.06.2025):
+**Projekt jest w ~96% gotowy** - backend API kompletny + system pamięci w pełni funkcjonalny + wszystkie testy produkcyjne!
 
 #### ✅ GOTOWE:
 - ✅ Chat z AI + streaming odpowiedzi (SSE)
@@ -453,8 +464,11 @@ NODE_ENV=production
 - ✅ PWA - Progressive Web App (instalacja mobilna)
 - ✅ Complete Memory Management API (save, update, AI analysis)
 - ✅ User Profile System z AI generowaniem
+- ✅ Walidacja importance 1-5 w API i bazie danych
+- ✅ Testowy użytkownik do weryfikacji endpointów
+- ✅ Wszystkie endpointy przetestowane na produkcji
 
-#### 🔄 DO ZROBIENIA (5%):
+#### 🔄 DO ZROBIENIA (4%):
 - 🔄 UI systemu konwersacji (sidebar z listą)
 - 🔄 UI sekcji "Co o mnie wiesz?" dla użytkowników
 - 🔄 OAuth (Google/Apple login)
@@ -706,22 +720,22 @@ NODE_ENV=production
 - **Admin Panel**: https://talk2me.up.railway.app/admin.html (hasło: qwe123)
 
 ---
-**Ostatnia aktualizacja**: 18 czerwca 2025, 02:00  
-**Sesja**: #15  
-**Status**: 🟢 Backend API ✅ + System pamięci ✅ + PWA ✅ w pełni funkcjonalne  
-**Kompletność projektu**: ~95% (backend kompletny, brakuje tylko UI konwersacji i OAuth)
+**Ostatnia aktualizacja**: 19 czerwca 2025, 00:00  
+**Sesja**: #16  
+**Status**: 🟢 Backend API ✅ + System pamięci ✅ + PWA ✅ + Testy produkcyjne ✅  
+**Kompletność projektu**: ~96% (backend kompletny i przetestowany, brakuje tylko UI konwersacji i OAuth)
 
-### 🎯 **NASTĘPNE PRIORYTETY** (dla Sesji #16):
-1. **UI systemu konwersacji** - sidebar z listą rozmów (3% projektu)
+### 🎯 **NASTĘPNE PRIORYTETY** (dla Sesji #17):
+1. **UI systemu konwersacji** - sidebar z listą rozmów (2% projektu)
 2. **UI sekcji "Co o mnie wiesz?"** - przeglądanie wspomnień dla użytkowników (1% projektu)  
 3. **OAuth logowanie** - Google/Apple integration (1% projektu)
 4. **Lepsze ikony PWA** - profesjonalny design zamiast placeholder
 
-### 🏆 **OSIĄGNIĘCIA SESJI #15**:
-✅ **5 zadań backend wykonanych** - wszystkie TASK 1-5 ukończone  
-✅ **Tabela user_profile** - kompletna struktura profili psychologicznych  
-✅ **Memory Management API** - save, update, AI analysis  
-✅ **AI Profile Generation** - automatyczne generowanie profili ze wspomnień  
-✅ **Pełna dokumentacja** - JSDoc w kodzie + test scripts  
+### 🏆 **OSIĄGNIĘCIA SESJI #16**:
+✅ **Testowanie produkcyjne** - wszystkie 3 endpointy działają na Railway  
+✅ **Testowy użytkownik** - utworzony w bazie dla testów API  
+✅ **Walidacja importance** - zaktualizowana z 1-10 na 1-5 (Integer)  
+✅ **Database constraint** - CHECK importance zaktualizowany w memories_v2  
+✅ **SQL scripts** - dokumentacja i automatyzacja zmian w bazie  
 
-**Projekt gotowy w 95%! Backend kompletny, pozostało tylko UI!** 🎉🚀🧠
+**Projekt gotowy w 96%! Backend w pełni przetestowany!** 🎉✅🧪

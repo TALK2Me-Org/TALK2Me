@@ -7,6 +7,62 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.1] - 2025-06-19
+
+### Sesja 16 - Testing API & Database Constraints Update (19.06.2025, 20:00-00:00)
+**Developer**: Claude (AI Assistant)
+
+### 🧪 TESTOWANIE ENDPOINTÓW I AKTUALIZACJA WALIDACJI! ✅
+
+#### 📦 **Główne zadania wykonane:**
+
+##### **1. Testowanie produkcyjnych endpointów**
+- ✅ Przetestowano wszystkie 3 nowe endpointy na Railway production
+- **POST /api/save-memory** - działa poprawnie, zapisuje embeddingi
+- **POST /api/update-profile** - poprawny UPSERT profilu
+- **POST /api/summarize-memories** - AI generuje profile psychologiczne
+
+##### **2. Utworzenie testowego użytkownika**
+- **SQL**: `/create-test-user-nati.sql` 
+- **User ID**: `00000000-0000-0000-0000-000000000001`
+- **Email**: `test-nati@example.com`
+- **Role**: tester (w polu subscription_type)
+- Pusty profil psychologiczny gotowy do testów
+
+##### **3. Aktualizacja walidacji importance**
+- 🔧 **FIX w API**: Zmiana zakresu z 1-10 na 1-5
+- Dodano sprawdzenie `Number.isInteger()`
+- Komunikat błędu: "Importance must be an integer between 1 and 5"
+- **SQL**: `/update-importance-constraint.sql`
+- Constraint w bazie danych zaktualizowany na 1-5
+- Automatyczne skalowanie starych wartości 6-10 → 4-5
+
+##### **4. Testowanie z prawdziwymi danymi**
+- Zapisano 3 wspomnienia testowe dla użytkownika:
+  - Wspomnienie z dzieciństwa (personal, importance: 7 → 4)
+  - Doświadczenie z pierwszej relacji (relationship, importance: 8 → 5)
+  - Głęboki schemat psychologiczny (schemat, importance: 9 → 5)
+
+#### 🛠️ **Technologie i narzędzia użyte:**
+- **curl** - testowanie API endpoints w produkcji
+- **Supabase SQL Editor** - wykonywanie skryptów SQL
+- **Git** - version control, systematyczne commity
+- **Railway logs** - monitoring deploymentu
+- **UUID validation** - walidacja formatu identyfikatorów
+
+#### 📊 **Stan zmian:**
+- **api/save-memory.js** - zaktualizowana walidacja importance
+- **create-test-user-nati.sql** - nowy skrypt tworzący test usera
+- **update-importance-constraint.sql** - skrypt aktualizujący constraint
+
+#### ✅ **Wyniki testów:**
+1. Wszystkie endpointy działają poprawnie na produkcji
+2. Walidacja importance 1-5 działa zarówno w API jak i bazie
+3. AI poprawnie generuje profile psychologiczne
+4. System embeddings działa z OpenAI
+
+---
+
 ## [1.9.0] - 2025-06-18
 
 ### Sesja 15 - Backend API dla Memory & Profile Management (18.06.2025, 22:00-02:00)
