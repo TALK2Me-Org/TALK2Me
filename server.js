@@ -51,7 +51,7 @@ const __dirname = dirname(__filename);
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler, executeAlterTableHandler;
-let createUserProfileTableHandler, testUserProfileHandler, saveMemoryHandler, updateProfileHandler;
+let createUserProfileTableHandler, testUserProfileHandler, saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -166,6 +166,14 @@ try {
     console.log('✅ Loaded: update-profile handler');
   } catch (e) {
     console.log('⚠️ Could not load update-profile handler:', e.message);
+  }
+  
+  // Summarize memories handler
+  try {
+    summarizeMemoriesHandler = (await import('./api/summarize-memories.js')).default;
+    console.log('✅ Loaded: summarize-memories handler');
+  } catch (e) {
+    console.log('⚠️ Could not load summarize-memories handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -371,6 +379,12 @@ if (saveMemoryHandler) {
 if (updateProfileHandler) {
   app.post('/api/update-profile', updateProfileHandler);
   console.log('✅ Registered route: POST /api/update-profile');
+}
+
+// Summarize memories endpoint
+if (summarizeMemoriesHandler) {
+  app.post('/api/summarize-memories', summarizeMemoriesHandler);
+  console.log('✅ Registered route: POST /api/summarize-memories');
 }
 
 // Root endpoint - handle both health checks and static files
