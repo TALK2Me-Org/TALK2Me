@@ -1,6 +1,7 @@
-// TALK2Me Service Worker - Sesja 14 (17.06.2025)
+// TALK2Me Service Worker - Sesja 15 (18.06.2025)
 // Implementuje offline cache, background sync i PWA functionality
-const CACHE_NAME = 'talk2me-v1.3';
+// v1.4 - nowe ikony T2Me (T czarne, 2 różowa, Me czarne, białe tło)
+const CACHE_NAME = 'talk2me-v1.4';
 const urlsToCache = [
   '/',
   '/index.html',

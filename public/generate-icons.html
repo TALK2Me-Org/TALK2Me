@@ -4,8 +4,9 @@
     <title>Generator Ikon PWA dla TALK2Me</title>
 </head>
 <body>
-    <h1>Generator Ikon PWA</h1>
-    <button onclick="generateIcons()">Generuj Ikony</button>
+    <h1>Generator Ikon PWA - T2Me (Nowy Design)</h1>
+    <p>T (czarne) + 2 (różowa) + Me (czarne) na białym tle</p>
+    <button onclick="generateIcons()" style="background: #FF69B4; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">Generuj Nowe Ikony</button>
     <div id="preview"></div>
 
     <script>
@@ -21,25 +22,38 @@
                 canvas.height = size;
                 const ctx = canvas.getContext('2d');
 
-                // Gradient tło
-                const gradient = ctx.createLinearGradient(0, 0, size, size);
-                gradient.addColorStop(0, '#FF69B4');
-                gradient.addColorStop(1, '#FF1493');
-                ctx.fillStyle = gradient;
+                // Białe tło
+                ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, size, size);
 
-                // Białe kółko w środku
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.arc(size/2, size/2, size/3, 0, 2 * Math.PI);
-                ctx.fill();
+                // Subtelna ramka
+                ctx.strokeStyle = '#E0E0E0';
+                ctx.lineWidth = size/128; // proporcjonalna grubość
+                ctx.strokeRect(0, 0, size, size);
 
-                // Tekst T2M
-                ctx.fillStyle = '#FF69B4';
-                ctx.font = `bold ${size/6}px Arial`;
+                // Tekst T2Me z kolorami
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('T2M', size/2, size/2);
+                
+                const fontSize = size/5;
+                const smallerFont = fontSize * 0.7;
+                ctx.font = `bold ${fontSize}px Arial`;
+                
+                // T - czarne
+                ctx.fillStyle = '#000000';
+                ctx.fillText('T', size/2 - fontSize*1.2, size/2);
+                
+                // 2 - różowa
+                ctx.fillStyle = '#FF69B4';
+                ctx.fillText('2', size/2 - fontSize*0.4, size/2);
+                
+                // M - czarne
+                ctx.fillStyle = '#000000';
+                ctx.fillText('M', size/2 + fontSize*0.3, size/2);
+                
+                // e - czarne, mniejsza
+                ctx.font = `bold ${smallerFont}px Arial`;
+                ctx.fillText('e', size/2 + fontSize*1.0, size/2);
 
                 // Dodanie do preview
                 const img = new Image();

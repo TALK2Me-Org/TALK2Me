@@ -1,11 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#FF69B4;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#FF1493;stop-opacity:1" />
-    </radialGradient>
-  </defs>
-  <rect width="512" height="512" fill="url(#bg)" rx="80"/>
-  <circle cx="256" cy="256" r="170" fill="white"/>
-  <text x="256" y="280" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="#FF69B4">T2M</text>
+  <!-- Białe tło -->
+  <rect width="512" height="512" fill="white" rx="80"/>
+  
+  <!-- Tekst T2Me z odpowiednimi kolorami -->
+  <g transform="translate(256, 280)">
+    <!-- T - czarne -->
+    <text x="-120" y="0" font-family="Arial, sans-serif" font-size="110" font-weight="bold" text-anchor="middle" fill="#000000">T</text>
+    
+    <!-- 2 - różowa -->
+    <text x="-40" y="0" font-family="Arial, sans-serif" font-size="110" font-weight="bold" text-anchor="middle" fill="#FF69B4">2</text>
+    
+    <!-- M - czarne -->
+    <text x="30" y="0" font-family="Arial, sans-serif" font-size="110" font-weight="bold" text-anchor="middle" fill="#000000">M</text>
+    
+    <!-- e - czarne, mniejsza -->
+    <text x="100" y="0" font-family="Arial, sans-serif" font-size="80" font-weight="bold" text-anchor="middle" fill="#000000">e</text>
+  </g>
+  
+  <!-- Subtelna ramka -->
+  <rect width="512" height="512" fill="none" stroke="#E0E0E0" stroke-width="4" rx="80"/>
 </svg>
