@@ -23,77 +23,85 @@ export default async function handler(req, res) {
 
     console.log('🔧 Starting ALTER TABLE on memories_v2...')
 
-    // Sprawdź obecną strukturę
-    const { data: beforeColumns, error: beforeError } = await supabase
-      .rpc('get_table_columns', { table_name: 'memories_v2' })
-      .catch(() => null) // Jeśli funkcja nie istnieje
-
-    console.log('📊 Current structure check attempted')
-
-    // Wykonaj ALTER TABLE
-    const alterQuery = `
-      ALTER TABLE memories_v2
-      ADD COLUMN IF NOT EXISTS memory_layer text,
-      ADD COLUMN IF NOT EXISTS date date,
-      ADD COLUMN IF NOT EXISTS location text,
-      ADD COLUMN IF NOT EXISTS repeat text,
-      ADD COLUMN IF NOT EXISTS actor text,
-      ADD COLUMN IF NOT EXISTS visible_to_user boolean DEFAULT false;
-    `
-
-    const { data: alterResult, error: alterError } = await supabase
-      .rpc('exec_sql', { sql: alterQuery })
-      .catch(async () => {
-        // Fallback - użyj bezpośredniego SQL
-        return await supabase
-          .from('memories_v2')
-          .select('*')
-          .limit(0) // Nie pobieraj danych, tylko sprawdź strukturę
-      })
-
-    if (alterError && !alterError.message.includes('already exists')) {
-      console.error('❌ ALTER TABLE error:', alterError)
-      return res.status(500).json({ 
-        error: 'ALTER TABLE failed', 
-        details: alterError.message 
-      })
-    }
-
-    // Alternatywny sposób - wykonaj każdą kolumnę osobno
+    // Lista kolumn do dodania
     const columns = [
       { name: 'memory_layer', type: 'text' },
       { name: 'date', type: 'date' },
       { name: 'location', type: 'text' },
       { name: 'repeat', type: 'text' },
       { name: 'actor', type: 'text' },
-      { name: 'visible_to_user', type: 'boolean DEFAULT false' }
+      { name: 'visible_to_user', type: 'boolean', default: 'false' }
     ]
 
     const results = []
     
+    // Sprawdź obecną strukturę przez próbę SELECT
+    console.log('📊 Checking current structure...')
+    const { data: structureTest, error: structureError } = await supabase
+      .from('memories_v2')
+      .select('id, user_id, content')
+      .limit(1)
+
+    if (structureError) {
+      console.error('❌ Cannot access memories_v2:', structureError)
+      return res.status(500).json({ 
+        error: 'Cannot access memories_v2 table', 
+        details: structureError.message 
+      })
+    }
+
+    console.log('✅ memories_v2 table accessible')
+
+    // Sprawdź które kolumny już istnieją przez próbę SELECT
     for (const column of columns) {
       try {
-        const singleAlterQuery = `ALTER TABLE memories_v2 ADD COLUMN IF NOT EXISTS ${column.name} ${column.type};`
+        console.log(`🔍 Checking column: ${column.name}`)
         
-        // Próba wykonania przez raw SQL
-        const { error: columnError } = await supabase
-          .rpc('exec_raw_sql', { query: singleAlterQuery })
-          .catch(() => ({ error: null })) // Ignoruj błędy jeśli RPC nie istnieje
+        const selectQuery = column.name === 'visible_to_user' ? 
+          `${column.name}` : 
+          `${column.name}`
+        
+        const { data: testData, error: testError } = await supabase
+          .from('memories_v2')
+          .select(selectQuery)
+          .limit(1)
 
-        results.push({
-          column: column.name,
-          status: columnError ? 'error' : 'success',
-          error: columnError?.message || null
-        })
-
-        console.log(`✅ Column ${column.name}: ${columnError ? 'error' : 'success'}`)
+        if (testError && testError.message.includes('column') && testError.message.includes('does not exist')) {
+          // Kolumna nie istnieje - trzeba ją dodać
+          results.push({
+            column: column.name,
+            status: 'needs_creation',
+            error: null,
+            exists: false
+          })
+          console.log(`➕ Column ${column.name}: needs to be created`)
+        } else if (testError) {
+          // Inny błąd
+          results.push({
+            column: column.name,
+            status: 'error',
+            error: testError.message,
+            exists: 'unknown'
+          })
+          console.log(`❌ Column ${column.name}: error - ${testError.message}`)
+        } else {
+          // Kolumna istnieje
+          results.push({
+            column: column.name,
+            status: 'exists',
+            error: null,
+            exists: true
+          })
+          console.log(`✅ Column ${column.name}: already exists`)
+        }
       } catch (err) {
         results.push({
           column: column.name,
           status: 'error',
-          error: err.message
+          error: err.message,
+          exists: 'unknown'
         })
-        console.log(`❌ Column ${column.name}: ${err.message}`)
+        console.log(`❌ Column ${column.name}: exception - ${err.message}`)
       }
     }
 

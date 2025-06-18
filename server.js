@@ -51,6 +51,7 @@ const __dirname = dirname(__filename);
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler, executeAlterTableHandler;
+let createUserProfileTableHandler, testUserProfileHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -134,6 +135,21 @@ try {
     console.log('✅ Loaded: execute-alter-table handler');
   } catch (e) {
     console.log('⚠️ Could not load execute-alter-table handler:', e.message);
+  }
+  
+  // User profile handlers
+  try {
+    createUserProfileTableHandler = (await import('./api/create-user-profile-table.js')).default;
+    console.log('✅ Loaded: create-user-profile-table handler');
+  } catch (e) {
+    console.log('⚠️ Could not load create-user-profile-table handler:', e.message);
+  }
+  
+  try {
+    testUserProfileHandler = (await import('./api/test-user-profile.js')).default;
+    console.log('✅ Loaded: test-user-profile handler');
+  } catch (e) {
+    console.log('⚠️ Could not load test-user-profile handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -315,6 +331,18 @@ if (alterMemoriesV2Handler) {
 if (executeAlterTableHandler) {
   app.get('/api/execute-alter-table', executeAlterTableHandler);
   console.log('✅ Registered route: GET /api/execute-alter-table');
+}
+
+// User profile endpoints
+if (createUserProfileTableHandler) {
+  app.post('/api/create-user-profile-table', createUserProfileTableHandler);
+  console.log('✅ Registered route: POST /api/create-user-profile-table');
+}
+
+if (testUserProfileHandler) {
+  app.get('/api/test-user-profile', testUserProfileHandler);
+  app.post('/api/test-user-profile', testUserProfileHandler);
+  console.log('✅ Registered routes: GET/POST /api/test-user-profile');
 }
 
 // Root endpoint - handle both health checks and static files
