@@ -970,6 +970,36 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+
+        /* ===== CHATGPT STYLE ICONS ===== */
+        .menu-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: -2px;
+        }
+
+        .menu-icon-filled {
+            fill: currentColor;
+            stroke: none;
+        }
+
+        .section-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 6px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vertical-align: -3px;
+        }
     </style>
 </head>
 <body>
@@ -1013,20 +1043,36 @@
                         <span class="arrow">→</span>
                     </div>
                     <div class="quick-action-item pro-upgrade" onclick="showProUpgrade()">
-                        <span id="hamburgerUpgradePro">⭐ Rozszerz do Pro</span>
+                        <svg class="menu-icon menu-icon-filled" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span id="hamburgerUpgradePro">Rozszerz do Pro</span>
                         <span class="arrow">→</span>
                     </div>
                 </div>
             </div>
 
-            <div class="library-section-title" style="margin-top: 20px;" id="recentChatsTitle">📚 Ostatnie rozmowy</div>
+            <div class="library-section-title" style="margin-top: 20px;" id="recentChatsTitle">
+                <svg class="section-icon" viewBox="0 0 24 24">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 1.5 17V7A2.5 2.5 0 0 1 4 4.5h16A2.5 2.5 0 0 1 22.5 7v10a2.5 2.5 0 0 1-2.5 2.5H4z"/>
+                    <path d="M9 7h6"/>
+                    <path d="M7 12h10"/>
+                    <path d="M7 17h6"/>
+                </svg>
+                Ostatnie rozmowy
+            </div>
             <div id="recentChats">
                 <div style="padding: 20px; text-align: center; color: #999;" id="loadingHistory">
                     Ładowanie historii...
                 </div>
             </div>
             
-            <div class="library-section-title" style="margin-top: 20px;" id="favoriteChatsTitle">❤️ Ulubione</div>
+            <div class="library-section-title" style="margin-top: 20px;" id="favoriteChatsTitle">
+                <svg class="section-icon menu-icon-filled" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                Ulubione
+            </div>
             <div id="favoriteChats">
                 <div style="padding: 20px; text-align: center; color: #999;" id="loadingFavorites">
                     Ładowanie ulubionych...
@@ -1044,74 +1090,150 @@
         <div class="menu-section">
             <div class="menu-section-title" id="accountSectionTitle">Konto</div>
             <div class="menu-item">
-                <span id="profileEmailLabel">📧 Adres e-mail</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span id="profileEmailLabel">Adres e-mail</span>
                 <span class="menu-item-value" id="profileEmail">-</span>
             </div>
             <div class="menu-item" onclick="editPhoneNumber()">
-                <span id="profilePhoneLabel">📱 Numer telefonu</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                <span id="profilePhoneLabel">Numer telefonu</span>
                 <span class="menu-item-value" id="profilePhone">+48 *** *** ***</span>
             </div>
             <div class="menu-item">
-                <span id="profileSubscriptionLabel">💳 Subskrypcja</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                    <line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+                <span id="profileSubscriptionLabel">Subskrypcja</span>
                 <span class="menu-item-value" id="profileSubscription">Free</span>
             </div>
             <div class="menu-item pro-upgrade" onclick="showProUpgrade()">
-                <span id="profileUpgradeProLabel">⭐ Rozszerz do Pro</span>
+                <svg class="menu-icon menu-icon-filled" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                <span id="profileUpgradeProLabel">Rozszerz do Pro</span>
                 <span>→</span>
             </div>
             <div class="menu-item" onclick="showPersonalization()">
-                <span id="profilePersonalizationLabel">🎨 Personalizacja</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m15.5-6.5l-4.24 4.24M7.76 16.24l-4.24 4.24m0-8.48l4.24 4.24m8.48 0l4.24 4.24"/>
+                </svg>
+                <span id="profilePersonalizationLabel">Personalizacja</span>
                 <span>→</span>
             </div>
             <div class="menu-item" onclick="showNotifications()">
-                <span id="profileNotificationsLabel">🔔 Powiadomienia</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span id="profileNotificationsLabel">Powiadomienia</span>
                 <span>→</span>
             </div>
             <div class="menu-item" onclick="showFavorites()">
-                <span id="profileFavoritesLabel">❤️ Ulubione czaty</span>
+                <svg class="menu-icon menu-icon-filled" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span id="profileFavoritesLabel">Ulubione czaty</span>
                 <span>→</span>
             </div>
             <div class="menu-item" onclick="showSecurity()">
-                <span id="profileSecurityLabel">🔐 Zabezpieczenia</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <circle cx="12" cy="16" r="1"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span id="profileSecurityLabel">Zabezpieczenia</span>
                 <span>→</span>
             </div>
         </div>
         <div class="menu-section">
             <div class="menu-section-title" id="applicationSectionTitle">Aplikacja</div>
             <div class="menu-item" onclick="showLanguageSettings()">
-                <span>🌍 Język aplikacji</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span>Język aplikacji</span>
                 <span class="menu-item-value" id="currentLanguage">Polski</span>
             </div>
             <div class="menu-item" onclick="toggleVoiceSend()">
-                <span>🎤 Wysyłaj po podyktowaniu</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                <span>Wysyłaj po podyktowaniu</span>
                 <span class="menu-item-value" id="voiceSendStatus">Wł.</span>
             </div>
             <div class="menu-item" onclick="toggleDarkMode()">
-                <span>🌓 Wersja apki</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                <span>Wersja apki</span>
                 <span class="menu-item-value" id="themeValue">Jasna</span>
             </div>
             <div class="menu-item" onclick="showDictionarySettings()">
-                <span>📝 Słownik</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10,9 9,9 8,9"/>
+                </svg>
+                <span>Słownik</span>
                 <span class="menu-item-value" id="dictionaryStatus">Auto</span>
             </div>
             <div class="menu-item" onclick="showAbout()">
-                <span>ℹ️ O aplikacji</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <span>O aplikacji</span>
                 <span>→</span>
             </div>
             <div class="menu-item" onclick="showPrivacyPolicy()">
-                <span>🔒 Polityka Prywatności</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>Polityka Prywatności</span>
                 <span>→</span>
             </div>
             <div class="menu-item" onclick="showTerms()">
-                <span>📄 Warunki Korzystania</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                <span>Warunki Korzystania</span>
                 <span>→</span>
             </div>
             <div class="menu-item" style="color: #FF0000;" onclick="deleteAccount()">
-                <span>🗑️ Usuń konto</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <polyline points="3,6 5,6 21,6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/>
+                    <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                <span>Usuń konto</span>
                 <span>→</span>
             </div>
             <div class="menu-item" style="color: #666;" onclick="logout()">
-                <span>🚪 Wyloguj</span>
+                <svg class="menu-icon" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16,17 21,12 16,7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Wyloguj</span>
                 <span>→</span>
             </div>
         </div>
@@ -1170,8 +1292,8 @@
                 analyzing: "Analizuję",
                 
                 // Menu hamburger
-                recentChats: "📚 Ostatnie rozmowy",
-                favoriteChats: "❤️ Ulubione",
+                recentChats: "Ostatnie rozmowy",
+                favoriteChats: "Ulubione",
                 loadingHistory: "Ładowanie historii...",
                 loadingFavorites: "Ładowanie ulubionych...",
                 noHistory: "Brak historii czatów",
@@ -1186,26 +1308,26 @@
                 // Menu profilu
                 accountSettings: "Ustawienia konta",
                 account: "Konto",
-                email: "📧 Adres e-mail",
-                phone: "📱 Numer telefonu",
-                subscription: "💳 Subskrypcja",
-                upgradePro: "⭐ Rozszerz do Pro",
-                personalization: "🎨 Personalizacja",
-                notifications: "🔔 Powiadomienia",
-                favoriteChatsMenu: "❤️ Ulubione czaty",
-                security: "🔐 Zabezpieczenia",
+                email: "Adres e-mail",
+                phone: "Numer telefonu",
+                subscription: "Subskrypcja",
+                upgradePro: "Rozszerz do Pro",
+                personalization: "Personalizacja",
+                notifications: "Powiadomienia",
+                favoriteChatsMenu: "Ulubione czaty",
+                security: "Zabezpieczenia",
                 
                 // Aplikacja
                 application: "Aplikacja",
-                appLanguage: "🌍 Język aplikacji",
-                voiceSend: "🎤 Wysyłaj po podyktowaniu",
-                appTheme: "🌓 Wersja apki",
-                dictionary: "📝 Słownik",
-                about: "ℹ️ O aplikacji",
-                privacy: "🔒 Polityka Prywatności",
-                terms: "📄 Warunki Korzystania",
-                deleteAccount: "🗑️ Usuń konto",
-                logout: "🚪 Wyloguj",
+                appLanguage: "Język aplikacji",
+                voiceSend: "Wysyłaj po podyktowaniu",
+                appTheme: "Wersja apki",
+                dictionary: "Słownik",
+                about: "O aplikacji",
+                privacy: "Polityka Prywatności",
+                terms: "Warunki Korzystania",
+                deleteAccount: "Usuń konto",
+                logout: "Wyloguj",
                 
                 // Wartości
                 on: "Wł.",
@@ -1232,7 +1354,7 @@
                 veryLarge: "Bardzo duża",
                 
                 // Modal titles i content
-                proUpgradeTitle: "🌟 TALK2Me Pro",
+                proUpgradeTitle: "TALK2Me Pro",
                 proUpgradeSubtitle: "Odblokowuj pełny potencjał aplikacji!",
                 unlimitedChats: "Nielimitowane rozmowy",
                 patternAnalysis: "Analiza wzorców",
@@ -1241,13 +1363,13 @@
                 exportChats: "Eksport rozmów",
                 priorityAI: "Priorytetowe AI",
                 upgradeNow: "Ulepsz teraz",
-                phoneNumberEdit: "📱 Edytuj numer telefonu",
+                phoneNumberEdit: "Edytuj numer telefonu",
                 save: "Zapisz",
                 languageSettings: "🌍 Język aplikacji",
                 dictionarySettings: "📝 Ustawienia słownika",
                 dictionaryDescription: "Wybierz jakość interpretacji emocjonalnej:",
                 automatic: "🤖 Automatyczny",
-                emotional: "❤️ Emocjonalny",
+                emotional: "Emocjonalny",
                 logical: "🧠 Logiczny",
                 balanced: "⚖️ Zbalansowany"
             },
@@ -1258,8 +1380,8 @@
                 analyzing: "Analyzing",
                 
                 // Hamburger menu
-                recentChats: "📚 Recent chats",
-                favoriteChats: "❤️ Favorites",
+                recentChats: "Recent chats",
+                favoriteChats: "Favorites",
                 loadingHistory: "Loading history...",
                 loadingFavorites: "Loading favorites...",
                 noHistory: "No chat history",
@@ -1274,26 +1396,26 @@
                 // Profile menu
                 accountSettings: "Account settings",
                 account: "Account",
-                email: "📧 Email address",
-                phone: "📱 Phone number",
-                subscription: "💳 Subscription",
-                upgradePro: "⭐ Upgrade to Pro",
-                personalization: "🎨 Personalization",
-                notifications: "🔔 Notifications",
-                favoriteChatsMenu: "❤️ Favorite chats",
-                security: "🔐 Security",
+                email: "Email address",
+                phone: "Phone number",
+                subscription: "Subscription",
+                upgradePro: "Upgrade to Pro",
+                personalization: "Personalization",
+                notifications: "Notifications",
+                favoriteChatsMenu: "Favorite chats",
+                security: "Security",
                 
                 // Application
                 application: "Application",
-                appLanguage: "🌍 App language",
-                voiceSend: "🎤 Send after dictation",
-                appTheme: "🌓 App theme",
-                dictionary: "📝 Dictionary",
-                about: "ℹ️ About",
-                privacy: "🔒 Privacy Policy",
-                terms: "📄 Terms of Use",
-                deleteAccount: "🗑️ Delete account",
-                logout: "🚪 Log out",
+                appLanguage: "App language",
+                voiceSend: "Send after dictation",
+                appTheme: "App theme",
+                dictionary: "Dictionary",
+                about: "About",
+                privacy: "Privacy Policy",
+                terms: "Terms of Use",
+                deleteAccount: "Delete account",
+                logout: "Log out",
                 
                 // Values
                 on: "On",
@@ -1320,7 +1442,7 @@
                 veryLarge: "Very large",
                 
                 // Modal titles and content
-                proUpgradeTitle: "🌟 TALK2Me Pro",
+                proUpgradeTitle: "TALK2Me Pro",
                 proUpgradeSubtitle: "Unlock the full potential of the app!",
                 unlimitedChats: "Unlimited conversations",
                 patternAnalysis: "Pattern analysis",
@@ -1329,13 +1451,13 @@
                 exportChats: "Export conversations",
                 priorityAI: "Priority AI",
                 upgradeNow: "Upgrade now",
-                phoneNumberEdit: "📱 Edit phone number",
+                phoneNumberEdit: "Edit phone number",
                 save: "Save",
                 languageSettings: "🌍 App language",
                 dictionarySettings: "📝 Dictionary settings",
                 dictionaryDescription: "Choose emotional interpretation quality:",
                 automatic: "🤖 Automatic",
-                emotional: "❤️ Emotional",
+                emotional: "Emotional",
                 logical: "🧠 Logical",
                 balanced: "⚖️ Balanced"
             }
@@ -1667,7 +1789,10 @@
                         ${favoriteButton}
                         <div class="response-section">
                             <div class="section-header">
-                                <span class="emoji">❤️</span> ${t('firstSection')}
+                                <svg class="section-icon menu-icon-filled" viewBox="0 0 24 24">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                </svg>
+                                ${t('firstSection')}
                             </div>
                             <div class="section-content">${parsedSections.intro}</div>
                         </div>
@@ -2519,7 +2644,7 @@
         function editPhoneNumber() {
             const phoneHTML = `
                 <div style="padding: 20px;">
-                    <h3>📱 Edytuj numer telefonu</h3>
+                    <h3>Edytuj numer telefonu</h3>
                     <input type="tel" id="phoneInput" placeholder="+48 123 456 789" 
                            style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
                     <button onclick="savePhoneNumber()" 
@@ -2756,7 +2881,7 @@
                         <span>${localStorage.getItem('dictionary') === 'auto' || !localStorage.getItem('dictionary') ? '✓' : ''}</span>
                     </div>
                     <div class="menu-item" style="margin: 10px 0; cursor: pointer;" onclick="setDictionary('emotional')">
-                        <span>❤️ Emocjonalny</span>
+                        <span>Emocjonalny</span>
                         <span>${localStorage.getItem('dictionary') === 'emotional' ? '✓' : ''}</span>
                     </div>
                     <div class="menu-item" style="margin: 10px 0; cursor: pointer;" onclick="setDictionary('logical')">
@@ -2923,7 +3048,7 @@
         // Install prompt
         let deferredPrompt;
         const installButton = document.createElement('button');
-        installButton.textContent = '📱 Zainstaluj aplikację';
+        installButton.textContent = 'Zainstaluj aplikację';
         installButton.style.cssText = `
             position: fixed;
             top: 50px;
@@ -2990,7 +3115,7 @@
                 `;
                 
                 iosPrompt.innerHTML = `
-                    <div style="margin-bottom: 10px;">📱 <strong>Zainstaluj TALK2Me</strong></div>
+                    <div style="margin-bottom: 10px;"><strong>Zainstaluj TALK2Me</strong></div>
                     <div style="color: #666; margin-bottom: 15px;">
                         Kliknij <strong>Udostępnij</strong> ⬆️ <br>
                         następnie <strong>"Dodaj do ekr. głównego"</strong> ➕
