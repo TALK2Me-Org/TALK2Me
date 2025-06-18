@@ -50,7 +50,7 @@ const __dirname = dirname(__filename);
 // Import handlers with error handling
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
-let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler;
+let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler, executeAlterTableHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -127,6 +127,13 @@ try {
     console.log('✅ Loaded: alter-memories-v2 handler');
   } catch (e) {
     console.log('⚠️ Could not load alter-memories-v2 handler:', e.message);
+  }
+  
+  try {
+    executeAlterTableHandler = (await import('./api/execute-alter-table.js')).default;
+    console.log('✅ Loaded: execute-alter-table handler');
+  } catch (e) {
+    console.log('⚠️ Could not load execute-alter-table handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -303,6 +310,11 @@ if (testMemoriesV2Handler) {
 if (alterMemoriesV2Handler) {
   app.post('/api/alter-memories-v2', alterMemoriesV2Handler);
   console.log('✅ Registered route: POST /api/alter-memories-v2');
+}
+
+if (executeAlterTableHandler) {
+  app.get('/api/execute-alter-table', executeAlterTableHandler);
+  console.log('✅ Registered route: GET /api/execute-alter-table');
 }
 
 // Root endpoint - handle both health checks and static files
