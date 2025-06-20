@@ -63,7 +63,7 @@ try {
   } catch (memoryError) {
     console.warn('⚠️  Failed to load memory chat:', memoryError.message);
     console.log('📌 Falling back to basic chat handler');
-    chatHandler = (await import('./api/chat.js')).default;
+    chatHandler = (await import('./api/chat-with-memory.js')).default;
     console.log('✅ Loaded: basic chat handler');
   }
   
