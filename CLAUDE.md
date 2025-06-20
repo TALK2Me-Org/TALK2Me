@@ -15,12 +15,12 @@
 - **Deploy**: Auto-deploy przy każdym push na `railway-migration`
 - **Status**: ✅ DZIAŁA POPRAWNIE - system pamięci w pełni funkcjonalny
 
-### 🟢 PRODUKCJA (Railway) - NOWA KONFIGURACJA
+### 🟢 PRODUKCJA (Railway) - AKTYWNE
 - **URL**: https://talk2me.up.railway.app
-- **Branch**: `main` ✅ (ZMIENIONE Z railway-migration!)
+- **Branch**: `main` ✅ (AKTYWNE!)
 - **Platforma**: Railway.app (Express.js server)
 - **Deploy**: Auto-deploy przy każdym push na `main`
-- **Status**: ✅ Skonfigurowane do auto-deploy
+- **Status**: ✅ AKTYWNE - branch main skonfigurowany w Railway Dashboard
 
 ### 🟡 BACKUP (Vercel) - STARE
 - **URL**: https://tk2me.vercel.app
