@@ -41,10 +41,21 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      // Get favorite chats
-      const { data: chats, error } = await supabase
-        .from('chat_history')
-        .select('*')
+      // Get favorite messages from new messages table
+      const { data: favoriteMessages, error } = await supabase
+        .from('messages')
+        .select(`
+          id,
+          content,
+          role,
+          ai_model,
+          created_at,
+          conversation_id,
+          conversations!inner(
+            title,
+            user_id
+          )
+        `)
         .eq('user_id', decoded.id)
         .eq('is_favorite', true)
         .order('created_at', { ascending: false })
@@ -53,36 +64,48 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Database error', details: error })
       }
 
+      // Transform to match expected format
+      const chats = favoriteMessages?.map(msg => ({
+        id: msg.id,
+        conversation_id: msg.conversation_id,
+        title: msg.conversations?.title || 'Untitled Chat',
+        message: msg.role === 'user' ? msg.content : '',
+        response: msg.role === 'assistant' ? msg.content : '',
+        created_at: msg.created_at,
+        is_favorite: true,
+        ai_model: msg.ai_model
+      })) || []
+
       res.json({
         success: true,
-        chats: chats || []
+        chats: chats
       })
 
     } else if (req.method === 'POST') {
-      // Toggle favorite status
-      const { chatId } = req.body
+      // Toggle favorite status for message
+      const { messageId } = req.body
       
-      if (!chatId) {
-        return res.status(400).json({ error: 'chatId required' })
+      if (!messageId) {
+        return res.status(400).json({ error: 'messageId required' })
       }
 
       // First get current status
-      const { data: currentChat } = await supabase
-        .from('chat_history')
+      const { data: currentMessage } = await supabase
+        .from('messages')
         .select('is_favorite')
-        .eq('id', chatId)
+        .eq('id', messageId)
         .eq('user_id', decoded.id)
         .single()
 
-      if (!currentChat) {
-        return res.status(404).json({ error: 'Chat not found' })
+      if (!currentMessage) {
+        return res.status(404).json({ error: 'Message not found' })
       }
 
       // Toggle favorite
       const { error } = await supabase
-        .from('chat_history')
-        .update({ is_favorite: !currentChat.is_favorite })
-        .eq('id', chatId)
+        .from('messages')
+        .update({ is_favorite: !currentMessage.is_favorite })
+        .eq('id', messageId)
         .eq('user_id', decoded.id)
 
       if (error) {
@@ -91,7 +114,8 @@ export default async function handler(req, res) {
 
       res.json({
         success: true,
-        message: 'Favorite status updated'
+        message: 'Favorite status updated',
+        is_favorite: !currentMessage.is_favorite
       })
 
     } else {

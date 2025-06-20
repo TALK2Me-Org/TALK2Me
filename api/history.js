@@ -46,20 +46,46 @@ export default async function handler(req, res) {
 
     const limit = parseInt(req.query.limit) || 20
 
-    const { data: chats, error } = await supabase
-      .from('chat_history')
-      .select('*')
+    // Read from new conversations table instead of legacy chat_history
+    const { data: conversations, error } = await supabase
+      .from('conversations')
+      .select(`
+        id,
+        title,
+        created_at,
+        last_message_at,
+        messages!inner(
+          content,
+          role,
+          created_at
+        )
+      `)
       .eq('user_id', decoded.id)
-      .order('created_at', { ascending: false })
+      .order('last_message_at', { ascending: false })
       .limit(limit)
 
     if (error) {
       return res.status(500).json({ error: 'Database error', details: error })
     }
 
+    // Transform to match expected chat history format
+    const chats = conversations?.map(conv => {
+      const lastMessage = conv.messages?.[conv.messages.length - 1]
+      return {
+        id: conv.id,
+        conversation_id: conv.id,
+        title: conv.title,
+        message: conv.messages?.find(m => m.role === 'user')?.content || '',
+        response: conv.messages?.find(m => m.role === 'assistant')?.content || '',
+        created_at: conv.created_at,
+        last_message_at: conv.last_message_at,
+        is_favorite: false // TODO: implement favorites in new system
+      }
+    }) || []
+
     res.json({
       success: true,
-      chats: chats || []
+      chats: chats
     })
 
   } catch (error) {
