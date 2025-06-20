@@ -1,188 +1,245 @@
 # 🗂️ STRUKTURA PROJEKTU TALK2Me
 
-## 📁 Pełne drzewo katalogów z opisami
+## 📁 Pełne drzewo katalogów z opisami (Stan na 19.06.2025)
 
 ```
 /Users/nataliarybarczyk/TALK2Me/
 │
-├── 📁 api/                           # Vercel Serverless Functions (backend)
-│   ├── 📁 admin/                     # Endpointy panelu administratora
-│   │   ├── config.js                 # GET/PUT - zarządzanie konfiguracją AI (klucze API, modele)
-│   │   └── debug.js                  # GET - endpoint debugowania, info o cache promptu
-│   │
-│   ├── 📁 auth/                      # System autoryzacji
-│   │   ├── login.js                  # POST - logowanie użytkownika (JWT token)
-│   │   ├── register.js               # POST - rejestracja nowego użytkownika
-│   │   ├── verify.js                 # POST - weryfikacja adresu email
-│   │   └── me.js                     # GET - dane zalogowanego użytkownika
-│   │
-│   ├── chat.js                       # POST - GŁÓWNY endpoint czatu z AI
-│   │                                 # - Streaming SSE responses
-│   │                                 # - OpenAI Chat Completions + Groq fallback
-│   │                                 # - Cache promptu z Assistant API
-│   │
-│   ├── conversations.js              # GET/POST/PUT/DELETE - system konwersacji
-│   │                                 # - Lista konwersacji użytkownika
-│   │                                 # - CRUD operations
-│   │                                 # - Integracja z messages table
-│   │
-│   ├── favorites.js                  # GET/POST/DELETE - ulubione wiadomości
-│   │                                 # - Zapisywanie ważnych odpowiedzi
-│   │
-│   └── history.js                    # GET/POST - historia czatów
-│                                     # - Pobieranie poprzednich rozmów
-│                                     # - Zapisywanie nowych wpisów
+├── 🔧 PLIKI KONFIGURACYJNE
+│   ├── 📄 server.js                    # Express.js server dla Railway (główny plik)
+│   ├── 📄 railway.json                 # Railway deployment config (healthcheck, build)
+│   ├── 📄 nixpacks.toml               # Railway build process config (Node 18)
+│   ├── 📄 package.json                 # Dependencies (LangChain, OpenAI, Supabase)
+│   ├── 📄 vercel.json                  # Stara konfiguracja Vercel (backup)
+│   └── 📄 .gitignore                   # Ignorowane pliki (package-lock.json)
 │
-├── 📁 backend/                       # STARY backend (nieużywany)
-│   ├── auth.js                       # Stara autoryzacja Express
-│   ├── database.js                   # SQLite connection (zastąpione Supabase)
-│   ├── server.js                     # Express server localhost:3001
-│   ├── test-api.js                   # Testy API
-│   ├── test-claude.js                # Test integracji Claude
-│   ├── package.json                  # Dependencies starego backendu
-│   └── node_modules/                 # Moduły Node.js
+├── 📚 DOKUMENTACJA
+│   ├── 📄 CLAUDE.md                    # 🔥 GŁÓWNA DOKUMENTACJA (TEN PLIK)
+│   ├── 📄 CHANGELOG.md                 # Historia zmian po sesjach
+│   ├── 📄 README.md                    # Podstawowy opis projektu
+│   ├── 📄 DEVELOPER_GUIDE.md           # Przewodnik dla developerów
+│   ├── 📄 TECH_STACK.md                # Opis technologii
+│   ├── 📄 PROJECT_STRUCTURE.md         # Struktura projektu
+│   ├── 📄 MEMORY_ARCHITECTURE.md       # Architektura systemu pamięci
+│   └── 📄 MIGRATION_GUIDE.md           # Przewodnik migracji
 │
-├── 📁 public/                        # Frontend - pliki statyczne
-│   ├── index.html                    # ⭐ GŁÓWNA APLIKACJA
-│   │                                 # - Mobile-first UI
-│   │                                 # - Chat interface
-│   │                                 # - Menu boczne
-│   │                                 # - Tryb gościa/zalogowany
-│   │
-│   ├── admin.html                    # Panel administratora
-│   │                                 # - Konfiguracja AI
-│   │                                 # - Zarządzanie kluczami API
-│   │                                 # - Podgląd promptu
-│   │                                 # - Hasło: qwe123
-│   │
-│   ├── login.html                    # Strona logowania/rejestracji
-│   │                                 # - Formularz logowania
-│   │                                 # - Link do rejestracji
-│   │
-│   ├── clear-storage.html            # Narzędzie czyszczenia localStorage
-│   │
-│   ├── index-backup-before-v2.html   # Backup przed zmianami v2
-│   └── index-v2-conversations.html   # Prototyp UI z konwersacjami (wycofany)
+├── 📁 public/                          # FRONTEND (Static Files)
+│   ├── 📄 index.html                   # Główna aplikacja czatu (SPA)
+│   ├── 📄 login.html                   # Strona logowania/rejestracji
+│   ├── 📄 admin.html                   # Panel administratora
+│   ├── 📄 test-memory.html             # Strona testowa systemu pamięci
+│   ├── 📄 styles.css                   # Główne style (CSS Variables)
+│   ├── 📄 manifest.json                # 🆕 PWA manifest - kompletna konfiguracja
+│   ├── 📄 sw.js                        # 🆕 Service Worker - offline cache & sync
+│   ├── 📄 generate-icons.html          # 🆕 Generator ikon PWA (HTML + Canvas)
+│   ├── 📁 icons/                       # 🆕 Ikony aplikacji PWA (8 rozmiarów)
+│   │   ├── 📄 icon-72x72.png           # Ikona 72x72px (Android)
+│   │   ├── 📄 icon-96x96.png           # Ikona 96x96px (Android)
+│   │   ├── 📄 icon-128x128.png         # Ikona 128x128px (Desktop)
+│   │   ├── 📄 icon-144x144.png         # Ikona 144x144px (Windows)
+│   │   ├── 📄 icon-152x152.png         # Ikona 152x152px (iOS)
+│   │   ├── 📄 icon-192x192.png         # Ikona 192x192px (Android Maskable)
+│   │   ├── 📄 icon-384x384.png         # Ikona 384x384px (Splash Screen)
+│   │   ├── 📄 icon-512x512.png         # Ikona 512x512px (High-res)
+│   │   ├── 📄 icon.svg                 # Źródłowa ikona SVG
+│   │   └── 📄 create-icons.js          # Node.js generator ikon (niewykorzystany)
+│   └── 📄 index-*.html                 # Backup/wersje developerskie
 │
-├── 📁 mobile/                        # Prototypy mobilne (archiwum)
-│   ├── prototype.html                # Pierwszy prototyp
-│   ├── prototype-v2.html             # Iteracja 2
-│   ├── prototype-v3.html             # Iteracja 3
-│   ├── prototype-v4.html             # Iteracja 4
-│   ├── prototype-working.html        # Działający prototyp
-│   ├── prototype-final.html          # Finalny prototyp
-│   ├── prototype-mobile.html         # Mobile-specific
-│   ├── prototype-chatgpt-style.html  # Styl podobny do ChatGPT
-│   └── login.html                    # Prototyp logowania
+├── 📁 api/                             # BACKEND HANDLERS (Express.js)
+│   ├── 📄 chat.js                      # Podstawowy chat (fallback)
+│   ├── 📄 chat-with-memory.js          # 🔥 Chat z pamięcią (LangChain)
+│   ├── 📄 history.js                   # Historia rozmów (legacy)
+│   ├── 📄 favorites.js                 # Ulubione wiadomości
+│   ├── 📄 conversations.js             # System konwersacji
+│   ├── 📄 test-memory.js               # Test endpoint systemu pamięci
+│   ├── 📄 debug-tables.js              # Debug tabel Supabase
+│   ├── 📄 test-memories-v2.js          # Test dostępu do memories_v2
+│   ├── 📄 create-test-user.js          # Tworzenie test usera
+│   ├── 📄 setup-openai-key.js          # Setup klucza OpenAI
+│   ├── 📄 alter-memories-v2.js         # 🆕 TASK 1 - Info o ALTER TABLE
+│   ├── 📄 execute-alter-table.js       # 🆕 TASK 1 - Executor dla ALTER
+│   ├── 📄 create-user-profile-table.js # 🆕 TASK 2 - Tworzenie tabeli user_profile
+│   ├── 📄 test-user-profile.js         # 🆕 TASK 2 - Test tabeli user_profile
+│   ├── 📄 save-memory.js               # 🆕 TASK 3 - Zapisywanie wspomnień z embeddingami
+│   ├── 📄 update-profile.js            # 🆕 TASK 4 - UPSERT profilu psychologicznego
+│   ├── 📄 summarize-memories.js        # 🆕 TASK 5 - AI generowanie profilu
+│   │
+│   ├── 📁 auth/                        # AUTORYZACJA
+│   │   ├── 📄 login.js                 # Login endpoint (JWT)
+│   │   ├── 📄 register.js              # Rejestracja użytkowników
+│   │   ├── 📄 me.js                    # Dane zalogowanego usera
+│   │   └── 📄 verify.js                # Weryfikacja email (TODO)
+│   │
+│   └── 📁 admin/                       # PANEL ADMINA
+│       ├── 📄 config.js                # Zarządzanie konfiguracją
+│       ├── 📄 debug.js                 # Debug info & stats
+│       └── 📄 memory.js                # 🔥 Memory Viewer - zarządzanie wspomnieniami
 │
-├── 📁 design/                        # Dokumentacja projektowa
-│   └── ui-concept.md                 # Koncepcja UI/UX
+├── 📁 lib/                             # BIBLIOTEKI POMOCNICZE
+│   └── 📄 memory-manager.js            # 🔥 Manager pamięci AI (LangChain)
 │
-├── 📄 Pliki konfiguracyjne
-│   ├── package.json                  # ⚙️ Dependencies + ES6 modules
-│   │                                 # - "type": "module"
-│   │                                 # - Vercel dev dependencies
-│   │
-│   ├── vercel.json                   # ⚙️ Konfiguracja Vercel
-│   │                                 # - Routing rules
-│   │                                 # - Function settings
-│   │
-│   ├── .gitignore                    # Ignorowane pliki Git
-│   └── .env                          # Zmienne środowiskowe (nie w repo!)
+├── 📁 SQL/                             # SCHEMATY BAZY DANYCH
+│   ├── 📄 create-test-user.sql         # Tworzenie test usera (UUID)
+│   ├── 📄 001_optimized_schema.sql     # Zoptymalizowany schemat
+│   ├── 📄 002_migration_script.sql     # Skrypt migracji
+│   ├── 📄 003_rollback_script.sql      # Rollback migracji
+│   └── 📄 COMBINED_MIGRATION.sql       # Kompletna migracja
 │
-├── 📄 Skrypty SQL
-│   ├── supabase-schema.sql           # 🗃️ Główny schemat bazy danych
-│   │                                 # - users, chat_history, app_config
-│   │
-│   ├── supabase-conversations-schema.sql # 🗃️ Schemat dla konwersacji
-│   │                                     # - conversations, messages tables
-│   │
-│   └── cleanup-and-test-user.sql     # Skrypt czyszczenia + test user
+├── 📁 ROOT SQL FILES                   # Schematy w głównym katalogu
+│   ├── 📄 supabase-schema.sql          # Podstawowy schemat DB
+│   ├── 📄 supabase-conversations.sql   # System konwersacji
+│   ├── 📄 supabase-memory-schema.sql   # System pamięci (legacy memories)
+│   ├── 📄 create-memories-v2.sql       # 🔥 PRODUKCYJNY schema memories_v2
+│   ├── 📄 cleanup-and-test-user.sql    # Czyszczenie + test data
+│   ├── 📄 alter-memories-v2.sql        # TASK 1 - ALTER TABLE dla nowych kolumn
+│   ├── 📄 TASK_1_EXECUTE.sql           # TASK 1 - Skrypt wykonawczy ALTER
+│   ├── 📄 create-user-profile.sql      # TASK 2 - Schema tabeli user_profile
+│   ├── 📄 create-test-user-nati.sql    # 🆕 Sesja 16 - Tworzenie test usera Nati
+│   ├── 📄 update-importance-constraint.sql # 🆕 Sesja 16 - Update constraint 1-5
 │
-├── 📄 Dokumentacja
-│   ├── CLAUDE.md                     # 📋 GŁÓWNA DOKUMENTACJA
-│   │                                 # - Stan projektu
-│   │                                 # - Historia sesji
-│   │                                 # - Plany rozwoju
-│   │
-│   ├── CHANGELOG.md                  # 📝 Historia wszystkich zmian
-│   │                                 # - Chronologiczny log sesji
-│   │
-│   ├── PROJECT_STRUCTURE.md          # 🗂️ Ten plik
-│   │
-│   ├── README.md                     # 📖 Publiczny opis projektu
-│   │                                 # - Dla GitHub
-│   │
-│   ├── PROJECT_DOCUMENTATION.md      # 📚 Dokumentacja sesji 1-3
-│   │                                 # - Szczegółowy opis początków
-│   │
-│   ├── PROJECT_DOCUMENTATION_V4.md   # 📚 Dokumentacja sesji 4
-│   │                                 # - Migracja na cloud
-│   │
-│   ├── INSTRUKCJA_BAZA_DANYCH.md     # 💾 Instrukcja setup Supabase
-│   │
-│   ├── FAZA2_INSTRUKCJA_WDROZENIA.md # 🚀 Instrukcja systemu konwersacji
-│   │
-│   ├── VERCEL_DEPLOY_HOOK_INSTRUKCJA.md # 🔗 Auto-deploy setup (PL)
-│   └── VERCEL_DEPLOY_HOOK_SETUP.md   # 🔗 Auto-deploy setup (EN)
+├── 📁 mobile/                          # PROTOTYPY MOBILNE (archiwum)
+│   ├── 📄 prototype-*.html             # Różne wersje prototypów
+│   └── 📄 login.html                   # Mobilny login
 │
-└── 📄 Pliki głównego katalogu
-    └── migration-to-conversations.sql # 🔄 Skrypt migracji (planowany)
+├── 📁 backend/                         # STARY BACKEND (nieużywany)
+│   └── 📄 *.js                         # Legacy pliki
+│
+├── 📁 archive/                         # ARCHIWUM
+│   ├── 📄 README_legacy.md             # Stara dokumentacja
+│   └── 📄 PROJECT_DOCUMENTATION_*.md   # Historie projektu
+│
+├── 📁 design/                          # DESIGN
+│   └── 📄 ui-concept.md                # Koncepcja UI
+│
+├── 📁 .claude/                         # CLAUDE AI CONFIG
+│   └── 📄 settings.local.json          # Lokalne ustawienia Claude
+│
+└── 📄 PLIKI POMOCNICZE
+    ├── 📄 migrate.js                   # Skrypt migracji DB
+    ├── 📄 test-db-connection.js        # Test połączenia z DB
+    ├── 📄 test-memory-local.js         # Lokalny test pamięci
+    ├── 📄 verify-migration.js          # Weryfikacja migracji
+    ├── 📄 test-save-memory.js          # 🆕 TASK 3 - Test script dla save-memory
+    ├── 📄 test-update-profile.js       # 🆕 TASK 4 - Test script dla update-profile
+    └── 📄 test-summarize-memories.js   # 🆕 TASK 5 - Test script dla AI summarization
 ```
 
 ## 🔑 Kluczowe pliki według funkcji
 
 ### 🎯 Frontend (User Interface)
-- **Główna aplikacja**: `/public/index.html`
-- **Panel admina**: `/public/admin.html`
-- **Logowanie**: `/public/login.html`
+- **Główna aplikacja**: `/public/index.html` - SPA z chat interface
+- **Panel admina**: `/public/admin.html` - zarządzanie konfiguracją i wspomnieniami
+- **Logowanie**: `/public/login.html` - autoryzacja użytkowników
+- **PWA**: `/public/manifest.json` + `/public/sw.js` - instalacja mobilna
+- **Test pamięci**: `/public/test-memory.html` - debug systemu pamięci
 
 ### 🔌 Backend (API)
-- **Chat z AI**: `/api/chat.js`
-- **Autoryzacja**: `/api/auth/*.js`
-- **Konwersacje**: `/api/conversations.js`
-- **Admin**: `/api/admin/*.js`
+- **Chat z pamięcią**: `/api/chat-with-memory.js` - główny endpoint z LangChain
+- **Autoryzacja**: `/api/auth/*.js` - login, register, JWT
+- **Konwersacje**: `/api/conversations.js` - system rozmów
+- **Memory Management**: `/api/save-memory.js`, `/api/update-profile.js`, `/api/summarize-memories.js`
+- **Admin**: `/api/admin/*.js` - panel administracyjny
+- **Test endpoints**: `/api/test-*.js` - debugowanie
+
+### 🧠 System Pamięci AI
+- **Memory Manager**: `/lib/memory-manager.js` - LangChain orchestration
+- **Database Schema**: `/create-memories-v2.sql` - pgvector + embeddings
+- **User Profiles**: `/create-user-profile.sql` - profile psychologiczne
 
 ### 🗃️ Baza danych
-- **Schema**: `/supabase-schema.sql`
-- **Konwersacje**: `/supabase-conversations-schema.sql`
+- **Główny schema**: `/supabase-schema.sql` - users, config, sessions
+- **System pamięci**: `/create-memories-v2.sql` - memories_v2 z pgvector
+- **Profile użytkowników**: `/create-user-profile.sql` - psychologiczne profile
+- **Konwersacje**: `/supabase-conversations.sql` - system rozmów
 
 ### 📋 Dokumentacja
-- **Główna**: `/CLAUDE.md`
-- **Zmiany**: `/CHANGELOG.md`
-- **Publiczna**: `/README.md`
+- **Główna**: `/CLAUDE.md` - kompleksowy opis projektu
+- **Zmiany**: `/CHANGELOG.md` - historia sesji roboczych
+- **Struktura**: `/PROJECT_STRUCTURE.md` - ten plik
+- **Publiczna**: `/README.md` - opis dla GitHub
 
-## 📊 Statystyki projektu
+### 🔧 Konfiguracja
+- **Server**: `/server.js` - Express.js dla Railway
+- **Railway**: `/railway.json` + `/nixpacks.toml` - deployment config
+- **Dependencies**: `/package.json` - LangChain, OpenAI, Supabase
+
+## 📊 Statystyki projektu (Stan na 19.06.2025)
 
 ### Liczba plików według typu:
-- **JavaScript (API)**: 12 plików
-- **HTML (Frontend)**: 14 plików
-- **SQL**: 3 pliki
-- **Markdown (Docs)**: 9 plików
-- **JSON (Config)**: 2 pliki
-- **Razem**: ~40 plików aktywnych
+- **JavaScript (API + Lib)**: 25+ plików
+- **HTML (Frontend + PWA)**: 15+ plików  
+- **SQL (Schemas + Scripts)**: 15+ plików
+- **Markdown (Docs)**: 10+ plików
+- **JSON/Config**: 5+ plików
+- **PWA Assets**: 10+ plików (ikony + manifest)
+- **Razem**: ~80+ plików aktywnych
 
 ### Rozmiar i złożoność:
-- **Linie kodu JS**: ~3000
-- **Linie HTML/CSS**: ~5000
-- **Dokumentacja**: ~3000 linii
-- **Całkowity rozmiar**: ~2MB (bez node_modules)
+- **Backend JS**: ~8000+ linii (Express + LangChain)
+- **Frontend HTML/CSS/JS**: ~6000+ linii (SPA + PWA)
+- **SQL Schemas**: ~2000+ linii (PostgreSQL + pgvector)
+- **Dokumentacja**: ~5000+ linii (CLAUDE.md + guides)
+- **Całkowity rozmiar**: ~5MB (bez node_modules)
+
+### Funkcjonalność:
+- **Chat z AI**: ✅ Streaming SSE + Function Calling
+- **System Pamięci**: ✅ LangChain + pgvector + embeddings
+- **Memory Management**: ✅ CRUD API + Admin Panel
+- **User Profiles**: ✅ AI-generated psychological profiles
+- **PWA**: ✅ Installable mobile app + offline cache
+- **Auth System**: ✅ JWT + user management
+- **Admin Panel**: ✅ Configuration + Memory Viewer
+- **Railway Deploy**: ✅ Auto-deploy + health checks
+- **Test Coverage**: ✅ Production endpoints tested
 
 ## 🚀 Ścieżki deploymentu
 
-### Obecnie (Vercel):
+### 🟢 Aktualnie (Railway - PRODUKCJA):
+```
+GitHub Push (main) → Railway Build → Deploy
+         ↓               ↓           ↓
+    Auto-webhook    Express.js    Europe-West4
+                    Container     Single Server
+```
+**URL**: https://talk2me.up.railway.app  
+**Branch**: `main` (aktywny)  
+**Health checks**: ✅ Co 10s  
+**Status**: 🟢 Stabilny  
+
+### 🟡 Backup (Vercel - NIEAKTYWNY):
 ```
 GitHub Push → Vercel Build → Deploy
     ↓             ↓            ↓
   Webhook    Serverless    CDN Edge
 ```
+**URL**: https://tk2me.vercel.app  
+**Status**: ⚠️ Może konflikować z Railway  
 
-### Planowane (Railway):
-```
-GitHub Push → Railway Build → Deploy
-    ↓             ↓            ↓
-  Auto-deploy  Container    Single Server
-```
+## 🏗️ Architektura techniczna
+
+### Backend Stack:
+- **Server**: Express.js na Railway (Node.js 18)
+- **Database**: Supabase PostgreSQL + pgvector extension
+- **AI**: OpenAI GPT-3.5/4 + text-embedding-ada-002
+- **Memory**: LangChain 0.3.6 + function calling
+- **Auth**: Custom JWT implementation
+- **Streaming**: Server-Sent Events (SSE)
+
+### Frontend Stack:
+- **Framework**: Vanilla JavaScript SPA
+- **PWA**: Service Worker + Manifest + Install Prompts
+- **Styling**: Custom CSS z CSS Variables
+- **State**: LocalStorage + in-memory cache
+- **Icons**: 8 rozmiarów PNG (72px-512px)
+
+### Database Schema:
+- **users** - dane użytkowników + JWT sessions
+- **memories_v2** - wspomnienia AI z embeddings (1536D vectors)
+- **user_profile** - profile psychologiczne generowane przez AI  
+- **conversations** + **messages** - system rozmów
+- **app_config** - konfiguracja AI (klucze, modele)
+- **chat_history** - legacy historia (backup)
 
 ---
-**Ostatnia aktualizacja struktury**: 2025-01-09 23:00
+**Ostatnia aktualizacja struktury**: 19 czerwca 2025, 00:00  
+**Stan projektu**: 96% gotowy - backend kompletny + testy produkcyjne ✅
