@@ -1,6 +1,6 @@
 // Admin API - zarządzanie konfiguracją
 import { createClient } from '@supabase/supabase-js'
-import { promptCache } from '../chat.js'
+import { promptCache } from '../chat-with-memory.js'
 import OpenAI from 'openai'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
