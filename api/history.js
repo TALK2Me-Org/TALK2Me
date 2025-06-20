@@ -1,5 +1,6 @@
-// Chat history API endpoint
+// Chat history API endpoint - Custom JWT Version
 import { createClient } from '@supabase/supabase-js'
+import jwt from 'jsonwebtoken'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -26,10 +27,20 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const token = authHeader.split(' ')[1]
     
-    // Get user from token (simplified - in real app verify JWT)
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // Get JWT secret from config
+    const { data: config } = await supabase
+      .from('app_config')
+      .select('config_value')
+      .eq('config_key', 'jwt_secret')
+      .single()
     
-    if (authError || !user) {
+    const jwtSecret = config?.config_value || 'talk2me-secret-key-2024'
+    
+    // Verify custom JWT token
+    let decoded
+    try {
+      decoded = jwt.verify(token, jwtSecret)
+    } catch (error) {
       return res.status(401).json({ error: 'Invalid token' })
     }
 
@@ -38,7 +49,7 @@ export default async function handler(req, res) {
     const { data: chats, error } = await supabase
       .from('chat_history')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', decoded.id)
       .order('created_at', { ascending: false })
       .limit(limit)
 
