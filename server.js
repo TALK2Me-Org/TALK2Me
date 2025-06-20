@@ -50,8 +50,8 @@ const __dirname = dirname(__filename);
 // Import handlers with error handling
 let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
-let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler, testMemoriesV2Handler, alterMemoriesV2Handler, executeAlterTableHandler;
-let createUserProfileTableHandler, testUserProfileHandler, saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
+let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
+let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -116,43 +116,7 @@ try {
     console.log('⚠️ Could not load debug-tables handler:', e.message);
   }
   
-  try {
-    testMemoriesV2Handler = (await import('./api/test-memories-v2.js')).default;
-    console.log('✅ Loaded: test-memories-v2 handler');
-  } catch (e) {
-    console.log('⚠️ Could not load test-memories-v2 handler:', e.message);
-  }
-  
-  try {
-    alterMemoriesV2Handler = (await import('./api/alter-memories-v2.js')).default;
-    console.log('✅ Loaded: alter-memories-v2 handler');
-  } catch (e) {
-    console.log('⚠️ Could not load alter-memories-v2 handler:', e.message);
-  }
-  
-  try {
-    executeAlterTableHandler = (await import('./api/execute-alter-table.js')).default;
-    console.log('✅ Loaded: execute-alter-table handler');
-  } catch (e) {
-    console.log('⚠️ Could not load execute-alter-table handler:', e.message);
-  }
-  
-  // User profile handlers
-  try {
-    createUserProfileTableHandler = (await import('./api/create-user-profile-table.js')).default;
-    console.log('✅ Loaded: create-user-profile-table handler');
-  } catch (e) {
-    console.log('⚠️ Could not load create-user-profile-table handler:', e.message);
-  }
-  
-  try {
-    testUserProfileHandler = (await import('./api/test-user-profile.js')).default;
-    console.log('✅ Loaded: test-user-profile handler');
-  } catch (e) {
-    console.log('⚠️ Could not load test-user-profile handler:', e.message);
-  }
-  
-  // Memory save handler
+  // Memory Management API handlers
   try {
     saveMemoryHandler = (await import('./api/save-memory.js')).default;
     console.log('✅ Loaded: save-memory handler');
@@ -342,34 +306,7 @@ if (debugTablesHandler) {
   console.log('✅ Registered route: GET /api/debug-tables');
 }
 
-if (testMemoriesV2Handler) {
-  app.get('/api/test-memories-v2', testMemoriesV2Handler);
-  console.log('✅ Registered route: GET /api/test-memories-v2');
-}
-
-if (alterMemoriesV2Handler) {
-  app.post('/api/alter-memories-v2', alterMemoriesV2Handler);
-  console.log('✅ Registered route: POST /api/alter-memories-v2');
-}
-
-if (executeAlterTableHandler) {
-  app.get('/api/execute-alter-table', executeAlterTableHandler);
-  console.log('✅ Registered route: GET /api/execute-alter-table');
-}
-
-// User profile endpoints
-if (createUserProfileTableHandler) {
-  app.post('/api/create-user-profile-table', createUserProfileTableHandler);
-  console.log('✅ Registered route: POST /api/create-user-profile-table');
-}
-
-if (testUserProfileHandler) {
-  app.get('/api/test-user-profile', testUserProfileHandler);
-  app.post('/api/test-user-profile', testUserProfileHandler);
-  console.log('✅ Registered routes: GET/POST /api/test-user-profile');
-}
-
-// Memory save endpoint
+// Memory Management API endpoints
 if (saveMemoryHandler) {
   app.post('/api/save-memory', saveMemoryHandler);
   console.log('✅ Registered route: POST /api/save-memory');

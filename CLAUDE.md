@@ -144,13 +144,6 @@ Projekt jest **~96% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 │   ├── 📄 conversations.js             # System konwersacji
 │   ├── 📄 test-memory.js               # Test endpoint systemu pamięci
 │   ├── 📄 debug-tables.js              # Debug tabel Supabase
-│   ├── 📄 test-memories-v2.js          # Test dostępu do memories_v2
-│   ├── 📄 create-test-user.js          # Tworzenie test usera
-│   ├── 📄 setup-openai-key.js          # Setup klucza OpenAI
-│   ├── 📄 alter-memories-v2.js         # 🆕 TASK 1 - Info o ALTER TABLE
-│   ├── 📄 execute-alter-table.js       # 🆕 TASK 1 - Executor dla ALTER
-│   ├── 📄 create-user-profile-table.js # 🆕 TASK 2 - Tworzenie tabeli user_profile
-│   ├── 📄 test-user-profile.js         # 🆕 TASK 2 - Test tabeli user_profile
 │   ├── 📄 save-memory.js               # 🆕 TASK 3 - Zapisywanie wspomnień z embeddingami
 │   ├── 📄 update-profile.js            # 🆕 TASK 4 - UPSERT profilu psychologicznego
 │   ├── 📄 summarize-memories.js        # 🆕 TASK 5 - AI generowanie profilu
@@ -231,20 +224,13 @@ Projekt jest **~96% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 13. **public/index.html** - główny UI aplikacji
 14. **CLAUDE.md** - ta dokumentacja
 
-### 🆕 Endpointy API (Sesja 15):
-- **POST /api/alter-memories-v2** - informacje o ALTER TABLE dla memories_v2
-- **GET /api/execute-alter-table** - wykonanie ALTER TABLE
-- **POST /api/create-user-profile-table** - tworzenie tabeli user_profile
-- **GET/POST /api/test-user-profile** - testowanie tabeli user_profile
+### 🆕 Endpointy API (Memory Management):
 - **POST /api/save-memory** - zapisywanie wspomnień z embeddingami
 - **POST /api/update-profile** - UPSERT profilu psychologicznego
 - **POST /api/summarize-memories** - AI generowanie profilu ze wspomnień
 
 ### 🔧 Endpointy debug i admin:
 - **GET /api/debug-tables** - sprawdzanie tabel w Supabase
-- **GET /api/test-memories-v2** - test bezpośredniego dostępu do memories_v2
-- **POST /api/create-test-user** - tworzenie test usera
-- **POST /api/setup-openai-key** - setup klucza OpenAI z env do config
 - **GET /api/admin/memory?action=users** - lista userów z pamięcią
 - **GET /api/admin/memory?user_id=X** - wspomnienia konkretnego usera
 - **PUT /api/admin/memory?id=X** - edycja wspomnienia (summary/importance)

@@ -53,13 +53,6 @@
 │   ├── 📄 conversations.js             # System konwersacji
 │   ├── 📄 test-memory.js               # Test endpoint systemu pamięci
 │   ├── 📄 debug-tables.js              # Debug tabel Supabase
-│   ├── 📄 test-memories-v2.js          # Test dostępu do memories_v2
-│   ├── 📄 create-test-user.js          # Tworzenie test usera
-│   ├── 📄 setup-openai-key.js          # Setup klucza OpenAI
-│   ├── 📄 alter-memories-v2.js         # 🆕 TASK 1 - Info o ALTER TABLE
-│   ├── 📄 execute-alter-table.js       # 🆕 TASK 1 - Executor dla ALTER
-│   ├── 📄 create-user-profile-table.js # 🆕 TASK 2 - Tworzenie tabeli user_profile
-│   ├── 📄 test-user-profile.js         # 🆕 TASK 2 - Test tabeli user_profile
 │   ├── 📄 save-memory.js               # 🆕 TASK 3 - Zapisywanie wspomnień z embeddingami
 │   ├── 📄 update-profile.js            # 🆕 TASK 4 - UPSERT profilu psychologicznego
 │   ├── 📄 summarize-memories.js        # 🆕 TASK 5 - AI generowanie profilu
