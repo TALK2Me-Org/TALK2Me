@@ -11,7 +11,21 @@
       "Bash(cp:*)",
       "Bash(mv:*)",
       "Bash(ls:*)",
-      "WebFetch(domain:platform.openai.com)"
+      "WebFetch(domain:platform.openai.com)",
+      "Bash(git checkout:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:talk2me.up.railway.app)",
+      "Bash(mkdir:*)",
+      "Bash(curl:*)",
+      "Bash(psql:*)",
+      "Bash(npm run dev:*)",
+      "Bash(node:*)",
+      "Bash(git rm:*)",
+      "Bash(touch:*)",
+      "Bash(npm run test:db:*)",
+      "Bash(pkill:*)",
+      "Bash(npm start)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
