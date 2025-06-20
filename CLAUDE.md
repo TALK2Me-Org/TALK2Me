@@ -15,12 +15,19 @@
 - **Deploy**: Auto-deploy przy każdym push na `railway-migration`
 - **Status**: ✅ DZIAŁA POPRAWNIE - system pamięci w pełni funkcjonalny
 
+### 🟢 PRODUKCJA (Railway) - NOWA KONFIGURACJA
+- **URL**: https://talk2me.up.railway.app
+- **Branch**: `main` ✅ (ZMIENIONE Z railway-migration!)
+- **Platforma**: Railway.app (Express.js server)
+- **Deploy**: Auto-deploy przy każdym push na `main`
+- **Status**: ✅ Skonfigurowane do auto-deploy
+
 ### 🟡 BACKUP (Vercel) - STARE
 - **URL**: https://tk2me.vercel.app
-- **Branch**: `main`
+- **Branch**: `main` (może konflikować)
 - **Platforma**: Vercel (Serverless Functions)
-- **Deploy**: Auto-deploy z main (obecnie nieużywane)
-- **Status**: ✅ Działa jako backup
+- **Deploy**: Auto-deploy z main (do wyłączenia)
+- **Status**: ⚠️ Może powodować konflikty
 
 ## 🎯 Aktualny Stan (19 Czerwca 2025, 00:00)
 Projekt jest **~96% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA GOTOWE + PEŁNE TESTY! 🎉🚀🧠✅
