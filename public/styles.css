@@ -499,7 +499,7 @@ body {
 
 .quick-action-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     padding: 10px;
     background: white;
