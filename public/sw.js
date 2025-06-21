@@ -1,7 +1,7 @@
-// TALK2Me Service Worker - Sesja 15 (18.06.2025)
-// Implementuje offline cache, background sync i PWA functionality
-// v1.4 - nowe ikony T2Me (T czarne, 2 różowa, Me czarne, białe tło)
-const CACHE_NAME = 'talk2me-v1.4';
+// TALK2Me Service Worker - Sesja 17 (21.06.2025)
+// Implementuje network-first strategy - bez cache'owania dla development
+// v1.5 - wyłączony cache dla lepszej widoczności zmian po deploy
+const CACHE_NAME = 'talk2me-v1.5-no-cache';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -12,17 +12,36 @@ const urlsToCache = [
   '/icons/icon-512x512.png'
 ];
 
-// Install event - cache resources
+// Install event - minimal caching (only PWA essentials)
 self.addEventListener('install', function(event) {
-  console.log('SW: Installing...');
+  console.log('SW: Installing v1.5 (no-cache strategy)...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        console.log('SW: Caching files');
-        return cache.addAll(urlsToCache);
+        console.log('SW: Caching only PWA essentials');
+        // Cache tylko manifest i ikony dla PWA
+        return cache.addAll([
+          '/manifest.json',
+          '/icons/icon-192x192.png',
+          '/icons/icon-512x512.png'
+        ]);
+      })
+      .then(function() {
+        console.log('SW: Cleaning all old caches...');
+        return caches.keys();
+      })
+      .then(function(cacheNames) {
+        return Promise.all(
+          cacheNames.map(function(cacheName) {
+            if (cacheName !== CACHE_NAME) {
+              console.log('SW: Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
       })
       .catch(function(error) {
-        console.error('SW: Cache failed:', error);
+        console.error('SW: Installation failed:', error);
       })
   );
   self.skipWaiting();
@@ -46,7 +65,7 @@ self.addEventListener('activate', function(event) {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - NETWORK FIRST strategy (no caching for development)
 self.addEventListener('fetch', function(event) {
   // Skip non-GET requests and API calls
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
@@ -54,37 +73,41 @@ self.addEventListener('fetch', function(event) {
   }
 
   event.respondWith(
-    caches.match(event.request)
+    // NETWORK FIRST - zawsze próbuj network, cache tylko jako fallback
+    fetch(event.request)
       .then(function(response) {
-        // Return cached version if available
-        if (response) {
-          console.log('SW: Serving from cache:', event.request.url);
-          return response;
-        }
-
-        // Otherwise fetch from network
-        console.log('SW: Fetching from network:', event.request.url);
-        return fetch(event.request).then(function(response) {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone response for caching
+        console.log('SW: Fetched from network (fresh):', event.request.url);
+        
+        // Opcjonalnie cache tylko manifest i ikony dla podstawowej PWA funkcjonalności
+        if (event.request.url.includes('/manifest.json') || 
+            event.request.url.includes('/icons/')) {
           var responseToCache = response.clone();
           caches.open(CACHE_NAME)
             .then(function(cache) {
               cache.put(event.request, responseToCache);
             });
-
-          return response;
-        });
+        }
+        
+        return response;
       })
       .catch(function() {
-        // Fallback for offline - return main page for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
+        // Fallback do cache tylko gdy network nie działa (offline)
+        console.log('SW: Network failed, trying cache for:', event.request.url);
+        return caches.match(event.request)
+          .then(function(response) {
+            if (response) {
+              console.log('SW: Serving from cache (offline fallback):', event.request.url);
+              return response;
+            }
+            
+            // Ostateczny fallback dla navigation - main page
+            if (event.request.mode === 'navigate') {
+              return caches.match('/index.html');
+            }
+            
+            // Nie ma cache - zwróć błąd
+            throw new Error('No cache available');
+          });
       })
   );
 });
