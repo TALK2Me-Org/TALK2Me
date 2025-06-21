@@ -882,9 +882,9 @@ Loading prompt...
                         document.getElementById('assistant_info_name').textContent = defaultName;
                     }
                     
-                    // Update assistant model info
-                    const currentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
-                    document.getElementById('assistant_info_model').textContent = currentModel;
+                    // Update assistant model info (use existing currentModel variable later)
+                    const assistantCurrentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
+                    document.getElementById('assistant_info_model').textContent = assistantCurrentModel;
                     
                     // Set assistant status
                     const hasApiKey = data.config.find(c => c.config_key === 'openai_api_key')?.config_value;
@@ -1087,41 +1087,6 @@ Loading prompt...
                 }
             } catch (error) {
                 showStatus('adminStatus', 'Error refreshing prompt: ' + error.message, 'error');
-            } finally {
-                button.disabled = false;
-                button.textContent = originalText;
-            }
-        }
-        
-        // Refresh assistant information
-        async function refreshAssistantInfo() {
-            const button = event.target;
-            const originalText = button.textContent;
-            button.disabled = true;
-            button.textContent = '⏳ Refreshing...';
-            
-            try {
-                // First refresh the config to get latest data
-                await loadConfig();
-                
-                // Then refresh the prompt from OpenAI to verify connection
-                const response = await fetch('/api/admin/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ action: 'refresh-prompt' })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showStatus('adminStatus', 'Assistant information refreshed successfully!', 'success');
-                } else {
-                    showStatus('adminStatus', 'Warning: Could not verify assistant connection: ' + data.error, 'error');
-                }
-            } catch (error) {
-                showStatus('adminStatus', 'Error refreshing assistant info: ' + error.message, 'error');
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -1487,6 +1452,41 @@ Loading prompt...
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+        
+        // Refresh assistant information
+        async function refreshAssistantInfo() {
+            const button = event.target;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = '⏳ Refreshing...';
+            
+            try {
+                // First refresh the config to get latest data
+                await loadConfig();
+                
+                // Then refresh the prompt from OpenAI to verify connection
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'refresh-prompt' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('adminStatus', 'Assistant information refreshed successfully!', 'success');
+                } else {
+                    showStatus('adminStatus', 'Warning: Could not verify assistant connection: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('adminStatus', 'Error refreshing assistant info: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
         }
         
         // Load config on page load
