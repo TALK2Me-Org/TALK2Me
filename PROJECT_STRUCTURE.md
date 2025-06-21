@@ -46,30 +46,34 @@
 │   └── 📄 index-*.html                 # Backup/wersje developerskie
 │
 ├── 📁 api/                             # BACKEND HANDLERS (Express.js)
-│   ├── 📄 chat.js                      # Podstawowy chat (fallback)
-│   ├── 📄 chat-with-memory.js          # 🔥 Chat z pamięcią (LangChain)
-│   ├── 📄 history.js                   # Historia rozmów (legacy)
-│   ├── 📄 favorites.js                 # Ulubione wiadomości
-│   ├── 📄 conversations.js             # System konwersacji
-│   ├── 📄 test-memory.js               # Test endpoint systemu pamięci
-│   ├── 📄 debug-tables.js              # Debug tabel Supabase
-│   ├── 📄 save-memory.js               # 🆕 TASK 3 - Zapisywanie wspomnień z embeddingami
-│   ├── 📄 update-profile.js            # 🆕 TASK 4 - UPSERT profilu psychologicznego
-│   ├── 📄 summarize-memories.js        # 🆕 TASK 5 - AI generowanie profilu
+│   ├── 📄 README.md                    # 📋 API organization documentation
 │   │
-│   ├── 📁 auth/                        # AUTORYZACJA
-│   │   ├── 📄 login.js                 # Login endpoint (JWT)
-│   │   ├── 📄 register.js              # Rejestracja użytkowników
-│   │   ├── 📄 me.js                    # Dane zalogowanego usera
-│   │   └── 📄 verify.js                # Weryfikacja email (TODO)
+│   ├── 📁 user/                        # 👤 USER-FACING FEATURES
+│   │   ├── 📄 chat-with-memory.js      # 🔥 Main chat with AI memory (LangChain)
+│   │   ├── 📄 conversations.js         # Conversation management (CRUD)
+│   │   ├── 📄 favorites.js             # User favorites for important messages
+│   │   └── 📄 history.js               # Chat history (legacy support)
 │   │
-│   └── 📁 admin/                       # PANEL ADMINA
-│       ├── 📄 config.js                # Zarządzanie konfiguracją
-│       ├── 📄 debug.js                 # Debug info & stats
-│       └── 📄 memory.js                # 🔥 Memory Viewer - zarządzanie wspomnieniami
-│
-├── 📁 lib/                             # BIBLIOTEKI POMOCNICZE
-│   └── 📄 memory-manager.js            # 🔥 Manager pamięci AI (LangChain)
+│   ├── 📁 auth/                        # 🔐 AUTHENTICATION & AUTHORIZATION
+│   │   ├── 📄 login.js                 # User login with JWT tokens
+│   │   ├── 📄 register.js              # User registration
+│   │   ├── 📄 me.js                    # Current user data
+│   │   └── 📄 verify.js                # Email verification (future)
+│   │
+│   ├── 📁 memory/                      # 🧠 AI MEMORY MANAGEMENT
+│   │   ├── 📄 manager.js               # 🔥 MemoryManager class (LangChain + pgvector)
+│   │   ├── 📄 save-memory.js           # Save memories with embeddings
+│   │   ├── 📄 update-profile.js        # Update psychological profiles
+│   │   └── 📄 summarize-memories.js    # AI-powered profile generation
+│   │
+│   ├── 📁 admin/                       # 🛡️ ADMIN PANEL FEATURES
+│   │   ├── 📄 config.js                # AI configuration (keys, models)
+│   │   ├── 📄 debug.js                 # System debugging information
+│   │   └── 📄 memory.js                # Memory Viewer CRUD operations
+│   │
+│   └── 📁 debug/                       # 🔍 DEVELOPMENT & MONITORING
+│       ├── 📄 test-memory.js           # Memory system health check
+│       └── 📄 debug-tables.js          # Database table inspection
 │
 ├── 📁 SQL/                             # SCHEMATY BAZY DANYCH
 │   ├── 📄 create-test-user.sql         # Tworzenie test usera (UUID)

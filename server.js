@@ -58,23 +58,23 @@ try {
   
   // Try to load memory-enabled chat, fallback to basic if fails
   try {
-    chatHandler = (await import('./api/chat-with-memory.js')).default;
+    chatHandler = (await import('./api/user/chat-with-memory.js')).default;
     console.log('✅ Loaded: chat-with-memory handler');
   } catch (memoryError) {
     console.warn('⚠️  Failed to load memory chat:', memoryError.message);
     console.log('📌 Falling back to basic chat handler');
-    chatHandler = (await import('./api/chat-with-memory.js')).default;
+    chatHandler = (await import('./api/user/chat-with-memory.js')).default;
     console.log('✅ Loaded: basic chat handler');
   }
   
   // Load other handlers
-  historyHandler = (await import('./api/history.js')).default;
+  historyHandler = (await import('./api/user/history.js')).default;
   console.log('✅ Loaded: history handler');
   
-  favoritesHandler = (await import('./api/favorites.js')).default;
+  favoritesHandler = (await import('./api/user/favorites.js')).default;
   console.log('✅ Loaded: favorites handler');
   
-  conversationsHandler = (await import('./api/conversations.js')).default;
+  conversationsHandler = (await import('./api/user/conversations.js')).default;
   console.log('✅ Loaded: conversations handler');
   
   // Auth handlers
@@ -102,7 +102,7 @@ try {
   
   // Test handlers
   try {
-    testMemoryHandler = (await import('./api/test-memory.js')).default;
+    testMemoryHandler = (await import('./api/debug/test-memory.js')).default;
     console.log('✅ Loaded: test-memory handler');
   } catch (e) {
     console.log('⚠️ Could not load test-memory handler:', e.message);
@@ -110,7 +110,7 @@ try {
   
   // Debug handlers
   try {
-    debugTablesHandler = (await import('./api/debug-tables.js')).default;
+    debugTablesHandler = (await import('./api/debug/debug-tables.js')).default;
     console.log('✅ Loaded: debug-tables handler');
   } catch (e) {
     console.log('⚠️ Could not load debug-tables handler:', e.message);
@@ -118,7 +118,7 @@ try {
   
   // Memory Management API handlers
   try {
-    saveMemoryHandler = (await import('./api/save-memory.js')).default;
+    saveMemoryHandler = (await import('./api/memory/save-memory.js')).default;
     console.log('✅ Loaded: save-memory handler');
   } catch (e) {
     console.log('⚠️ Could not load save-memory handler:', e.message);
@@ -126,7 +126,7 @@ try {
   
   // Profile update handler
   try {
-    updateProfileHandler = (await import('./api/update-profile.js')).default;
+    updateProfileHandler = (await import('./api/memory/update-profile.js')).default;
     console.log('✅ Loaded: update-profile handler');
   } catch (e) {
     console.log('⚠️ Could not load update-profile handler:', e.message);
@@ -134,7 +134,7 @@ try {
   
   // Summarize memories handler
   try {
-    summarizeMemoriesHandler = (await import('./api/summarize-memories.js')).default;
+    summarizeMemoriesHandler = (await import('./api/memory/summarize-memories.js')).default;
     console.log('✅ Loaded: summarize-memories handler');
   } catch (e) {
     console.log('⚠️ Could not load summarize-memories handler:', e.message);

@@ -211,7 +211,7 @@ Projekt jest **~96% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 ### 🔑 Najważniejsze pliki:
 1. **server.js** - główny serwer Express.js z routingiem (rozszerzony o 5 nowych endpointów)
 2. **api/chat-with-memory.js** - chat z systemem pamięci i function calling
-3. **lib/memory-manager.js** - zarządzanie pamięcią AI (LangChain + pgvector)
+3. **api/memory/manager.js** - zarządzanie pamięcią AI (LangChain + pgvector)
 4. **api/admin/memory.js** - Memory Viewer CRUD API
 5. **public/admin.html** - admin panel z Memory Management
 6. **create-memories-v2.sql** - schema produkcyjnej tabeli pamięci

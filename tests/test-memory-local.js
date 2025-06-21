@@ -5,7 +5,7 @@
 import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-import { MemoryManager } from './lib/memory-manager.js';
+import { MemoryManager } from '../api/memory/manager.js';
 
 config();
 
