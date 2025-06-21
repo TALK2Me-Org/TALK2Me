@@ -153,43 +153,43 @@
             <div class="menu-section-title" id="applicationSectionTitle">Aplikacja</div>
             <div class="menu-item" onclick="showLanguageSettings()">
                 <img src="/icons/globe.svg" class="icon" alt="">
-                <span>Język aplikacji</span>
+                <span id="appLanguageLabel">Język aplikacji</span>
                 <span class="menu-item-value" id="currentLanguage">Polski</span>
             </div>
             <div class="menu-item" onclick="toggleVoiceSend()">
                 <img src="/icons/mic.svg" class="icon" alt="">
-                <span>Wysyłaj po podyktowaniu</span>
+                <span id="voiceSendLabel">Wysyłaj po podyktowaniu</span>
                 <span class="menu-item-value" id="voiceSendStatus">Wł.</span>
             </div>
             <div class="menu-item" onclick="toggleDarkMode()">
                 <img src="/icons/moon.svg" class="icon" alt="">
-                <span>Wersja apki</span>
+                <span id="appThemeLabel">Wersja apki</span>
                 <span class="menu-item-value" id="themeValue">Jasna</span>
             </div>
             <div class="menu-item" onclick="showDictionarySettings()">
                 <img src="/icons/book.svg" class="icon" alt="">
-                <span>Słownik</span>
+                <span id="dictionaryLabel">Słownik</span>
                 <span class="menu-item-value" id="dictionaryStatus">Auto</span>
             </div>
             <div class="menu-item" onclick="showAbout()">
                 <img src="/icons/info.svg" class="icon" alt="">
-                <span>O aplikacji</span>
+                <span id="aboutLabel">O aplikacji</span>
             </div>
             <div class="menu-item" onclick="showPrivacyPolicy()">
                 <img src="/icons/shield.svg" class="icon" alt="">
-                <span>Polityka Prywatności</span>
+                <span id="privacyLabel">Polityka Prywatności</span>
             </div>
             <div class="menu-item" onclick="showTerms()">
                 <img src="/icons/contract.svg" class="icon" alt="">
-                <span>Warunki Korzystania</span>
+                <span id="termsLabel">Warunki Korzystania</span>
             </div>
             <div class="menu-item" style="color: #FF0000;" onclick="deleteAccount()">
                 <img src="/icons/trash.svg" class="icon" alt="">
-                <span>Usuń konto</span>
+                <span id="deleteAccountLabel">Usuń konto</span>
             </div>
             <div class="menu-item" style="color: #666;" onclick="logout()">
                 <img src="/icons/logout.svg" class="icon" alt="">
-                <span>Wyloguj</span>
+                <span id="logoutLabel">Wyloguj</span>
             </div>
         </div>
     </div>
@@ -302,6 +302,8 @@
                 changePhoto: "Zmień zdjęcie",
                 supportedFormats: "Obsługiwane: JPG, PNG (max 2MB)",
                 previewNewAvatar: "👤 Podgląd nowego awatara",
+                phoneNumberTitle: "Numer telefonu",
+                save: "Zapisz",
                 saveNewPhoto: "Zapisz nowe zdjęcie",
                 cancel: "Anuluj",
                 small: "Mała",
@@ -390,6 +392,8 @@
                 changePhoto: "Change photo",
                 supportedFormats: "Supported: JPG, PNG (max 2MB)",
                 previewNewAvatar: "👤 Preview new avatar",
+                phoneNumberTitle: "Phone number",
+                save: "Save",
                 saveNewPhoto: "Save new photo",
                 cancel: "Cancel",
                 small: "Small",
@@ -1902,17 +1906,17 @@
         function editPhoneNumber() {
             const phoneHTML = `
                 <div style="padding: 20px;">
-                    <h3>Edytuj numer telefonu</h3>
+                    <h3>Edytuj ${t('phone')}</h3>
                     <input type="tel" id="phoneInput" placeholder="+48 123 456 789" 
                            style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
                     <button onclick="savePhoneNumber()" 
                             class="accent-button" style="color: white; border: none; padding: 10px 20px; 
                                    border-radius: 5px; cursor: pointer;">
-                        Zapisz
+                        ${t('save')}
                     </button>
                 </div>
             `;
-            showModal('Numer telefonu', phoneHTML);
+            showModal(t('phoneNumberTitle'), phoneHTML);
         }
         
         function savePhoneNumber() {
@@ -2037,49 +2041,92 @@
                 applicationSectionTitle.textContent = t('application');
             }
             
-            // Menu items - używamy span:first-child do pobrania tylko tekstu
-            const menuItems = document.querySelectorAll('.menu-item');
-            menuItems.forEach(item => {
-                const textSpan = item.querySelector('span:first-child');
-                if (!textSpan) return;
-                
-                const text = textSpan.textContent;
-                if (text.includes('Adres e-mail') || text.includes('Email address')) {
-                    textSpan.textContent = t('email');
-                } else if (text.includes('Numer telefonu') || text.includes('Phone number')) {
-                    textSpan.textContent = t('phone');
-                } else if (text.includes('Subskrypcja') || text.includes('Subscription')) {
-                    textSpan.textContent = t('subscription');
-                } else if (text.includes('Rozszerz do Pro') || text.includes('Upgrade to Pro')) {
-                    textSpan.textContent = t('upgradePro');
-                } else if (text.includes('Personalizacja') || text.includes('Personalization')) {
-                    textSpan.textContent = t('personalization');
-                } else if (text.includes('Powiadomienia') || text.includes('Notifications')) {
-                    textSpan.textContent = t('notifications');
-                } else if (text.includes('Ulubione czaty') || text.includes('Favorite chats')) {
-                    textSpan.textContent = t('favoriteChatsMenu');
-                } else if (text.includes('Zabezpieczenia') || text.includes('Security')) {
-                    textSpan.textContent = t('security');
-                } else if (text.includes('Język aplikacji') || text.includes('App language')) {
-                    textSpan.textContent = t('appLanguage');
-                } else if (text.includes('Wysyłaj po podyktowaniu') || text.includes('Send after dictation')) {
-                    textSpan.textContent = t('voiceSend');
-                } else if (text.includes('Wersja apki') || text.includes('App theme')) {
-                    textSpan.textContent = t('appTheme');
-                } else if (text.includes('Słownik') || text.includes('Dictionary')) {
-                    textSpan.textContent = t('dictionary');
-                } else if (text.includes('O aplikacji') || text.includes('About')) {
-                    textSpan.textContent = t('about');
-                } else if (text.includes('Polityka Prywatności') || text.includes('Privacy Policy')) {
-                    textSpan.textContent = t('privacy');
-                } else if (text.includes('Warunki Korzystania') || text.includes('Terms of Use')) {
-                    textSpan.textContent = t('terms');
-                } else if (text.includes('Usuń konto') || text.includes('Delete account')) {
-                    textSpan.textContent = t('deleteAccount');
-                } else if (text.includes('Wyloguj') || text.includes('Log out')) {
-                    textSpan.textContent = t('logout');
-                }
-            });
+            // Direct translations for profile menu labels by ID (cleaner approach)
+            const profileEmailLabel = document.getElementById('profileEmailLabel');
+            if (profileEmailLabel) {
+                profileEmailLabel.textContent = t('email');
+            }
+            
+            const profilePhoneLabel = document.getElementById('profilePhoneLabel');
+            if (profilePhoneLabel) {
+                profilePhoneLabel.textContent = t('phone');
+            }
+            
+            const profileSubscriptionLabel = document.getElementById('profileSubscriptionLabel');
+            if (profileSubscriptionLabel) {
+                profileSubscriptionLabel.textContent = t('subscription');
+            }
+            
+            const profileUpgradeProLabel = document.getElementById('profileUpgradeProLabel');
+            if (profileUpgradeProLabel) {
+                profileUpgradeProLabel.textContent = t('upgradePro');
+            }
+            
+            const profilePersonalizationLabel = document.getElementById('profilePersonalizationLabel');
+            if (profilePersonalizationLabel) {
+                profilePersonalizationLabel.textContent = t('personalization');
+            }
+            
+            const profileNotificationsLabel = document.getElementById('profileNotificationsLabel');
+            if (profileNotificationsLabel) {
+                profileNotificationsLabel.textContent = t('notifications');
+            }
+            
+            const profileFavoritesLabel = document.getElementById('profileFavoritesLabel');
+            if (profileFavoritesLabel) {
+                profileFavoritesLabel.textContent = t('favoriteChatsMenu');
+            }
+            
+            const profileSecurityLabel = document.getElementById('profileSecurityLabel');
+            if (profileSecurityLabel) {
+                profileSecurityLabel.textContent = t('security');
+            }
+            
+            // Application section labels
+            const appLanguageLabel = document.getElementById('appLanguageLabel');
+            if (appLanguageLabel) {
+                appLanguageLabel.textContent = t('appLanguage');
+            }
+            
+            const voiceSendLabel = document.getElementById('voiceSendLabel');
+            if (voiceSendLabel) {
+                voiceSendLabel.textContent = t('voiceSend');
+            }
+            
+            const appThemeLabel = document.getElementById('appThemeLabel');
+            if (appThemeLabel) {
+                appThemeLabel.textContent = t('appTheme');
+            }
+            
+            const dictionaryLabel = document.getElementById('dictionaryLabel');
+            if (dictionaryLabel) {
+                dictionaryLabel.textContent = t('dictionary');
+            }
+            
+            const aboutLabel = document.getElementById('aboutLabel');
+            if (aboutLabel) {
+                aboutLabel.textContent = t('about');
+            }
+            
+            const privacyLabel = document.getElementById('privacyLabel');
+            if (privacyLabel) {
+                privacyLabel.textContent = t('privacy');
+            }
+            
+            const termsLabel = document.getElementById('termsLabel');
+            if (termsLabel) {
+                termsLabel.textContent = t('terms');
+            }
+            
+            const deleteAccountLabel = document.getElementById('deleteAccountLabel');
+            if (deleteAccountLabel) {
+                deleteAccountLabel.textContent = t('deleteAccount');
+            }
+            
+            const logoutLabel = document.getElementById('logoutLabel');
+            if (logoutLabel) {
+                logoutLabel.textContent = t('logout');
+            }
             
             // Wartości dark mode
             const themeValue = document.getElementById('themeValue');
