@@ -586,7 +586,12 @@ export default async function handler(req, res) {
       })
     }
 
-    // Wyślij zakończenie streamingu
+    // Wyślij zakończenie streamingu z conversationId
+    res.write(`data: ${JSON.stringify({ 
+      type: 'conversation_id', 
+      conversationId: activeConversationId,
+      done: true 
+    })}\n\n`)
     res.write(`data: [DONE]\n\n`)
     res.end()
     

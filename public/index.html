@@ -531,8 +531,9 @@
             }
         });
         
-        // Zmienna globalna do przechowywania załadowanej historii
+        // Zmienne globalne do zarządzania konwersacjami
         let cachedChatHistory = [];
+        let currentConversationId = null; // ID aktualnej konwersacji
         
         // Funkcja do ładowania historii czatów
         async function loadChatHistory() {
@@ -666,6 +667,10 @@
             }
             
             console.log('Załadowana konwersacja:', chat);
+            
+            // Ustaw aktualną konwersację
+            currentConversationId = chat.id;
+            console.log('🔄 Ustawiono currentConversationId:', currentConversationId);
             
             // Wyczyść obecny chat i załaduj pełną konwersację
             const chatContainer = document.getElementById('chatContainer');
@@ -974,7 +979,8 @@
                     headers: headers,
                     body: JSON.stringify({
                         message: message,
-                        userContext: '' // Możemy dodać kontekst użytkownika później
+                        userContext: '', // Możemy dodać kontekst użytkownika później
+                        conversationId: currentConversationId // Przekaż ID aktualnej konwersacji
                     })
                 });
 
@@ -1030,6 +1036,15 @@
                             
                             try {
                                 const parsed = JSON.parse(data);
+                                
+                                // Obsługa conversationId z backend
+                                if (parsed.type === 'conversation_id' && parsed.conversationId) {
+                                    if (!currentConversationId) {
+                                        currentConversationId = parsed.conversationId;
+                                        console.log('🆕 Otrzymano nowy conversationId:', currentConversationId);
+                                    }
+                                }
+                                
                                 if (parsed.content) {
                                     fullResponse += parsed.content;
                                     // Konwertuj markdown na HTML
@@ -1187,6 +1202,10 @@
             document.getElementById('userInput').style.height = 'auto';
             document.getElementById('userInput').focus();
             toggleSendButton();
+            
+            // Reset aktualnej konwersacji
+            currentConversationId = null;
+            console.log('🆕 Rozpoczęto nową konwersację - resetowano currentConversationId');
         }
         
         // Funkcja do przełączania ulubionego
