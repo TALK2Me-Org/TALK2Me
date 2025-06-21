@@ -603,7 +603,7 @@
                 const preview = chat.message.length > 50 ? chat.message.substring(0, 50) + '...' : chat.message;
                 const favoriteIcon = chat.is_favorite ? '<span class="accent-text" style="float: right;">❤️</span>' : '';
                 return `
-                    <div class="chat-item" onclick="loadChat(${chat.id})">
+                    <div class="chat-item" onclick="loadChat('${chat.id}')">
                         <div class="chat-item-title">${chat.message.split(' ').slice(0, 4).join(' ')}...${favoriteIcon}</div>
                         <div class="chat-item-preview">${preview}</div>
                         <div class="chat-item-date">${formatDate(date)}</div>
@@ -626,7 +626,7 @@
                 const date = new Date(chat.created_at);
                 const preview = chat.message.length > 50 ? chat.message.substring(0, 50) + '...' : chat.message;
                 return `
-                    <div class="chat-item" onclick="loadChat(${chat.id})">
+                    <div class="chat-item" onclick="loadChat('${chat.id}')">
                         <div class="chat-item-title">${chat.message.split(' ').slice(0, 4).join(' ')}...</div>
                         <div class="chat-item-preview">${preview}</div>
                         <div class="chat-item-date">${formatDate(date)}</div>
