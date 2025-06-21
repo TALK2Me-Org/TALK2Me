@@ -52,6 +52,7 @@ export default async function handler(req, res) {
     } else if (req.method === 'POST') {
       // Obsługa akcji POST
       const { action } = req.body
+      console.log('🔧 Admin API POST received:', { action, body: req.body })
       
       if (action === 'refresh-prompt') {
         // Wymuś odświeżenie promptu
@@ -90,6 +91,46 @@ export default async function handler(req, res) {
           return res.json({
             success: false,
             error: 'Failed to fetch assistant: ' + error.message
+          })
+        }
+      }
+      
+      else if (action === 'list-assistants') {
+        // Lista dostępnych asystentów
+        const { data: config } = await supabase
+          .from('app_config')
+          .select('config_key, config_value')
+          .eq('config_key', 'openai_api_key')
+          .single()
+        
+        if (!config?.config_value) {
+          return res.json({ 
+            success: false, 
+            error: 'OpenAI API key not configured' 
+          })
+        }
+        
+        try {
+          const openai = new OpenAI({ apiKey: config.config_value })
+          const assistantsList = await openai.beta.assistants.list({
+            order: 'desc',
+            limit: 20
+          })
+          
+          return res.json({
+            success: true,
+            assistants: assistantsList.data.map(assistant => ({
+              id: assistant.id,
+              name: assistant.name,
+              description: assistant.description,
+              model: assistant.model,
+              created_at: assistant.created_at
+            }))
+          })
+        } catch (error) {
+          return res.json({
+            success: false,
+            error: 'Failed to fetch assistants: ' + error.message
           })
         }
       }
