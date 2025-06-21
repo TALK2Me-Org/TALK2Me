@@ -634,12 +634,38 @@
             <div class="config-section">
                 <div class="config-header">📝 Assistant Information</div>
                 <div style="padding: 20px;">
-                    <p>OpenAI Assistant API is configured. The assistant's prompt and behavior are managed directly in the OpenAI platform.</p>
-                    <br>
-                    <p><strong>Current Assistant ID:</strong> <span id="current_assistant_id" style="font-family: monospace;">Not configured</span></p>
-                    <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                        System automatycznie pobiera prompt z OpenAI Assistant API. Cache odświeża się co godzinę.
-                    </p>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; color: #495057;">🤖 Current Assistant</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; font-size: 14px;">
+                            <strong>Name:</strong>
+                            <span id="assistant_info_name">Loading...</span>
+                            
+                            <strong>Assistant ID:</strong>
+                            <code id="assistant_info_id" style="font-family: monospace; font-size: 12px; background: #e9ecef; padding: 2px 4px; border-radius: 3px;">Not configured</code>
+                            
+                            <strong>Model:</strong>
+                            <span id="assistant_info_model">Loading...</span>
+                            
+                            <strong>Status:</strong>
+                            <span id="assistant_info_status">🔄 Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; border-left: 4px solid #007bff;">
+                        <h5 style="margin: 0 0 8px 0; color: #0056b3;">ℹ️ How it works</h5>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #495057;">
+                            <li>The assistant's personality and instructions are configured in OpenAI's platform</li>
+                            <li>System automatically fetches the latest prompt every hour</li>
+                            <li>Function calling for memory system is enabled</li>
+                            <li>Assistant uses the selected OpenAI model from configuration above</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="margin-top: 15px; text-align: center;">
+                        <button onclick="refreshAssistantInfo()" style="background: #28a745; font-size: 14px;">
+                            🔄 Refresh Assistant Info
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -840,15 +866,34 @@ Loading prompt...
                         if (document.getElementById('current_assistant_id')) {
                             document.getElementById('current_assistant_id').textContent = assistantId;
                         }
+                        // Update new assistant info section
+                        document.getElementById('assistant_info_id').textContent = assistantId;
                     }
                     
                     // Display assistant name
                     const assistantName = data.config.find(c => c.config_key === 'assistant_name')?.config_value;
                     if (assistantName) {
                         document.getElementById('assistant_name').textContent = assistantName;
+                        document.getElementById('assistant_info_name').textContent = assistantName;
                     } else {
                         // Jeśli nie ma zapisanej nazwy, pokaż domyślną
-                        document.getElementById('assistant_name').textContent = 'Jamie (Relationship Coach)';
+                        const defaultName = 'Jamie (Relationship Coach)';
+                        document.getElementById('assistant_name').textContent = defaultName;
+                        document.getElementById('assistant_info_name').textContent = defaultName;
+                    }
+                    
+                    // Update assistant model info
+                    const currentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
+                    document.getElementById('assistant_info_model').textContent = currentModel;
+                    
+                    // Set assistant status
+                    const hasApiKey = data.config.find(c => c.config_key === 'openai_api_key')?.config_value;
+                    if (hasApiKey && assistantId) {
+                        document.getElementById('assistant_info_status').innerHTML = '✅ Configured & Ready';
+                    } else if (hasApiKey && !assistantId) {
+                        document.getElementById('assistant_info_status').innerHTML = '⚠️ API Key OK, Assistant ID missing';
+                    } else {
+                        document.getElementById('assistant_info_status').innerHTML = '❌ Not configured';
                     }
                     
                     
@@ -1042,6 +1087,41 @@ Loading prompt...
                 }
             } catch (error) {
                 showStatus('adminStatus', 'Error refreshing prompt: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+        
+        // Refresh assistant information
+        async function refreshAssistantInfo() {
+            const button = event.target;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = '⏳ Refreshing...';
+            
+            try {
+                // First refresh the config to get latest data
+                await loadConfig();
+                
+                // Then refresh the prompt from OpenAI to verify connection
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'refresh-prompt' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('adminStatus', 'Assistant information refreshed successfully!', 'success');
+                } else {
+                    showStatus('adminStatus', 'Warning: Could not verify assistant connection: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('adminStatus', 'Error refreshing assistant info: ' + error.message, 'error');
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
