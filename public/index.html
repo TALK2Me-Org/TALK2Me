@@ -1436,10 +1436,11 @@
             
             localStorage.setItem('accentColor', color);
             
-            // Zawsze utrzymuj biały theme-color niezależnie od koloru akcentu
+            // Ustaw theme-color zgodnie z aktualnym motywem
             const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+            const isDarkMode = document.body.classList.contains('dark-mode');
             if (themeColorMeta) {
-                themeColorMeta.setAttribute('content', '#FFFFFF');
+                themeColorMeta.setAttribute('content', isDarkMode ? '#1a1a1a' : '#FFFFFF');
             }
             
             // Zmień kolor wszystkich różowych elementów
@@ -1930,7 +1931,9 @@
         // Tryb ciemny
         function toggleDarkMode() {
             const body = document.body;
+            const html = document.documentElement;
             const isDark = body.classList.toggle('dark-mode');
+            html.classList.toggle('dark-mode', isDark);
             localStorage.setItem('darkMode', isDark);
             
             // DEBUG: Sprawdź czy dark mode się ustawił
@@ -1961,6 +1964,23 @@
                 inputField.style.color = '';
             }
             
+            // Aktualizuj theme-color zgodnie z motywem
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+            const htmlElement = document.documentElement;
+            const bodyElement = document.body;
+            
+            if (isDark) {
+                // Tryb ciemny - ustaw ciemne tło
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#1a1a1a');
+                htmlElement.style.backgroundColor = '#1a1a1a';
+                bodyElement.style.backgroundColor = '#1a1a1a';
+            } else {
+                // Tryb jasny - ustaw białe tło
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#FFFFFF');
+                htmlElement.style.backgroundColor = '#FFFFFF';
+                bodyElement.style.backgroundColor = '#FFFFFF';
+            }
+            
             const themeValue = document.getElementById('themeValue');
             if (themeValue) {
                 themeValue.textContent = isDark ? 'Ciemna' : 'Jasna';
@@ -1970,6 +1990,17 @@
         // Sprawdź tryb ciemny przy ładowaniu
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
+            document.documentElement.classList.add('dark-mode');
+            
+            // Ustaw ciemny theme-color i background dla trybu ciemnego
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+            const htmlElement = document.documentElement;
+            const bodyElement = document.body;
+            
+            if (themeColorMeta) themeColorMeta.setAttribute('content', '#1a1a1a');
+            htmlElement.style.backgroundColor = '#1a1a1a';
+            bodyElement.style.backgroundColor = '#1a1a1a';
+            
             const themeValue = document.getElementById('themeValue');
             if (themeValue) {
                 themeValue.textContent = 'Ciemna';
@@ -2016,10 +2047,11 @@
             pinkElements.forEach(el => el.style.color = savedAccentColor);
         }
         
-        // Zawsze upewnij się, że theme-color jest biały
+        // Ustaw theme-color zgodnie z aktualnym motywem
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        const isDarkMode = document.body.classList.contains('dark-mode');
         if (themeColorMeta) {
-            themeColorMeta.setAttribute('content', '#FFFFFF');
+            themeColorMeta.setAttribute('content', isDarkMode ? '#1a1a1a' : '#FFFFFF');
         }
         
         // Załaduj zapisany numer telefonu

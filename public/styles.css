@@ -625,6 +625,11 @@ body {
 }
 
 /* Dark mode styles */
+html.dark-mode,
+html:has(body.dark-mode) {
+    background-color: #1a1a1a !important;
+}
+
 body.dark-mode {
     background: #1a1a1a;
     color: #e0e0e0;
