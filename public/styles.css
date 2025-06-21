@@ -989,7 +989,7 @@ input:checked + .slider:before {
     stroke: none;
 }
 
-/* External SVG icons for menu items */
+/* External PNG icons for menu items */
 .icon {
     width: 16px;
     height: 16px;
@@ -997,6 +997,8 @@ input:checked + .slider:before {
     vertical-align: -2px;
     filter: none;
     flex-shrink: 0;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 .section-icon {
