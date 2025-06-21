@@ -519,6 +519,7 @@
             if (localStorage.getItem('token')) {
                 loadChatHistory();
                 loadFavoriteChats();
+                loadConversations(); // Dodaj ładowanie nowych konwersacji
             }
         });
         
@@ -528,6 +529,7 @@
             if (localStorage.getItem('token')) {
                 loadChatHistory();
                 loadFavoriteChats();
+                loadConversations(); // Dodaj ładowanie nowych konwersacji
             }
         });
         
@@ -914,6 +916,152 @@
             
             // Zamknij menu hamburger
             closeHamburgerMenu();
+        }
+
+        // NOWA funkcja do ładowania konwersacji z nowego systemu API
+        async function loadConversation(conversationId) {
+            console.log('🔄 Ładuję konwersację z nowego API:', conversationId);
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('Brak tokena - użytkownik niezalogowany');
+                return;
+            }
+            
+            try {
+                // Pobierz wiadomości z konwersacji
+                const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.error('Błąd podczas ładowania konwersacji:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                const messages = data.messages || [];
+                
+                console.log(`✅ Załadowano ${messages.length} wiadomości z konwersacji`);
+                
+                // Ustaw aktualną konwersację
+                currentConversationId = conversationId;
+                console.log('🔄 Ustawiono currentConversationId:', currentConversationId);
+                
+                // Wyczyść obecny chat
+                const chatContainer = document.getElementById('chatContainer');
+                chatContainer.innerHTML = '';
+                
+                // Wyświetl wszystkie wiadomości chronologicznie
+                messages.forEach(message => {
+                    if (message.role === 'user') {
+                        // Wiadomość użytkownika
+                        const userMessageDiv = document.createElement('div');
+                        userMessageDiv.className = 'user-message';
+                        userMessageDiv.textContent = message.content;
+                        chatContainer.appendChild(userMessageDiv);
+                        
+                    } else if (message.role === 'assistant') {
+                        // Odpowiedź AI
+                        const responseDiv = document.createElement('div');
+                        responseDiv.className = 'response-container';
+                        responseDiv.style.display = 'block';
+                        
+                        // Proste formatowanie odpowiedzi AI
+                        const formattedContent = message.content
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/\n/g, '<br>');
+                        
+                        responseDiv.innerHTML = `
+                            <div class="simple-response">
+                                <div class="response-content">${formattedContent}</div>
+                            </div>
+                        `;
+                        
+                        chatContainer.appendChild(responseDiv);
+                    }
+                });
+                
+                // Przewiń do dołu
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // Zamknij menu hamburger
+                closeHamburgerMenu();
+                
+                console.log('✅ Konwersacja załadowana pomyślnie');
+                
+            } catch (error) {
+                console.error('❌ Błąd podczas ładowania konwersacji:', error);
+            }
+        }
+
+        // Funkcja do ładowania listy konwersacji z nowego API
+        async function loadConversations() {
+            console.log('📂 Ładuję listę konwersacji...');
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('Brak tokena - użytkownik niezalogowany');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/conversations?limit=20', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.error('Błąd podczas ładowania konwersacji:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                const conversations = data.conversations || [];
+                
+                console.log(`✅ Załadowano ${conversations.length} konwersacji`);
+                
+                // Wyświetl konwersacje w sidebar
+                displayConversations(conversations);
+                
+            } catch (error) {
+                console.error('❌ Błąd podczas ładowania konwersacji:', error);
+            }
+        }
+
+        // Funkcja do wyświetlania listy konwersacji w sidebar
+        function displayConversations(conversations) {
+            // Sprawdź czy mamy kontener dla konwersacji, jeśli nie to użyj obecny
+            let container = document.getElementById('conversationsList');
+            if (!container) {
+                // Fallback - używaj istniejącego kontenera historii
+                container = document.getElementById('recentChats');
+            }
+            
+            if (!container) return;
+            
+            if (conversations.length === 0) {
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #999;">Brak konwersacji</div>`;
+                return;
+            }
+            
+            container.innerHTML = conversations.map(conversation => {
+                const date = new Date(conversation.last_message_at);
+                const title = conversation.title || 'Bez tytułu';
+                const preview = title.length > 50 ? title.substring(0, 50) + '...' : title;
+                
+                return `
+                    <div class="chat-item" onclick="loadConversation('${conversation.id}')">
+                        <div class="chat-item-title">${title}</div>
+                        <div class="chat-item-preview">${preview}</div>
+                        <div class="chat-item-date">${formatDate(date)}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Przykładowe odpowiedzi AI
