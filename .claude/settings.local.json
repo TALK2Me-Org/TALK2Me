@@ -25,7 +25,8 @@
       "Bash(npm run test:db:*)",
       "Bash(pkill:*)",
       "Bash(npm start)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "WebFetch(domain:docs.mem0.ai)"
     ],
     "deny": []
   }
