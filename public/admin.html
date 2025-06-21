@@ -508,10 +508,19 @@
                     </div>
                 </div>
                 <div class="config-item">
-                    <div class="config-label">OpenAI Assistant ID:</div>
+                    <div class="config-label">OpenAI Assistant:</div>
                     <div class="config-value">
-                        <input type="text" id="assistant_id" placeholder="asst_..." style="font-family: monospace;">
-                        <button class="btn-save" onclick="saveConfig('assistant_id')">Save</button>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <button onclick="loadAssistants()" style="background: #007bff; font-size: 13px; padding: 6px 12px;">
+                                🔄 Load Assistants
+                            </button>
+                            <span id="assistants_status" style="font-size: 12px; color: #666;"></span>
+                        </div>
+                        <select id="assistant_selector" style="width: 100%; margin-bottom: 8px; font-family: monospace; font-size: 13px;" onchange="selectAssistant()">
+                            <option value="">Select an assistant...</option>
+                        </select>
+                        <input type="text" id="assistant_id" placeholder="asst_..." style="font-family: monospace; font-size: 12px;" readonly>
+                        <button class="btn-save" onclick="saveConfig('assistant_id')" id="save_assistant_btn" disabled>Save</button>
                     </div>
                 </div>
                 <div class="config-item">
@@ -868,6 +877,12 @@ Loading prompt...
                         }
                         // Update new assistant info section
                         document.getElementById('assistant_info_id').textContent = assistantId;
+                        
+                        // Set assistant selector value if it exists
+                        const assistantSelector = document.getElementById('assistant_selector');
+                        if (assistantSelector && [...assistantSelector.options].some(opt => opt.value === assistantId)) {
+                            assistantSelector.value = assistantId;
+                        }
                     }
                     
                     // Display assistant name
@@ -1485,6 +1500,84 @@ Loading prompt...
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
+            }
+        }
+        
+        // Load available assistants from OpenAI
+        async function loadAssistants() {
+            const button = event.target;
+            const originalText = button.textContent;
+            const statusSpan = document.getElementById('assistants_status');
+            const selector = document.getElementById('assistant_selector');
+            
+            button.disabled = true;
+            button.textContent = '⏳ Loading...';
+            statusSpan.textContent = 'Fetching assistants from OpenAI...';
+            
+            try {
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ action: 'list-assistants' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.assistants) {
+                    // Clear existing options except first
+                    selector.innerHTML = '<option value="">Select an assistant...</option>';
+                    
+                    // Add assistants to dropdown
+                    data.assistants.forEach(assistant => {
+                        const option = document.createElement('option');
+                        option.value = assistant.id;
+                        option.textContent = `${assistant.name || 'Unnamed'} (${assistant.id.substring(0, 12)}...) - ${assistant.model}`;
+                        selector.appendChild(option);
+                    });
+                    
+                    statusSpan.innerHTML = `✅ Found ${data.assistants.length} assistants`;
+                    statusSpan.style.color = '#28a745';
+                    
+                    // Select current assistant if it exists
+                    const currentAssistantId = document.getElementById('assistant_id').value;
+                    if (currentAssistantId) {
+                        selector.value = currentAssistantId;
+                    }
+                    
+                } else {
+                    statusSpan.innerHTML = `❌ Error: ${data.error || 'Failed to load assistants'}`;
+                    statusSpan.style.color = '#dc3545';
+                }
+                
+            } catch (error) {
+                console.error('Error loading assistants:', error);
+                statusSpan.innerHTML = `❌ Network error: ${error.message}`;
+                statusSpan.style.color = '#dc3545';
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+        
+        // Handle assistant selection
+        function selectAssistant() {
+            const selector = document.getElementById('assistant_selector');
+            const assistantIdInput = document.getElementById('assistant_id');
+            const saveButton = document.getElementById('save_assistant_btn');
+            
+            const selectedId = selector.value;
+            
+            if (selectedId) {
+                assistantIdInput.value = selectedId;
+                saveButton.disabled = false;
+                
+                // Auto-save the selection
+                saveConfig('assistant_id');
+            } else {
+                assistantIdInput.value = '';
+                saveButton.disabled = true;
             }
         }
         
