@@ -68,17 +68,32 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Database error', details: error })
     }
 
-    // Transform to match expected chat history format
+    // Transform to show full conversation history instead of just first message pair
     const chats = conversations?.map(conv => {
-      const lastMessage = conv.messages?.[conv.messages.length - 1]
+      // Get all messages sorted by creation time
+      const sortedMessages = conv.messages?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || []
+      
+      // Get first user message for preview
+      const firstUserMessage = sortedMessages.find(m => m.role === 'user')?.content || ''
+      
+      // Get last assistant message for preview
+      const lastAssistantMessage = sortedMessages.filter(m => m.role === 'assistant').pop()?.content || ''
+      
+      // Create conversation preview with full context
       return {
         id: conv.id,
         conversation_id: conv.id,
         title: conv.title,
-        message: conv.messages?.find(m => m.role === 'user')?.content || '',
-        response: conv.messages?.find(m => m.role === 'assistant')?.content || '',
+        message: firstUserMessage,
+        response: lastAssistantMessage,
         created_at: conv.created_at,
         last_message_at: conv.last_message_at,
+        message_count: sortedMessages.length,
+        full_conversation: sortedMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          created_at: msg.created_at
+        })),
         is_favorite: false // TODO: implement favorites in new system
       }
     }) || []

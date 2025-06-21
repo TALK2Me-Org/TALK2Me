@@ -59,11 +59,16 @@
                 </div>
                 <div class="profile-quick-actions">
                     <div class="quick-action-item" onclick="openProfileMenu()">
-                        <img src="/icons/user-settings.svg" class="icon" alt="">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
                         <span id="hamburgerAccountSettings">Ustawienia konta</span>
                     </div>
                     <div class="quick-action-item pro-upgrade" onclick="showProUpgrade()">
-                        <img src="/icons/star-premium.svg" class="icon" alt="">
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                        </svg>
                         <span id="hamburgerUpgradePro">Rozszerz do Pro</span>
                     </div>
                 </div>
@@ -122,7 +127,9 @@
                 <span class="menu-item-value" id="profileSubscription">Free</span>
             </div>
             <div class="menu-item pro-upgrade" onclick="showProUpgrade()">
-                <img src="/icons/star-outline.svg" class="icon" alt="">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                </svg>
                 <span id="profileUpgradeProLabel">Rozszerz do Pro</span>
             </div>
             <div class="menu-item" onclick="showPersonalization()">
@@ -524,6 +531,9 @@
             }
         });
         
+        // Zmienna globalna do przechowywania załadowanej historii
+        let cachedChatHistory = [];
+        
         // Funkcja do ładowania historii czatów
         async function loadChatHistory() {
             const token = localStorage.getItem('token');
@@ -543,6 +553,8 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Otrzymałem historię:', data.chats);
+                    // Cache'uj historię dla funkcji loadChat
+                    cachedChatHistory = data.chats;
                     displayChatHistory(data.chats);
                 } else {
                     console.error('Błąd odpowiedzi:', response.status);
@@ -635,150 +647,269 @@
             return date.toLocaleDateString(locale);
         }
         
-        // Funkcja do ładowania konkretnego czatu
+        // NOWA funkcja do ładowania konwersacji z pełną historią
         async function loadChat(chatId) {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('Brak tokena - nie mogę załadować czatu');
+            console.log('Ładuję konwersację:', chatId);
+            
+            // Znajdź konwersację w cache'owanej historii
+            let chat = cachedChatHistory.find(c => c.id == chatId);
+            
+            if (!chat) {
+                console.log('Konwersacja nie znaleziona w cache, pobieram ponownie historię...');
+                await loadChatHistory();
+                chat = cachedChatHistory.find(c => c.id == chatId);
+            }
+            
+            if (!chat) {
+                console.error('Nie można załadować konwersacji:', chatId);
                 return;
             }
             
-            try {
-                console.log('Ładuję czat:', chatId);
-                const response = await fetch(`/api/chat/${chatId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+            console.log('Załadowana konwersacja:', chat);
+            
+            // Wyczyść obecny chat i załaduj pełną konwersację
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+            
+            // Sprawdź czy mamy pełną konwersację lub tylko starą parę wiadomość-odpowiedź
+            if (chat.full_conversation && chat.full_conversation.length > 0) {
+                // NOWY FORMAT: Wyświetl całą konwersację chronologicznie
+                console.log(`Wyświetlam pełną konwersację z ${chat.full_conversation.length} wiadomościami`);
+                
+                chat.full_conversation.forEach((msg, index) => {
+                    if (msg.role === 'user') {
+                        // Wiadomość użytkownika
+                        const userMessageDiv = document.createElement('div');
+                        userMessageDiv.className = 'user-message';
+                        userMessageDiv.textContent = msg.content;
+                        chatContainer.appendChild(userMessageDiv);
+                        
+                    } else if (msg.role === 'assistant') {
+                        // Odpowiedź AI - użyj uproszczonego formatowania
+                        const responseDiv = document.createElement('div');
+                        responseDiv.className = 'response-container';
+                        responseDiv.style.display = 'block';
+                        
+                        // Sprawdź czy to jest strukturalna odpowiedź (ze znaczkami) czy zwykła
+                        const aiResponse = msg.content;
+                        if (aiResponse.includes('❤️') || aiResponse.includes('🤔') || aiResponse.includes('🌿') || aiResponse.includes('💬')) {
+                            // Strukturalna odpowiedź - parsuj na sekcje
+                            let parsedSections = { intro: '', situation: '', communication: '', suggestion: '' };
+                            const lines = aiResponse.split('\n');
+                            let currentSection = '';
+                            let currentContent = [];
+                            
+                            lines.forEach(line => {
+                                if (line.includes('❤️')) {
+                                    if (currentSection && currentContent.length > 0) {
+                                        parsedSections[currentSection] = currentContent.join(' ').trim();
+                                    }
+                                    currentSection = 'intro';
+                                    let cleanedLine = line.replace(/❤️\s*\*?\*?Przede wszystkim\.{0,3}\*?\*?:?/i, '').trim();
+                                    cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                                    currentContent = [cleanedLine];
+                                } else if (line.includes('🤔')) {
+                                    if (currentSection && currentContent.length > 0) {
+                                        parsedSections[currentSection] = currentContent.join(' ').trim();
+                                    }
+                                    currentSection = 'situation';
+                                    let cleanedLine = line.replace(/🤔\s*\*?\*?Co mogło się wydarzyć\*?\*?:?/i, '').trim();
+                                    cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                                    currentContent = [cleanedLine];
+                                } else if (line.includes('🌿')) {
+                                    if (currentSection && currentContent.length > 0) {
+                                        parsedSections[currentSection] = currentContent.join(' ').trim();
+                                    }
+                                    currentSection = 'communication';
+                                    let cleanedLine = line.replace(/🌿\s*\*?\*?Różnica w komunikacji\*?\*?:?/i, '').trim();
+                                    cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                                    currentContent = [cleanedLine];
+                                } else if (line.includes('💬')) {
+                                    if (currentSection && currentContent.length > 0) {
+                                        parsedSections[currentSection] = currentContent.join(' ').trim();
+                                    }
+                                    currentSection = 'suggestion';
+                                    let cleanedLine = line.replace(/💬\s*\*?\*?Spróbuj powiedzieć tak\*?\*?:?/i, '').trim();
+                                    cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                                    currentContent = [cleanedLine];
+                                } else if (line.trim() && currentSection) {
+                                    currentContent.push(line.trim());
+                                }
+                            });
+                            
+                            if (currentSection && currentContent.length > 0) {
+                                parsedSections[currentSection] = currentContent.join(' ').trim();
+                            }
+                            
+                            // Wyświetl w sekcjach
+                            responseDiv.innerHTML = `
+                                <div class="response-section">
+                                    <div class="section-header">
+                                        <svg class="section-icon menu-icon-filled" viewBox="0 0 24 24">
+                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                        </svg>
+                                        ${t('firstSection')}</div>
+                                    <div class="section-content">${parsedSections.intro}</div>
+                                </div>
+                                <div class="response-section">
+                                    <div class="section-header">
+                                        <svg class="section-icon" viewBox="0 0 24 24">
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                            <circle cx="12" cy="17" r=".02"/>
+                                        </svg>
+                                        ${t('secondSection')}</div>
+                                    <div class="section-content">${parsedSections.situation}</div>
+                                </div>
+                                <div class="response-section">
+                                    <div class="section-header">
+                                        <svg class="section-icon" viewBox="0 0 24 24">
+                                            <path d="M12 2v6.5l3 3-3 3V21"/>
+                                            <path d="M9 9l6 6"/>
+                                            <path d="M21 15l-6-6h6z"/>
+                                        </svg>
+                                        ${t('thirdSection')}</div>
+                                    <div class="section-content">${parsedSections.communication}</div>
+                                </div>
+                                <div class="response-section">
+                                    <div class="section-header">
+                                        <svg class="section-icon" viewBox="0 0 24 24">
+                                            <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5z"/>
+                                        </svg>
+                                        ${t('fourthSection')}</div>
+                                    <div class="section-content">${parsedSections.suggestion}</div>
+                                </div>
+                            `;
+                        } else {
+                            // Zwykła odpowiedź - wyświetl jako prosty tekst z markdown
+                            const formattedContent = aiResponse
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                                .replace(/\n/g, '<br>');
+                            
+                            responseDiv.innerHTML = `
+                                <div class="simple-response">
+                                    <div class="response-content">${formattedContent}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        chatContainer.appendChild(responseDiv);
                     }
                 });
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    const chat = data.chat;
-                    console.log('Załadowany czat:', chat);
-                    
-                    // Wyczyść obecny chat i załaduj historyczny
-                    const chatContainer = document.getElementById('chatContainer');
-                    chatContainer.innerHTML = '';
-                    
-                    // Dodaj wiadomość użytkownika
-                    const userMessageDiv = document.createElement('div');
-                    userMessageDiv.className = 'user-message';
-                    userMessageDiv.textContent = chat.message;
-                    chatContainer.appendChild(userMessageDiv);
-                    
-                    // Dodaj odpowiedź AI
-                    const responseDiv = document.createElement('div');
-                    responseDiv.className = 'response-container';
-                    responseDiv.style.display = 'block';
-                    
-                    // Parsuj odpowiedź na 4 sekcje (użyj istniejącej logiki)
-                    const aiResponse = chat.response;
-                    let parsedSections = {
-                        intro: '',
-                        situation: '',
-                        communication: '',
-                        suggestion: ''
-                    };
-                    
-                    // Uproszczona parser (możemy użyć istniejącej logiki)
-                    const lines = aiResponse.split('\n');
-                    let currentSection = '';
-                    let currentContent = [];
-                    
-                    lines.forEach(line => {
-                        if (line.includes('❤️')) {
-                            if (currentSection && currentContent.length > 0) {
-                                parsedSections[currentSection] = currentContent.join(' ').trim();
-                            }
-                            currentSection = 'intro';
-                            let cleanedLine = line.replace(/❤️\s*\*?\*?Przede wszystkim\.{0,3}\*?\*?:?/i, '').trim();
-                            cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                            currentContent = [cleanedLine];
-                        } else if (line.includes('🤔')) {
-                            if (currentSection && currentContent.length > 0) {
-                                parsedSections[currentSection] = currentContent.join(' ').trim();
-                            }
-                            currentSection = 'situation';
-                            let cleanedLine = line.replace(/🤔\s*\*?\*?Co mogło się wydarzyć\*?\*?:?/i, '').trim();
-                            cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                            currentContent = [cleanedLine];
-                        } else if (line.includes('🌿')) {
-                            if (currentSection && currentContent.length > 0) {
-                                parsedSections[currentSection] = currentContent.join(' ').trim();
-                            }
-                            currentSection = 'communication';
-                            let cleanedLine = line.replace(/🌿\s*\*?\*?Różnica w komunikacji\*?\*?:?/i, '').trim();
-                            cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                            currentContent = [cleanedLine];
-                        } else if (line.includes('💬')) {
-                            if (currentSection && currentContent.length > 0) {
-                                parsedSections[currentSection] = currentContent.join(' ').trim();
-                            }
-                            currentSection = 'suggestion';
-                            let cleanedLine = line.replace(/💬\s*\*?\*?Spróbuj powiedzieć tak\*?\*?:?/i, '').trim();
-                            cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
-                            currentContent = [cleanedLine];
-                        } else if (line.trim() && currentSection) {
-                            currentContent.push(line.trim());
+            } else {
+                // STARY FORMAT: Tylko jedna para wiadomość-odpowiedź (fallback)
+                console.log('Używam starego formatu dla konwersacji:', chatId);
+                
+                // Wiadomość użytkownika
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'user-message';
+                userMessageDiv.textContent = chat.message;
+                chatContainer.appendChild(userMessageDiv);
+                
+                // Odpowiedź AI (stary parsing)
+                const responseDiv = document.createElement('div');
+                responseDiv.className = 'response-container';
+                responseDiv.style.display = 'block';
+                
+                const aiResponse = chat.response;
+                let parsedSections = { intro: '', situation: '', communication: '', suggestion: '' };
+                const lines = aiResponse.split('\n');
+                let currentSection = '';
+                let currentContent = [];
+                
+                lines.forEach(line => {
+                    if (line.includes('❤️')) {
+                        if (currentSection && currentContent.length > 0) {
+                            parsedSections[currentSection] = currentContent.join(' ').trim();
                         }
-                    });
-                    
-                    // Zapisz ostatnią sekcję
-                    if (currentSection && currentContent.length > 0) {
-                        parsedSections[currentSection] = currentContent.join(' ').trim();
+                        currentSection = 'intro';
+                        let cleanedLine = line.replace(/❤️\s*\*?\*?Przede wszystkim\.{0,3}\*?\*?:?/i, '').trim();
+                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                        currentContent = [cleanedLine];
+                    } else if (line.includes('🤔')) {
+                        if (currentSection && currentContent.length > 0) {
+                            parsedSections[currentSection] = currentContent.join(' ').trim();
+                        }
+                        currentSection = 'situation';
+                        let cleanedLine = line.replace(/🤔\s*\*?\*?Co mogło się wydarzyć\*?\*?:?/i, '').trim();
+                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                        currentContent = [cleanedLine];
+                    } else if (line.includes('🌿')) {
+                        if (currentSection && currentContent.length > 0) {
+                            parsedSections[currentSection] = currentContent.join(' ').trim();
+                        }
+                        currentSection = 'communication';
+                        let cleanedLine = line.replace(/🌿\s*\*?\*?Różnica w komunikacji\*?\*?:?/i, '').trim();
+                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                        currentContent = [cleanedLine];
+                    } else if (line.includes('💬')) {
+                        if (currentSection && currentContent.length > 0) {
+                            parsedSections[currentSection] = currentContent.join(' ').trim();
+                        }
+                        currentSection = 'suggestion';
+                        let cleanedLine = line.replace(/💬\s*\*?\*?Spróbuj powiedzieć tak\*?\*?:?/i, '').trim();
+                        cleanedLine = cleanedLine.replace(/^[,:]\s*/, '');
+                        currentContent = [cleanedLine];
+                    } else if (line.trim() && currentSection) {
+                        currentContent.push(line.trim());
                     }
-                    
-                    // Przycisk ulubionego - sprawdź czy ten czat jest ulubiony
-                    const favoriteIcon = chat.is_favorite ? '🖤' : '🤍';
-                    const favoriteClass = chat.is_favorite ? 'active' : '';
-                    const favoriteButton = `<button class="favorite-btn ${favoriteClass}" data-chat-id="${chat.id}" onclick="toggleFavorite(${chat.id})" title="Dodaj do ulubionych">${favoriteIcon}</button>`;
-                    
-                    responseDiv.innerHTML = `
-                        ${favoriteButton}
-                        <div class="response-section">
-                            <div class="section-header">
-                                <svg class="section-icon menu-icon-filled" viewBox="0 0 24 24">
-                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                                </svg>
-                                ${t('firstSection')}
-                            </div>
-                            <div class="section-content">${parsedSections.intro}</div>
-                        </div>
-
-                        <div class="response-section">
-                            <div class="section-header">
-                                <span class="emoji">🤔</span> ${t('secondSection')}
-                            </div>
-                            <div class="section-content">${parsedSections.situation}</div>
-                        </div>
-
-                        <div class="response-section">
-                            <div class="section-header">
-                                <span class="emoji">🌿</span> ${t('thirdSection')}
-                            </div>
-                            <div class="section-content">${parsedSections.communication}</div>
-                        </div>
-
-                        <div class="response-section">
-                            <div class="section-header">
-                                <span class="emoji">💬</span> ${t('fourthSection')}
-                            </div>
-                            <div class="section-content">${parsedSections.suggestion}</div>
-                        </div>
-                    `;
-                    
-                    chatContainer.appendChild(responseDiv);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    
-                    // Zamknij menu hamburger
-                    closeHamburgerMenu();
-                    
-                } else {
-                    console.error('Błąd ładowania czatu:', response.status);
+                });
+                
+                if (currentSection && currentContent.length > 0) {
+                    parsedSections[currentSection] = currentContent.join(' ').trim();
                 }
-            } catch (error) {
-                console.error('Error loading chat:', error);
+                
+                const favoriteIcon = chat.is_favorite ? '🖤' : '🤍';
+                const favoriteClass = chat.is_favorite ? 'active' : '';
+                const favoriteButton = `<button class="favorite-btn ${favoriteClass}" data-chat-id="${chat.id}" onclick="toggleFavorite(${chat.id})" title="Dodaj do ulubionych">${favoriteIcon}</button>`;
+                
+                responseDiv.innerHTML = `
+                    ${favoriteButton}
+                    <div class="response-section">
+                        <div class="section-header">
+                            <svg class="section-icon menu-icon-filled" viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                            ${t('firstSection')}</div>
+                        <div class="section-content">${parsedSections.intro}</div>
+                    </div>
+                    <div class="response-section">
+                        <div class="section-header">
+                            <svg class="section-icon" viewBox="0 0 24 24">
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                <circle cx="12" cy="17" r=".02"/>
+                            </svg>
+                            ${t('secondSection')}</div>
+                        <div class="section-content">${parsedSections.situation}</div>
+                    </div>
+                    <div class="response-section">
+                        <div class="section-header">
+                            <svg class="section-icon" viewBox="0 0 24 24">
+                                <path d="M12 2v6.5l3 3-3 3V21"/>
+                                <path d="M9 9l6 6"/>
+                                <path d="M21 15l-6-6h6z"/>
+                            </svg>
+                            ${t('thirdSection')}</div>
+                        <div class="section-content">${parsedSections.communication}</div>
+                    </div>
+                    <div class="response-section">
+                        <div class="section-header">
+                            <svg class="section-icon" viewBox="0 0 24 24">
+                                <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5z"/>
+                            </svg>
+                            ${t('fourthSection')}</div>
+                        <div class="section-content">${parsedSections.suggestion}</div>
+                    </div>
+                `;
+                
+                chatContainer.appendChild(responseDiv);
             }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Zamknij menu hamburger
+            closeHamburgerMenu();
         }
 
         // Przykładowe odpowiedzi AI
