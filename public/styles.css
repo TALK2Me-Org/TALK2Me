@@ -98,9 +98,29 @@ body {
 .chat-bubble-icon {
     width: 22px;
     height: 22px;
-    fill: #666;
-    stroke: none;
+    fill: none;
+    stroke: #666;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     position: relative;
+}
+
+.plus-icon {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
 }
 
 .new-chat-btn:active {
@@ -108,7 +128,12 @@ body {
 }
 
 .new-chat-btn:hover .chat-bubble-icon {
-    fill: #000;
+    stroke: #000;
+}
+
+.new-chat-btn:hover .plus-icon {
+    background: #FF1493;
+    transform: scale(1.1);
 }
 
 .container {
@@ -838,7 +863,11 @@ body.dark-mode .new-chat-btn svg {
 }
 
 body.dark-mode .chat-bubble-icon {
-    fill: #e0e0e0;
+    stroke: #e0e0e0;
+}
+
+body.dark-mode .new-chat-btn:hover .chat-bubble-icon {
+    stroke: #fff;
 }
 
 /* Menu item values w dark mode */
