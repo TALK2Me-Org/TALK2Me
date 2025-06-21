@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="TALK2Me">
+    <meta name="theme-color" content="#FFFFFF">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -1435,6 +1436,12 @@
             
             localStorage.setItem('accentColor', color);
             
+            // Zawsze utrzymuj biały theme-color niezależnie od koloru akcentu
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', '#FFFFFF');
+            }
+            
             // Zmień kolor wszystkich różowych elementów
             const pinkElements = document.querySelectorAll('.pink');
             pinkElements.forEach(el => el.style.color = color);
@@ -2007,6 +2014,12 @@
             document.documentElement.style.setProperty('--accent-color', savedAccentColor);
             const pinkElements = document.querySelectorAll('.pink');
             pinkElements.forEach(el => el.style.color = savedAccentColor);
+        }
+        
+        // Zawsze upewnij się, że theme-color jest biały
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+            themeColorMeta.setAttribute('content', '#FFFFFF');
         }
         
         // Załaduj zapisany numer telefonu
