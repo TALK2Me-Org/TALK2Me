@@ -860,9 +860,8 @@
                     parsedSections[currentSection] = currentContent.join(' ').trim();
                 }
                 
-                const favoriteIcon = chat.is_favorite ? '🖤' : '🤍';
-                const favoriteClass = chat.is_favorite ? 'active' : '';
-                const favoriteButton = `<button class="favorite-btn ${favoriteClass}" data-chat-id="${chat.id}" onclick="toggleFavorite(${chat.id})" title="Dodaj do ulubionych">${favoriteIcon}</button>`;
+                // Usuń przycisk ulubionego - nie jest potrzebny
+                const favoriteButton = '';
                 
                 responseDiv.innerHTML = `
                     ${favoriteButton}
@@ -1055,18 +1054,7 @@
                     }
                 }
                 
-                // Dodaj przycisk ulubionego na końcu (jeśli użytkownik jest zalogowany)
-                if (token && fullResponse) {
-                    const favoriteButton = document.createElement('button');
-                    favoriteButton.className = 'favorite-btn';
-                    favoriteButton.innerHTML = '🤍';
-                    favoriteButton.title = 'Dodaj do ulubionych';
-                    favoriteButton.onclick = function() {
-                        // TODO: Implementacja zapisywania do ulubionych
-                        console.log('Zapisz do ulubionych');
-                    };
-                    responseDiv.insertBefore(favoriteButton, responseDiv.firstChild);
-                }
+                // Przycisk ulubionego usunięty - nie jest potrzebny
                 
                 // Odśwież historię czatów po otrzymaniu odpowiedzi
                 if (localStorage.getItem('token')) {
@@ -1233,7 +1221,7 @@
                             btn.innerHTML = '🖤'; // Czarne wypełnione serce
                             btn.style.color = '#000';
                         } else {
-                            btn.innerHTML = '🤍'; // Białe puste serce
+                            btn.innerHTML = '🤍'; // Białe puste serce  
                             btn.style.color = '#666';
                         }
                     }
