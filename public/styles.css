@@ -608,6 +608,7 @@ body {
 
 .menu-item .icon {
     flex-shrink: 0;
+    margin-right: 16px;
 }
 
 /* First span after icon should be left-aligned and take remaining space */
@@ -1022,7 +1023,7 @@ input:checked + .slider:before {
 .icon {
     width: 16px;
     height: 16px;
-    margin-right: 4px;
+    margin-right: 16px;
     vertical-align: -2px;
     filter: none;
     flex-shrink: 0;
