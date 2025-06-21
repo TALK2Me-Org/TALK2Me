@@ -978,6 +978,16 @@ input:checked + .slider:before {
     stroke: none;
 }
 
+/* External SVG icons for menu items */
+.icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    vertical-align: -2px;
+    filter: none;
+    flex-shrink: 0;
+}
+
 .section-icon {
     width: 18px;
     height: 18px;
