@@ -579,6 +579,19 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 15px;
+    gap: 8px;
+}
+
+.menu-item .icon {
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+/* First span after icon should be left-aligned and take remaining space */
+.menu-item span:first-of-type {
+    flex: 1;
+    text-align: left;
+    margin-right: auto;
 }
 
 .menu-item:active {
