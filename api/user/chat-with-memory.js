@@ -575,16 +575,7 @@ export default async function handler(req, res) {
         .eq('id', activeConversationId)
     }
 
-    // Zapisz także do starej tabeli chat_history dla kompatybilności
-    if (userId && fullResponse) {
-      await supabase.from('chat_history').insert({
-        user_id: userId,
-        message: message,
-        response: fullResponse,
-        ai_model: activeModel,
-        conversation_id: activeConversationId
-      })
-    }
+    // Stary kod zapisujący do chat_history usunięty - używamy nowego systemu conversations/messages
 
     // Wyślij zakończenie streamingu z conversationId
     res.write(`data: ${JSON.stringify({ 

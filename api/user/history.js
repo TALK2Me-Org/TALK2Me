@@ -98,6 +98,81 @@ export default async function handler(req, res) {
       }
     }) || []
 
+    // FALLBACK: Jeśli nowa tabela conversations jest pusta, użyj starej tabeli chat_history
+    if (chats.length === 0) {
+      console.log('⚠️ Tabela conversations pusta, używam fallback na chat_history')
+      
+      const { data: legacyChats, error: legacyError } = await supabase
+        .from('chat_history')
+        .select('*')
+        .eq('user_id', decoded.id)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (legacyError) {
+        console.error('Error reading legacy chat_history:', legacyError)
+      } else if (legacyChats && legacyChats.length > 0) {
+        console.log(`📚 Znaleziono ${legacyChats.length} starych czatów w chat_history`)
+        
+        // Grupuj stare czaty po conversation_id żeby unikać duplikatów
+        const groupedLegacyChats = new Map()
+        
+        legacyChats.forEach(chat => {
+          const convId = chat.conversation_id || chat.id
+          
+          if (!groupedLegacyChats.has(convId)) {
+            // Nowa konwersacja
+            groupedLegacyChats.set(convId, {
+              id: convId,
+              conversation_id: convId,
+              title: chat.message.substring(0, 50) + (chat.message.length > 50 ? '...' : ''),
+              message: chat.message,
+              response: chat.response,
+              created_at: chat.created_at,
+              last_message_at: chat.created_at,
+              message_count: 2,
+              full_conversation: [
+                {
+                  role: 'user',
+                  content: chat.message,
+                  created_at: chat.created_at
+                },
+                {
+                  role: 'assistant',
+                  content: chat.response,
+                  created_at: chat.created_at
+                }
+              ],
+              is_favorite: false
+            })
+          } else {
+            // Dodaj do istniejącej konwersacji
+            const existing = groupedLegacyChats.get(convId)
+            existing.full_conversation.push(
+              {
+                role: 'user',
+                content: chat.message,
+                created_at: chat.created_at
+              },
+              {
+                role: 'assistant',
+                content: chat.response,
+                created_at: chat.created_at
+              }
+            )
+            existing.message_count = existing.full_conversation.length
+            existing.last_message_at = chat.created_at
+            existing.response = chat.response // Aktualizuj na najnowszą odpowiedź
+          }
+        })
+        
+        const transformedLegacyChats = Array.from(groupedLegacyChats.values())
+          .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at))
+        
+        chats = transformedLegacyChats
+      }
+    }
+
     res.json({
       success: true,
       chats: chats
