@@ -511,7 +511,7 @@
                     <div class="config-label">OpenAI Assistant:</div>
                     <div class="config-value">
                         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-                            <button onclick="loadAssistants()" style="background: #007bff; font-size: 13px; padding: 6px 12px;">
+                            <button onclick="loadAssistants()" style="background: #007bff; color: white; border: none; border-radius: 4px; font-size: 13px; padding: 6px 12px; cursor: pointer;">
                                 🔄 Load Assistants
                             </button>
                             <span id="assistants_status" style="font-size: 12px; color: #666;"></span>
@@ -1504,11 +1504,14 @@ Loading prompt...
         }
         
         // Load available assistants from OpenAI
-        async function loadAssistants() {
-            const button = event.target;
+        async function loadAssistants(event) {
+            console.log('🔄 loadAssistants() called');
+            const button = event ? event.target : document.querySelector('button[onclick="loadAssistants()"]');
             const originalText = button.textContent;
             const statusSpan = document.getElementById('assistants_status');
             const selector = document.getElementById('assistant_selector');
+            
+            console.log('🔍 Elements found:', { button, statusSpan, selector });
             
             button.disabled = true;
             button.textContent = '⏳ Loading...';
@@ -1524,6 +1527,7 @@ Loading prompt...
                 });
                 
                 const data = await response.json();
+                console.log('📥 API Response:', data);
                 
                 if (data.success && data.assistants) {
                     // Clear existing options except first
