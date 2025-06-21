@@ -882,9 +882,7 @@ Loading prompt...
                         document.getElementById('assistant_info_name').textContent = defaultName;
                     }
                     
-                    // Update assistant model info (use existing currentModel variable later)
-                    const assistantCurrentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
-                    document.getElementById('assistant_info_model').textContent = assistantCurrentModel;
+                    // Update assistant model info (will use same variable later for model display)
                     
                     // Set assistant status
                     const hasApiKey = data.config.find(c => c.config_key === 'openai_api_key')?.config_value;
@@ -910,11 +908,12 @@ Loading prompt...
                     // Update model info
                     updateModelInfo();
                     
-                    // Update current model display
+                    // Update current model display and assistant info
                     const currentModel = data.config.find(c => c.config_key === 'openai_model')?.config_value || 'gpt-4o';
                     console.log('Loaded openai_model from DB:', currentModel);
                     document.getElementById('current_model_display').textContent = currentModel;
                     document.getElementById('current_model_name').textContent = currentModel;
+                    document.getElementById('assistant_info_model').textContent = currentModel;
                     
                     // Upewnij się że select pokazuje właściwy model
                     const modelSelect = document.getElementById('openai_model');
