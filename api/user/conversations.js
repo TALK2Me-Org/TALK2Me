@@ -186,7 +186,7 @@ export default async function handler(req, res) {
 
     // PUT /api/conversations/[id] - aktualizacja konwersacji
     if (req.method === 'PUT' && conversationId) {
-      const { title, is_archived } = req.body
+      const { title, is_archived, is_favorite } = req.body
 
       // Sprawdź czy użytkownik ma dostęp
       const { data: conv } = await supabase
@@ -203,6 +203,7 @@ export default async function handler(req, res) {
       const updates = {}
       if (title !== undefined) updates.title = title
       if (is_archived !== undefined) updates.is_archived = is_archived
+      if (is_favorite !== undefined) updates.is_favorite = is_favorite
 
       const { data: updated, error } = await supabase
         .from('conversations')

@@ -607,11 +607,21 @@
                 const date = new Date(chat.created_at);
                 const preview = chat.message.length > 50 ? chat.message.substring(0, 50) + '...' : chat.message;
                 const favoriteIcon = chat.is_favorite ? '<span class="accent-text" style="float: right;">❤️</span>' : '';
+                const title = chat.message.split(' ').slice(0, 4).join(' ') + '...';
+                
                 return `
-                    <div class="chat-item" onclick="loadChat('${chat.id}')">
-                        <div class="chat-item-title">${chat.message.split(' ').slice(0, 4).join(' ')}...${favoriteIcon}</div>
+                    <div class="chat-item" style="position: relative;" onclick="loadChat('${chat.id}')">
+                        <div class="chat-item-title" id="legacy-title-${chat.id}">${title}${favoriteIcon}</div>
                         <div class="chat-item-preview">${preview}</div>
                         <div class="chat-item-date">${formatDate(date)}</div>
+                        <div class="edit-title-btn" onclick="editLegacyChatTitle('${chat.id}', event)" 
+                             style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6; display: flex; align-items: center; justify-content: center;"
+                             title="Edytuj tytuł rozmowy">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1077,6 +1087,105 @@
             input.addEventListener('blur', saveTitle);
         }
 
+        // Funkcja do przełączania statusu ulubionej konwersacji
+        async function toggleFavoriteConversation(conversationId, event) {
+            event.stopPropagation(); // Zapobiega ładowaniu konwersacji
+            
+            const favoriteBtn = event.currentTarget;
+            const currentFavorite = favoriteBtn.querySelector('svg').getAttribute('fill') !== 'none';
+            const newFavoriteStatus = !currentFavorite;
+            
+            console.log('🔄 Przełączam status ulubionej dla konwersacji:', conversationId, 'na:', newFavoriteStatus);
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/conversations/${conversationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        is_favorite: newFavoriteStatus
+                    })
+                });
+                
+                if (response.ok) {
+                    // Aktualizuj UI natychmiast
+                    const svg = favoriteBtn.querySelector('svg');
+                    const title = favoriteBtn.getAttribute('title');
+                    
+                    if (newFavoriteStatus) {
+                        svg.setAttribute('fill', '#FF69B4');
+                        favoriteBtn.style.opacity = '1';
+                        favoriteBtn.setAttribute('title', 'Usuń z ulubionych');
+                    } else {
+                        svg.setAttribute('fill', 'none');
+                        favoriteBtn.style.opacity = '0.6';
+                        favoriteBtn.setAttribute('title', 'Dodaj do ulubionych');
+                    }
+                    
+                    console.log('✅ Status ulubionej konwersacji zaktualizowany:', newFavoriteStatus);
+                } else {
+                    console.error('❌ Błąd podczas aktualizacji statusu ulubionej');
+                }
+            } catch (error) {
+                console.error('❌ Błąd sieci:', error);
+            }
+        }
+
+        // Funkcja do edycji tytułu starych czatów (legacy system)
+        async function editLegacyChatTitle(chatId, event) {
+            event.stopPropagation(); // Zapobiega ładowaniu czatu
+            
+            const titleElement = document.getElementById(`legacy-title-${chatId}`);
+            const currentTitle = titleElement.textContent.replace('❤️', '').trim();
+            
+            // Tworzenie inputa do edycji
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.style.cssText = `
+                width: 100%;
+                padding: 4px 8px;
+                border: 2px solid var(--accent-color);
+                border-radius: 4px;
+                font-size: 14px;
+                font-weight: 500;
+                background: white;
+                color: #333;
+            `;
+            
+            // Zastąp tytuł inputem
+            titleElement.innerHTML = '';
+            titleElement.appendChild(input);
+            input.focus();
+            input.select();
+            
+            // Funkcja zapisująca (legacy czaty nie mają edytowalnych tytułów w bazie, więc tylko lokalnie)
+            const saveTitle = () => {
+                const newTitle = input.value.trim();
+                if (newTitle && newTitle !== currentTitle) {
+                    titleElement.textContent = newTitle;
+                    console.log('✅ Tytuł legacy czatu zaktualizowany lokalnie:', newTitle);
+                    // TODO: W przyszłości można dodać API dla legacy czatów
+                } else {
+                    titleElement.textContent = currentTitle;
+                }
+            };
+            
+            // Zapisz na Enter lub utrata focus
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveTitle();
+                } else if (e.key === 'Escape') {
+                    titleElement.textContent = currentTitle;
+                }
+            });
+            
+            input.addEventListener('blur', saveTitle);
+        }
+
         // Funkcja do ładowania listy konwersacji z nowego API
         async function loadConversations() {
             console.log('📂 Ładuję listę konwersacji...');
@@ -1142,23 +1251,33 @@
                 const date = new Date(conversation.last_message_at);
                 const title = conversation.title || 'Bez tytułu';
                 const preview = title.length > 50 ? title.substring(0, 50) + '...' : title;
+                const isFavorite = conversation.is_favorite || false;
                 
-                console.log('🔧 Generuję HTML dla konwersacji:', conversation.id, title);
+                console.log('🔧 Generuję HTML dla konwersacji:', conversation.id, title, 'ulubiona:', isFavorite);
                 
                 return `
-                    <div class="chat-item" style="border-left: 3px solid #00BCD4;">
+                    <div class="chat-item" style="border-left: 3px solid #00BCD4; position: relative;">
                         <div onclick="loadConversation('${conversation.id}')" style="cursor: pointer; flex: 1;">
                             <div class="chat-item-title" id="title-${conversation.id}">${title} [NOWA]</div>
                             <div class="chat-item-preview">${preview}</div>
                             <div class="chat-item-date">${formatDate(date)}</div>
                         </div>
-                        <div class="edit-title-btn" onclick="editConversationTitle('${conversation.id}', event)" 
-                             style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6; display: flex; align-items: center; justify-content: center;"
-                             title="Edytuj tytuł rozmowy">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
+                        <div class="conversation-actions" style="position: absolute; top: 8px; right: 8px; display: flex; gap: 4px;">
+                            <div class="favorite-btn" onclick="toggleFavoriteConversation('${conversation.id}', event)" 
+                                 style="width: 20px; height: 20px; cursor: pointer; opacity: ${isFavorite ? '1' : '0.6'}; display: flex; align-items: center; justify-content: center;"
+                                 title="${isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="${isFavorite ? '#FF69B4' : 'none'}" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                </svg>
+                            </div>
+                            <div class="edit-title-btn" onclick="editConversationTitle('${conversation.id}', event)" 
+                                 style="width: 20px; height: 20px; cursor: pointer; opacity: 0.6; display: flex; align-items: center; justify-content: center;"
+                                 title="Edytuj tytuł rozmowy">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 `;
