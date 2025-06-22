@@ -1708,11 +1708,26 @@
                 }
             });
             
-            // Zmień kolor przełączników (slider)
+            // Zmień kolor przełączników (slider) - natychmiastowo
             const sliders = document.querySelectorAll('input:checked + .slider');
             sliders.forEach(slider => {
                 slider.style.backgroundColor = color;
             });
+            
+            // Force refresh CSS custom properties na wszystkich sliderach
+            const allSliders = document.querySelectorAll('.slider');
+            allSliders.forEach(slider => {
+                // Wymuś ponowne obliczenie stylów
+                slider.style.cssText = slider.style.cssText;
+            });
+            
+            // Dodatkowe wymuszenie aktualizacji po delay (dla dynamicznych elementów)
+            setTimeout(() => {
+                const checkedSliders = document.querySelectorAll('input:checked + .slider');
+                checkedSliders.forEach(slider => {
+                    slider.style.backgroundColor = color;
+                });
+            }, 100);
             
             // Zmień kolor logo "2"
             const logoTwo = document.querySelector('.pink');
@@ -1721,10 +1736,18 @@
             }
             
             // Aktualizuj style CSS dla przyszłych elementów
+            // Usuń poprzedni custom style jeśli istnieje
+            const existingCustomStyle = document.getElementById('custom-accent-style');
+            if (existingCustomStyle) {
+                existingCustomStyle.remove();
+            }
+            
             const styleSheet = document.createElement('style');
+            styleSheet.id = 'custom-accent-style';
             styleSheet.textContent = `
                 .pink { color: ${color} !important; }
                 input:checked + .slider { background-color: ${color} !important; }
+                .slider input:checked ~ .slider { background-color: ${color} !important; }
                 .profile-avatar { background: ${color} !important; }
                 button[style*="background: #FF69B4"], 
                 button[style*="background-color: #FF69B4"] { 
