@@ -258,7 +258,8 @@ if (conversationsHandler) {
   app.get('/api/conversations', conversationsHandler);
   app.post('/api/conversations', conversationsHandler);
   app.get('/api/conversations/:id/messages', conversationsHandler);
-  app.put('/api/conversations/:id/title', conversationsHandler);
+  app.put('/api/conversations/:id', conversationsHandler); // PUT for updating conversation (title, archived status)
+  app.put('/api/conversations/:id/title', conversationsHandler); // Legacy PUT for title only
   app.delete('/api/conversations/:id', conversationsHandler);
 }
 

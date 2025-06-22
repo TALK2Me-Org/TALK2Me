@@ -43,8 +43,8 @@ export default async function handler(req, res) {
     
     const userId = decoded.id
 
-    // Routing based on URL structure
-    const { conversationId } = req.query
+    // Routing based on URL structure  
+    const conversationId = req.params.id || req.query.conversationId
 
     // GET /api/conversations - lista konwersacji
     if (req.method === 'GET' && !conversationId) {

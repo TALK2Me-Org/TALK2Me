@@ -473,6 +473,20 @@ body {
     margin-top: 4px;
 }
 
+/* Edit title button styles */
+.edit-title-btn {
+    transition: opacity 0.2s ease;
+}
+
+.chat-item:hover .edit-title-btn {
+    opacity: 1 !important;
+}
+
+.edit-title-btn:hover {
+    opacity: 1 !important;
+    color: var(--accent-color);
+}
+
 /* Style dla sekcji profilu w menu hamburger */
 .profile-section-top {
     padding: 15px;
