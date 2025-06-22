@@ -1146,7 +1146,7 @@
                 console.log('🔧 Generuję HTML dla konwersacji:', conversation.id, title);
                 
                 return `
-                    <div class="chat-item" style="border-left: 3px solid #00BCD4; position: relative;">
+                    <div class="chat-item" style="border-left: 3px solid #00BCD4;">
                         <div onclick="loadConversation('${conversation.id}')" style="cursor: pointer; flex: 1;">
                             <div class="chat-item-title" id="title-${conversation.id}">${title} [NOWA]</div>
                             <div class="chat-item-preview">${preview}</div>

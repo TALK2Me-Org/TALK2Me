@@ -447,6 +447,7 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     background: #f8f8f8;
+    position: relative;
 }
 
 .chat-item:active {
@@ -476,6 +477,9 @@ body {
 /* Edit title button styles */
 .edit-title-btn {
     transition: opacity 0.2s ease;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
 }
 
 .chat-item:hover .edit-title-btn {
@@ -485,6 +489,7 @@ body {
 .edit-title-btn:hover {
     opacity: 1 !important;
     color: var(--accent-color);
+    background: rgba(255, 255, 255, 1);
 }
 
 /* Style dla sekcji profilu w menu hamburger */
