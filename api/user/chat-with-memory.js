@@ -5,7 +5,6 @@
  * - Streaming odpowiedzi przez SSE (Server-Sent Events)
  * - Function calling dla zapisywania wspomnień
  * - Integracja z MemoryManager dla personalizacji
- * - Fallback na Groq gdy OpenAI nie działa
  * - Obsługa konwersacji (conversations/messages)
  * 
  * @author Claude (AI Assistant) - Sesja 10-13
@@ -21,7 +20,6 @@
  * 6. Zapis odpowiedzi do konwersacji
  */
 import { createClient } from '@supabase/supabase-js'
-import { Groq } from 'groq-sdk'
 import OpenAI from 'openai'
 import MemoryManager from '../memory/manager.js'
 
@@ -517,35 +515,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Fallback: Groq (bez function calling i memory)
-    const groqEnabled = configMap.groq_enabled === 'true'
-    if (!streamSuccess && groqEnabled && configMap.groq_api_key) {
-      try {
-        const groq = new Groq({ apiKey: configMap.groq_api_key })
-        
-        // Groq nie obsługuje system messages ani function calling
-        const groqMessages = conversationMessages.length > 0 
-          ? [...conversationMessages, { role: 'user', content: message }]
-          : [{ role: 'user', content: message }]
-        
-        const completion = await groq.chat.completions.create({
-          messages: groqMessages,
-          model: 'llama3-8b-8192',
-          temperature: parseFloat(configMap.temperature) || 0.7,
-          max_tokens: parseInt(configMap.max_tokens) || 1000
-        })
-
-        fullResponse = completion.choices[0].message.content
-        res.write(`data: ${JSON.stringify({ content: fullResponse })}\n\n`)
-        streamSuccess = true
-        console.log('✅ Groq response successful (fallback)')
-        
-      } catch (error) {
-        console.log('❌ Groq failed:', error.message)
-      }
-    }
-
-    // 3. Jeśli nic nie zadziałało
+    // 2. Jeśli OpenAI nie zadziałało
     if (!streamSuccess) {
       res.write(`data: ${JSON.stringify({ 
         error: 'Nie udało się uzyskać odpowiedzi od AI. Sprawdź konfigurację kluczy API w panelu administracyjnym.' 

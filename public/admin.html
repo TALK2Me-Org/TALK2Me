@@ -463,36 +463,6 @@
                                 <div style="margin-top: 5px; font-size: 12px;">Always ON</div>
                             </div>
                         </div>
-                        
-                        <!-- Groq - można włączyć/wyłączyć -->
-                        <div class="model-card disabled" data-model="groq" id="groq_card">
-                            <div class="model-status disabled" id="groq_status">❌ DISABLED</div>
-                            <h3>⚡ Groq</h3>
-                            <p>Llama 3 8B</p>
-                            <small>Free & Fast Fallback</small>
-                            <div class="model-toggle">
-                                <label class="switch">
-                                    <input type="checkbox" id="groq_enabled_toggle" onchange="toggleModel('groq')">
-                                    <span class="slider"></span>
-                                </label>
-                                <div style="margin-top: 5px; font-size: 12px;">Enable as backup</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Claude - można włączyć/wyłączyć ale obecnie niedostępny -->
-                        <div class="model-card disabled" data-model="claude" id="claude_card">
-                            <div class="model-status disabled" id="claude_status">❌ DISABLED</div>
-                            <h3>🎭 Claude</h3>
-                            <p>Claude 3 Haiku</p>
-                            <small>Currently unavailable</small>
-                            <div class="model-toggle">
-                                <label class="switch">
-                                    <input type="checkbox" id="claude_enabled_toggle" onchange="toggleModel('claude')" disabled>
-                                    <span class="slider"></span>
-                                </label>
-                                <div style="margin-top: 5px; font-size: 12px;">Not configured</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -521,20 +491,6 @@
                         </select>
                         <input type="text" id="assistant_id" placeholder="asst_..." style="font-family: monospace; font-size: 12px;" readonly>
                         <button class="btn-save" onclick="saveConfig('assistant_id')" id="save_assistant_btn" disabled>Save</button>
-                    </div>
-                </div>
-                <div class="config-item">
-                    <div class="config-label">Groq API Key:</div>
-                    <div class="config-value">
-                        <input type="password" id="groq_api_key" placeholder="gsk_...">
-                        <button class="btn-save" onclick="saveConfig('groq_api_key')">Save</button>
-                    </div>
-                </div>
-                <div class="config-item">
-                    <div class="config-label">Claude API Key:</div>
-                    <div class="config-value">
-                        <input type="password" id="claude_api_key" placeholder="sk-ant-..." disabled>
-                        <button class="btn-save" onclick="saveConfig('claude_api_key')" disabled>Save</button>
                     </div>
                 </div>
             </div>
@@ -910,15 +866,7 @@ Loading prompt...
                     }
                     
                     
-                    // Set toggle states for models
-                    const groqEnabled = data.config.find(c => c.config_key === 'groq_enabled')?.config_value === 'true';
-                    const claudeEnabled = data.config.find(c => c.config_key === 'claude_enabled')?.config_value === 'true';
-                    
-                    document.getElementById('groq_enabled_toggle').checked = groqEnabled;
-                    updateModelCard('groq', groqEnabled);
-                    
-                    document.getElementById('claude_enabled_toggle').checked = claudeEnabled;
-                    updateModelCard('claude', claudeEnabled);
+                    // Only OpenAI model - no toggles needed
                     
                     // Update model info
                     updateModelInfo();
@@ -990,56 +938,6 @@ Loading prompt...
             }
         }
         
-        // Toggle model enabled/disabled
-        async function toggleModel(model) {
-            const toggleElement = document.getElementById(`${model}_enabled_toggle`);
-            const enabled = toggleElement.checked;
-            
-            try {
-                const response = await fetch('/api/admin/config', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        config_key: `${model}_enabled`,
-                        config_value: enabled.toString()
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    updateModelCard(model, enabled);
-                    showStatus('adminStatus', `${model.toUpperCase()} ${enabled ? 'enabled' : 'disabled'} as backup`, 'success');
-                } else {
-                    toggleElement.checked = !enabled; // Revert on error
-                    showStatus('adminStatus', `Failed to update ${model} status`, 'error');
-                }
-            } catch (error) {
-                toggleElement.checked = !enabled; // Revert on error
-                showStatus('adminStatus', 'Error: ' + error.message, 'error');
-            }
-        }
-        
-        // Update model card visual state
-        function updateModelCard(model, enabled) {
-            const card = document.getElementById(`${model}_card`);
-            const status = document.getElementById(`${model}_status`);
-            
-            if (enabled) {
-                card.classList.remove('disabled');
-                card.classList.add('active');
-                status.classList.remove('disabled');
-                status.classList.add('active');
-                status.innerHTML = '🔄 BACKUP READY';
-            } else {
-                card.classList.remove('active');
-                card.classList.add('disabled');
-                status.classList.remove('active');
-                status.classList.add('disabled');
-                status.innerHTML = '❌ DISABLED';
-            }
-        }
         
         
         // Load prompt information
