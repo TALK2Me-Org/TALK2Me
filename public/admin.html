@@ -928,6 +928,14 @@ Loading prompt...
                         document.getElementById('current_model_name').textContent = newModel;
                         console.log(`Updated display to: ${newModel}`);
                     }
+                    
+                    // Refresh assistant info if we just saved assistant_id
+                    if (configKey === 'assistant_id') {
+                        console.log('🔄 Auto-refreshing Assistant Information after saving');
+                        setTimeout(() => {
+                            refreshAssistantInfo();
+                        }, 500); // Small delay to ensure config is fully saved
+                    }
                 } else {
                     showStatus('adminStatus', `Failed to save ${configKey}: ${data.error || 'Unknown error'}`, 'error');
                     console.error('Save failed:', data);
@@ -1474,6 +1482,12 @@ Loading prompt...
             if (selectedId) {
                 assistantIdInput.value = selectedId;
                 saveButton.disabled = false;
+                
+                // Update assistant info immediately with selected name
+                const selectedOption = selector.options[selector.selectedIndex];
+                const assistantName = selectedOption.textContent.split(' (')[0]; // Extract name before (id...)
+                document.getElementById('assistant_info_name').textContent = assistantName;
+                document.getElementById('assistant_info_id').textContent = selectedId;
                 
                 // Auto-save the selection
                 saveConfig('assistant_id');
