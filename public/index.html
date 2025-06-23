@@ -614,14 +614,6 @@
                         <div class="chat-item-title" id="legacy-title-${chat.id}">${title}${favoriteIcon}</div>
                         <div class="chat-item-preview">${preview}</div>
                         <div class="chat-item-date">${formatDate(date)}</div>
-                        <div class="edit-title-btn" onclick="editLegacyChatTitle('${chat.id}', event)" 
-                             style="position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; cursor: pointer; opacity: 0.6; display: flex; align-items: center; justify-content: center;"
-                             title="Edytuj tytuł rozmowy">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </div>
                     </div>
                 `;
             }).join('');
@@ -1268,14 +1260,6 @@
                                  title="${isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'}">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="${isFavorite ? '#FF69B4' : 'none'}" stroke="currentColor" stroke-width="2">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                                </svg>
-                            </div>
-                            <div class="edit-title-btn" onclick="editConversationTitle('${conversation.id}', event)" 
-                                 style="width: 20px; height: 20px; cursor: pointer; opacity: 0.6; display: flex; align-items: center; justify-content: center;"
-                                 title="Edytuj tytuł rozmowy">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                 </svg>
                             </div>
                         </div>
@@ -2720,7 +2704,246 @@
         
         // Show iOS instructions after 3 seconds
         setTimeout(showIOSInstallInstructions, 3000);
+
+        // ===== KONTEKSTOWE MENU DLA KONWERSACJI =====
+        
+        let currentContextMenuConversation = null;
+        let isMenuVisible = false;
+        let longPressTimer = null;
+        let isLongPressing = false;
+
+        // Dodaj event listeners do konwersacji po załadowaniu
+        function addContextMenuListeners() {
+            // Legacy chats
+            document.querySelectorAll('#recentChats .chat-item, #favoriteChats .chat-item').forEach(item => {
+                const titleElement = item.querySelector('[id^="legacy-title-"], [id^="title-"]');
+                if (titleElement && !item.hasAttribute('data-context-menu-init')) {
+                    item.setAttribute('data-context-menu-init', 'true');
+                    
+                    const conversationId = titleElement.id.replace('legacy-title-', '').replace('title-', '');
+                    
+                    // Desktop - prawy klik
+                    item.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        showContextMenu(e, conversationId, titleElement);
+                    });
+                    
+                    // Mobile - długie przytrzymanie
+                    item.addEventListener('touchstart', (e) => {
+                        isLongPressing = false;
+                        longPressTimer = setTimeout(() => {
+                            isLongPressing = true;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            showContextMenu(e.touches[0], conversationId, titleElement);
+                        }, 500);
+                    }, { passive: false });
+                    
+                    item.addEventListener('touchend', (e) => {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                        }
+                        
+                        if (isLongPressing) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return;
+                        }
+                    });
+                    
+                    item.addEventListener('touchmove', () => {
+                        if (longPressTimer) {
+                            clearTimeout(longPressTimer);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Pokaż kontekstowe menu
+        function showContextMenu(event, conversationId, titleElement) {
+            console.log('🎯 Pokazywanie menu dla konwersacji:', conversationId);
+            
+            const menu = document.getElementById('conversationContextMenu');
+            if (!menu) return;
+            
+            // Zapisz dane aktualnej konwersacji
+            currentContextMenuConversation = {
+                id: conversationId,
+                titleElement: titleElement,
+                title: titleElement.textContent.replace(' [NOWA]', '').trim()
+            };
+            
+            // Aktualizuj tekst menu ulubionych
+            updateFavoriteMenuText();
+            
+            // Pozycjonowanie menu
+            const x = event.clientX || event.pageX;
+            const y = event.clientY || event.pageY;
+            
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.style.display = 'block';
+            
+            // Animacja
+            setTimeout(() => {
+                menu.classList.add('visible');
+                isMenuVisible = true;
+                
+                // Dodaj backdrop
+                addMenuBackdrop();
+            }, 10);
+        }
+
+        // Ukryj kontekstowe menu
+        function hideContextMenu() {
+            if (!isMenuVisible) return;
+            
+            isMenuVisible = false;
+            const menu = document.getElementById('conversationContextMenu');
+            if (menu) {
+                menu.classList.remove('visible');
+                setTimeout(() => {
+                    menu.style.display = 'none';
+                }, 200);
+            }
+            
+            removeMenuBackdrop();
+            currentContextMenuConversation = null;
+        }
+
+        // Dodaj backdrop
+        function addMenuBackdrop() {
+            let backdrop = document.querySelector('.context-menu-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.className = 'context-menu-backdrop';
+                backdrop.addEventListener('click', hideContextMenu);
+                document.body.appendChild(backdrop);
+            }
+        }
+
+        // Usuń backdrop
+        function removeMenuBackdrop() {
+            const backdrop = document.querySelector('.context-menu-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+
+        // Aktualizuj tekst opcji ulubione
+        function updateFavoriteMenuText() {
+            if (!currentContextMenuConversation) return;
+            
+            const favoriteText = document.getElementById('favoriteMenuText');
+            if (favoriteText) {
+                const favoriteSection = document.getElementById('favoriteChats');
+                const isFavorite = favoriteSection.querySelector(`[id="title-${currentContextMenuConversation.id}"], [id="legacy-title-${currentContextMenuConversation.id}"]`) !== null;
+                
+                favoriteText.textContent = isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych';
+            }
+        }
+
+        // ===== FUNKCJE AKCJI MENU =====
+
+        // Zmień nazwę konwersacji
+        function renameConversationFromMenu() {
+            if (!currentContextMenuConversation) return;
+            
+            console.log('✏️ Zmiana nazwy konwersacji:', currentContextMenuConversation.title);
+            hideContextMenu();
+            
+            // TODO: Implementacja edycji nazwy
+            alert('Funkcja edycji nazwy będzie dostępna wkrótce!');
+        }
+
+        // Przełącz ulubione
+        function toggleFavoriteFromMenu() {
+            if (!currentContextMenuConversation) return;
+            
+            console.log('❤️ Przełączanie ulubionej:', currentContextMenuConversation.title);
+            hideContextMenu();
+            
+            // TODO: Implementacja przełączania ulubionych
+            alert('Funkcja ulubionych będzie dostępna wkrótce!');
+        }
+
+        // Usuń konwersację (tylko frontend)
+        function deleteConversationFromMenu() {
+            if (!currentContextMenuConversation) return;
+            
+            const title = currentContextMenuConversation.title;
+            console.log('🗑️ Usuwanie konwersacji z frontend:', title);
+            
+            hideContextMenu();
+            
+            if (confirm(`Czy na pewno chcesz usunąć konwersację "${title}"?\n\n⚠️ Ta akcja ukryje konwersację tylko w tej sesji. Rzeczywiste dane pozostaną w bazie.`)) {
+                const conversationItem = currentContextMenuConversation.titleElement.closest('.chat-item');
+                if (conversationItem) {
+                    conversationItem.style.transition = 'opacity 0.3s ease, height 0.3s ease';
+                    conversationItem.style.opacity = '0';
+                    conversationItem.style.height = '0';
+                    conversationItem.style.padding = '0';
+                    conversationItem.style.margin = '0';
+                    
+                    setTimeout(() => {
+                        conversationItem.remove();
+                    }, 300);
+                    
+                    console.log('✅ Konwersacja usunięta z interfejsu');
+                }
+            }
+        }
+
+        // Dodaj listeners po załadowaniu
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(addContextMenuListeners, 1000);
+        });
+
+        // Re-dodaj listeners po odświeżeniu listy
+        const originalLoadChatHistory = loadChatHistory;
+        const originalLoadFavoriteChats = loadFavoriteChats;
+        
+        loadChatHistory = async function(...args) {
+            const result = await originalLoadChatHistory.apply(this, args);
+            setTimeout(addContextMenuListeners, 100);
+            return result;
+        };
+        
+        loadFavoriteChats = async function(...args) {
+            const result = await originalLoadFavoriteChats.apply(this, args);
+            setTimeout(addContextMenuListeners, 100);
+            return result;
+        };
         
     </script>
+
+    <!-- Kontekstowe menu dla konwersacji -->
+    <div id="conversationContextMenu" class="context-menu" style="display: none;">
+        <div class="context-menu-item" onclick="renameConversationFromMenu()">
+            <svg class="context-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            <span>Zmień nazwę</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" onclick="toggleFavoriteFromMenu()">
+            <svg class="context-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span id="favoriteMenuText">Dodaj do ulubionych</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item context-menu-delete" onclick="deleteConversationFromMenu()">
+            <svg class="context-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            <span>Usuń</span>
+        </div>
+    </div>
 </body>
 </html>
