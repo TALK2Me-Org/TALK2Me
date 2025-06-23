@@ -139,10 +139,10 @@ export default async function handler(req, res) {
       try {
         saveResult = await memoryManager.saveMemory(
           TEST_USER_ID,
-          'This is a test memory from API endpoint. User mentioned their partner Maciej is a programmer.',
-          'Partner Maciej is a programmer',
-          3,
-          'relationship',
+          'This is a test memory from API endpoint. User mentioned they love hiking in mountains.',
+          'Loves hiking in mountains',
+          5,
+          'preference',
           null
         )
         
