@@ -2677,17 +2677,21 @@
 
         // Dodaj event listeners do konwersacji po załadowaniu
         function addContextMenuListeners() {
-            // Legacy chats
+            console.log('🎯 Dodaję context menu listeners...');
+            
+            // Nowe konwersacje (usuń legacy-title- references)
             document.querySelectorAll('#recentChats .chat-item, #favoriteChats .chat-item').forEach(item => {
-                const titleElement = item.querySelector('[id^="legacy-title-"], [id^="title-"]');
+                const titleElement = item.querySelector('[id^="title-"]');
                 if (titleElement && !item.hasAttribute('data-context-menu-init')) {
                     item.setAttribute('data-context-menu-init', 'true');
                     
-                    const conversationId = titleElement.id.replace('legacy-title-', '').replace('title-', '');
+                    const conversationId = titleElement.id.replace('title-', '');
+                    console.log('🔧 Context menu setup dla konwersacji:', conversationId, 'element:', titleElement.id);
                     
                     // Desktop - prawy klik
                     item.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
+                        console.log('🖱️ Right click na konwersacji:', conversationId);
                         showContextMenu(e, conversationId, titleElement);
                     });
                     
@@ -2698,6 +2702,7 @@
                             isLongPressing = true;
                             e.preventDefault();
                             e.stopPropagation();
+                            console.log('📱 Long press na konwersacji:', conversationId);
                             showContextMenu(e.touches[0], conversationId, titleElement);
                         }, 500);
                     }, { passive: false });
@@ -2726,16 +2731,24 @@
         // Pokaż kontekstowe menu
         function showContextMenu(event, conversationId, titleElement) {
             console.log('🎯 Pokazywanie menu dla konwersacji:', conversationId);
+            console.log('🔍 titleElement:', titleElement);
+            console.log('🔍 titleElement.id:', titleElement?.id);
+            console.log('🔍 titleElement.textContent:', titleElement?.textContent);
             
             const menu = document.getElementById('conversationContextMenu');
-            if (!menu) return;
+            if (!menu) {
+                console.error('❌ Menu element nie znaleziony!');
+                return;
+            }
             
             // Zapisz dane aktualnej konwersacji
             currentContextMenuConversation = {
                 id: conversationId,
                 titleElement: titleElement,
-                title: titleElement.textContent.replace(' [NOWA]', '').trim()
+                title: titleElement.textContent.replace(' [NOWA]', '').replace(' ❤️', '').trim()
             };
+            
+            console.log('💾 Zapisane currentContextMenuConversation:', currentContextMenuConversation);
             
             // Aktualizuj tekst menu ulubionych
             updateFavoriteMenuText();
@@ -2822,13 +2835,27 @@
 
         // Przełącz ulubione
         async function toggleFavoriteFromMenu() {
-            if (!currentContextMenuConversation) return;
+            console.log('❤️ toggleFavoriteFromMenu wywołane');
+            console.log('🔍 currentContextMenuConversation:', currentContextMenuConversation);
+            
+            if (!currentContextMenuConversation) {
+                console.error('❌ currentContextMenuConversation jest null!');
+                return;
+            }
             
             console.log('❤️ Przełączanie ulubionej:', currentContextMenuConversation.title);
             hideContextMenu();
             
             const conversation = currentContextMenuConversation;
             const conversationId = conversation.id;
+            
+            if (!conversationId) {
+                console.error('❌ conversationId jest null lub undefined!', conversationId);
+                alert('Błąd: Nie można określić ID konwersacji');
+                return;
+            }
+            
+            console.log('🔄 Praca z conversationId:', conversationId);
             
             try {
                 // Sprawdź aktualny status ulubionej (czy jest w sekcji ulubione)
