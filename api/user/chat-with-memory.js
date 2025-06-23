@@ -493,11 +493,24 @@ export default async function handler(req, res) {
                     activeConversationId
                   )
                   console.log(`✅ Memory saved: "${args.summary}" (importance: ${args.importance})`)
+                  
+                  // Dodaj automatyczną odpowiedź po zapisaniu pamięci
+                  const memoryResponse = `Zapamiętałam to! Będę pamiętać o tym w naszych przyszłych rozmowach. 😊\n\nCzy mogę Ci w czymś jeszcze pomóc?`
+                  fullResponse += memoryResponse
+                  res.write(`data: ${JSON.stringify({ content: memoryResponse })}\n\n`)
+                  console.log('📤 Sent memory confirmation response')
+                  
                 } else {
                   console.log('⚠️ Cannot save memory:', {
                     memoryManager: !!memoryManager,
                     userId: userId
                   })
+                  
+                  // Dodaj odpowiedź nawet gdy nie można zapisać pamięci
+                  const errorResponse = `Rozumiem to o czym mówisz. Czy mogę Ci w czymś jeszcze pomóc?`
+                  fullResponse += errorResponse
+                  res.write(`data: ${JSON.stringify({ content: errorResponse })}\n\n`)
+                  console.log('📤 Sent fallback response')
                 }
               }
             } catch (error) {

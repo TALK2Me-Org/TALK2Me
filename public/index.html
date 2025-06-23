@@ -1364,7 +1364,7 @@
                 // Usuń loading
                 loadingDiv.remove();
                 
-                // Przygotuj kontener na odpowiedź
+                // Przygotuj kontener na odpowiedź (ale nie dodawaj jeszcze do DOM)
                 const responseDiv = document.createElement('div');
                 responseDiv.className = 'response-container';
                 responseDiv.style.display = 'block';
@@ -1381,8 +1381,9 @@
                     </div>
                 `;
                 
-                chatContainer.appendChild(responseDiv);
-                const streamingParagraph = document.getElementById(uniqueId);
+                // Flagę czy już dodano odpowiedź do DOM
+                let responseAdded = false;
+                const streamingParagraph = responseDiv.querySelector(`#${uniqueId}`);
                 
                 // Czytaj stream odpowiedzi
                 const reader = response.body.getReader();
@@ -1401,7 +1402,13 @@
                             const data = line.slice(6);
                             if (data === '[DONE]') {
                                 console.log('Stream zakończony');
-                                streamingParagraph.classList.remove('streaming-cursor');
+                                
+                                // Jeśli nie dodano jeszcze żadnej odpowiedzi i nie ma content, nie twórz pustej bąbelki
+                                if (!responseAdded && !fullResponse.trim()) {
+                                    console.log('⚠️ Stream zakończony bez content - nie dodaję pustej bąbelki');
+                                } else if (responseAdded) {
+                                    streamingParagraph.classList.remove('streaming-cursor');
+                                }
                                 break;
                             }
                             
@@ -1417,6 +1424,12 @@
                                 }
                                 
                                 if (parsed.content) {
+                                    // Jeśli to pierwszy content, dodaj kontener do DOM
+                                    if (!responseAdded) {
+                                        chatContainer.appendChild(responseDiv);
+                                        responseAdded = true;
+                                    }
+                                    
                                     fullResponse += parsed.content;
                                     // Konwertuj markdown na HTML
                                     const formattedResponse = fullResponse
