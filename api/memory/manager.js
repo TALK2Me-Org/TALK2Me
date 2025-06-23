@@ -267,7 +267,7 @@ class MemoryManager {
       if (mems.length > 0) {
         context += `\n**${typeLabels[type] || type}:**\n`;
         for (const mem of mems) {
-          context += `- ${mem.summary} (ważność: ${mem.importance}/10)\n`;
+          context += `- ${mem.summary} (ważność: ${mem.importance}/5)\n`;
           if (mem.entities && Object.keys(mem.entities).length > 0) {
             const relevantEntities = [];
             if (mem.entities.people?.length > 0) {
@@ -314,7 +314,7 @@ class MemoryManager {
   }
 
   calculateImportance(text) {
-    let score = 5; // Base score
+    let score = 3; // Base score (1-5 scale)
     
     // High importance keywords
     const highImportancePatterns = [
@@ -334,13 +334,13 @@ class MemoryManager {
     
     for (const pattern of highImportancePatterns) {
       if (pattern.test(text)) {
-        score = Math.min(score + 3, 10);
+        score = Math.min(score + 2, 5);
       }
     }
     
     for (const pattern of mediumImportancePatterns) {
       if (pattern.test(text)) {
-        score = Math.min(score + 1, 10);
+        score = Math.min(score + 1, 5);
       }
     }
     

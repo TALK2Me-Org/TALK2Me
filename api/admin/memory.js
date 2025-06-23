@@ -139,8 +139,8 @@ export default async function handler(req, res) {
       }
 
       // Walidacja
-      if (importance && (importance < 1 || importance > 10)) {
-        return res.status(400).json({ error: 'Importance must be between 1 and 10' })
+      if (importance && (importance < 1 || importance > 5)) {
+        return res.status(400).json({ error: 'Importance must be between 1 and 5' })
       }
 
       const updateData = {}

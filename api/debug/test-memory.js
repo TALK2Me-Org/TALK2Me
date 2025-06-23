@@ -141,7 +141,7 @@ export default async function handler(req, res) {
           TEST_USER_ID,
           'This is a test memory from API endpoint. User mentioned their partner Maciej is a programmer.',
           'Partner Maciej is a programmer',
-          9,
+          5,
           'relationship',
           null
         )

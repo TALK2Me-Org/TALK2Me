@@ -51,8 +51,8 @@ const MEMORY_FUNCTION = {
       importance: { 
         type: "number", 
         minimum: 1, 
-        maximum: 10,
-        description: "Ważność informacji: 1-4 (niska), 5-6 (średnia), 7-8 (wysoka), 9-10 (krytyczna)"
+        maximum: 5,
+        description: "Ważność informacji: 1-2 (niska), 3 (średnia), 4-5 (wysoka)"
       },
       type: { 
         type: "string", 
@@ -76,11 +76,11 @@ const MEMORY_RULES = `
    - Preferencje komunikacyjne użytkownika
    - Informacje o pracy, hobby, zainteresowaniach
 
-2. **Priorytetyzacja ważności (importance 1-10)**:
-   - 9-10: Kluczowe relacje (imię partnera, dzieci), traumy, ważne rocznice
-   - 7-8: Ważne preferencje, hobby, praca, przyjaciele
-   - 5-6: Codzienne fakty, zwyczaje, rutyny
-   - 1-4: Mniej istotne szczegóły, tymczasowe preferencje
+2. **Priorytetyzacja ważności (importance 1-5)**:
+   - 5: Kluczowe relacje (imię partnera, dzieci), traumy, ważne rocznice
+   - 4: Ważne preferencje, hobby, praca, przyjaciele
+   - 3: Codzienne fakty, zwyczaje, rutyny
+   - 1-2: Mniej istotne szczegóły, tymczasowe preferencje
 
 3. **Typy pamięci (type)**:
    - personal: dane osobowe, wiek, miejsce zamieszkania, praca
@@ -95,13 +95,13 @@ const MEMORY_RULES = `
 
 5. **Przykłady użycia remember_this()**:
    - Użytkownik: "Mój mąż Maciej często pracuje do późna"
-     → remember_this("Mąż ma na imię Maciej i często pracuje do późna", 9, "relationship")
+     → remember_this("Mąż ma na imię Maciej i często pracuje do późna", 5, "relationship")
    
    - Użytkownik: "Nie lubię gdy ktoś podnosi na mnie głos"
-     → remember_this("Nie lubi gdy się na nią/niego krzyczy", 8, "preference")
+     → remember_this("Nie lubi gdy się na nią/niego krzyczy", 4, "preference")
    
    - Użytkownik: "W przyszłym miesiącu mamy 10 rocznicę ślubu"
-     → remember_this("10 rocznica ślubu w przyszłym miesiącu", 10, "event")
+     → remember_this("10 rocznica ślubu w przyszłym miesiącu", 5, "event")
 
 6. **Używaj zapisanych wspomnień** do personalizacji odpowiedzi - odnosij się do tego co już wiesz o użytkowniku.
 `
