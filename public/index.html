@@ -2844,10 +2844,19 @@
             }
             
             console.log('❤️ Przełączanie ulubionej:', currentContextMenuConversation.title);
+            
+            // WAŻNE: Skopiuj dane PRZED wywołaniem hideContextMenu() 
+            // bo hideContextMenu() resetuje currentContextMenuConversation na null
+            const conversation = {
+                id: currentContextMenuConversation.id,
+                titleElement: currentContextMenuConversation.titleElement,
+                title: currentContextMenuConversation.title
+            };
+            
             hideContextMenu();
             
-            const conversation = currentContextMenuConversation;
             const conversationId = conversation.id;
+            console.log('📋 Skopiowane dane konwersacji:', conversation);
             
             if (!conversationId) {
                 console.error('❌ conversationId jest null lub undefined!', conversationId);
