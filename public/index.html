@@ -572,22 +572,42 @@
             }
         }
         
-        // Funkcja do ładowania ulubionych czatów
+        // Funkcja do ładowania ulubionych czatów (obsługuje zarówno legacy system jak i nowe konwersacje)
         async function loadFavoriteChats() {
             const token = localStorage.getItem('token');
             if (!token) return;
             
             try {
-                const response = await fetch('/api/favorites', {
+                // Załaduj ulubione legacy chaty
+                const legacyResponse = await fetch('/api/favorites', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    displayFavoriteChats(data.chats);
+                let legacyFavorites = [];
+                if (legacyResponse.ok) {
+                    const legacyData = await legacyResponse.json();
+                    legacyFavorites = legacyData.chats || [];
                 }
+                
+                // Załaduj ulubione nowe konwersacje
+                const conversationsResponse = await fetch('/api/conversations?limit=100', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                let favoriteConversations = [];
+                if (conversationsResponse.ok) {
+                    const conversationsData = await conversationsResponse.json();
+                    favoriteConversations = (conversationsData.conversations || [])
+                        .filter(conv => conv.is_favorite === true);
+                }
+                
+                // Połącz i wyświetl wszystkie ulubione
+                displayFavoriteChats(legacyFavorites, favoriteConversations);
+                
             } catch (error) {
                 console.error('Error loading favorite chats:', error);
             }
@@ -619,27 +639,53 @@
             }).join('');
         }
         
-        // Funkcja do wyświetlania ulubionych czatów
-        function displayFavoriteChats(chats) {
+        // Funkcja do wyświetlania ulubionych czatów (obsługuje legacy chaty i nowe konwersacje)
+        function displayFavoriteChats(legacyChats = [], favoriteConversations = []) {
             const container = document.getElementById('favoriteChats');
             if (!container) return;
             
-            if (chats.length === 0) {
+            const totalFavorites = legacyChats.length + favoriteConversations.length;
+            
+            if (totalFavorites === 0) {
                 container.innerHTML = `<div style="padding: 20px; text-align: center; color: #999;">${t('noFavorites')}</div>`;
                 return;
             }
             
-            container.innerHTML = chats.map(chat => {
+            let html = '';
+            
+            // Wyświetl ulubione nowe konwersacje
+            favoriteConversations.forEach(conversation => {
+                const date = new Date(conversation.last_message_at);
+                const title = conversation.title || 'Bez tytułu';
+                const preview = title.length > 50 ? title.substring(0, 50) + '...' : title;
+                
+                html += `
+                    <div class="chat-item" style="border-left: 3px solid #FF69B4; position: relative;">
+                        <div onclick="loadConversation('${conversation.id}')" style="cursor: pointer; flex: 1;">
+                            <div class="chat-item-title" id="title-${conversation.id}">${title} ❤️</div>
+                            <div class="chat-item-preview">${preview}</div>
+                            <div class="chat-item-date">${formatDate(date)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Wyświetl ulubione legacy chaty
+            legacyChats.forEach(chat => {
                 const date = new Date(chat.created_at);
                 const preview = chat.message.length > 50 ? chat.message.substring(0, 50) + '...' : chat.message;
-                return `
-                    <div class="chat-item" onclick="loadChat('${chat.id}')">
-                        <div class="chat-item-title">${chat.message.split(' ').slice(0, 4).join(' ')}...</div>
+                const title = chat.message.split(' ').slice(0, 4).join(' ') + '...';
+                
+                html += `
+                    <div class="chat-item" style="border-left: 3px solid #FF69B4;" onclick="loadChat('${chat.id}')">
+                        <div class="chat-item-title" id="legacy-title-${chat.id}">${title} ❤️</div>
                         <div class="chat-item-preview">${preview}</div>
                         <div class="chat-item-date">${formatDate(date)}</div>
                     </div>
                 `;
-            }).join('');
+            });
+            
+            container.innerHTML = html;
         }
         
         // Funkcja do formatowania daty
@@ -2858,14 +2904,166 @@
         }
 
         // Przełącz ulubione
-        function toggleFavoriteFromMenu() {
+        async function toggleFavoriteFromMenu() {
             if (!currentContextMenuConversation) return;
             
             console.log('❤️ Przełączanie ulubionej:', currentContextMenuConversation.title);
             hideContextMenu();
             
-            // TODO: Implementacja przełączania ulubionych
-            alert('Funkcja ulubionych będzie dostępna wkrótce!');
+            const conversation = currentContextMenuConversation;
+            const conversationId = conversation.id;
+            
+            // Sprawdź czy to jest nowa konwersacja czy legacy chat
+            const isNewConversation = conversationId && !conversationId.includes('legacy-');
+            
+            if (isNewConversation) {
+                // Nowa konwersacja - użyj conversation API
+                try {
+                    // Sprawdź aktualny status ulubionej (czy jest w sekcji ulubione)
+                    const favoriteSection = document.getElementById('favoriteChats');
+                    const isFavorite = favoriteSection.querySelector(`[id="title-${conversationId}"]`) !== null;
+                    const newFavoriteStatus = !isFavorite;
+                    
+                    console.log('🔄 Aktualizuję status ulubionej konwersacji:', conversationId, 'na:', newFavoriteStatus);
+                    
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`/api/conversations/${conversationId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            is_favorite: newFavoriteStatus
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('✅ Status ulubionej konwersacji zaktualizowany');
+                        
+                        // Przenieś konwersację między sekcjami
+                        const conversationElement = conversation.titleElement.closest('.chat-item');
+                        if (conversationElement) {
+                            if (newFavoriteStatus) {
+                                // Dodaj do ulubionych - przenieś do sekcji ulubionych
+                                moveConversationToFavorites(conversationElement, conversation);
+                            } else {
+                                // Usuń z ulubionych - przenieś do sekcji ostatnich
+                                moveConversationToRecent(conversationElement, conversation);
+                            }
+                        }
+                        
+                        // Odśwież listy aby mieć aktualny stan
+                        setTimeout(() => {
+                            loadConversations();
+                            loadChatHistory();
+                        }, 100);
+                        
+                    } else {
+                        console.error('❌ Błąd podczas aktualizacji statusu ulubionej');
+                        alert('Nie udało się zaktualizować statusu ulubionej konwersacji');
+                    }
+                } catch (error) {
+                    console.error('❌ Błąd sieci:', error);
+                    alert('Wystąpił błąd podczas aktualizacji');
+                }
+            } else {
+                // Legacy chat - użyj favorites API
+                try {
+                    const legacyId = conversationId.replace('legacy-title-', '');
+                    console.log('🔄 Przełączam ulubioną dla legacy chat:', legacyId);
+                    
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/favorites', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ chatId: legacyId })
+                    });
+                    
+                    if (response.ok) {
+                        console.log('✅ Legacy chat favorite status updated');
+                        
+                        // Odśwież listy aby pokazać zmiany
+                        setTimeout(() => {
+                            loadChatHistory();
+                            loadFavoriteChats();
+                        }, 100);
+                        
+                    } else {
+                        console.error('❌ Błąd podczas aktualizacji legacy favorite');
+                        alert('Nie udało się zaktualizować statusu ulubionej');
+                    }
+                } catch (error) {
+                    console.error('❌ Błąd sieci (legacy):', error);
+                    alert('Wystąpił błąd podczas aktualizacji');
+                }
+            }
+        }
+        
+        // Pomocnicze funkcje do przenoszenia konwersacji między sekcjami
+        function moveConversationToFavorites(conversationElement, conversation) {
+            console.log('📌 Przenoszę konwersację do ulubionych');
+            
+            // Znajdź sekcję ulubionych
+            const favoriteSection = document.getElementById('favoriteChats');
+            if (!favoriteSection) return;
+            
+            // Sprawdź czy sekcja jest pusta (zawiera placeholder)
+            if (favoriteSection.innerHTML.includes('Brak ulubionych')) {
+                favoriteSection.innerHTML = '';
+            }
+            
+            // Sklonuj element i dodaj do ulubionych
+            const clonedElement = conversationElement.cloneNode(true);
+            clonedElement.style.borderLeft = '3px solid #FF69B4'; // Różowy border dla ulubionych
+            favoriteSection.appendChild(clonedElement);
+            
+            // Usuń z sekcji ostatnich z animacją
+            conversationElement.style.transition = 'opacity 0.3s ease, height 0.3s ease';
+            conversationElement.style.opacity = '0';
+            conversationElement.style.height = '0';
+            conversationElement.style.padding = '0';
+            conversationElement.style.margin = '0';
+            
+            setTimeout(() => {
+                conversationElement.remove();
+                // Re-dodaj event listeners dla nowego elementu
+                setTimeout(addContextMenuListeners, 100);
+            }, 300);
+        }
+        
+        function moveConversationToRecent(conversationElement, conversation) {
+            console.log('📋 Przenoszę konwersację do ostatnich');
+            
+            // Znajdź sekcję ostatnich
+            const recentSection = document.getElementById('recentChats');
+            if (!recentSection) return;
+            
+            // Sprawdź czy sekcja jest pusta
+            if (recentSection.innerHTML.includes('Brak') || recentSection.children.length === 0) {
+                recentSection.innerHTML = '';
+            }
+            
+            // Sklonuj element i dodaj do ostatnich
+            const clonedElement = conversationElement.cloneNode(true);
+            clonedElement.style.borderLeft = '3px solid #00BCD4'; // Niebieski border dla nowych
+            recentSection.insertBefore(clonedElement, recentSection.firstChild);
+            
+            // Usuń z sekcji ulubionych z animacją
+            conversationElement.style.transition = 'opacity 0.3s ease, height 0.3s ease';
+            conversationElement.style.opacity = '0';
+            conversationElement.style.height = '0';
+            conversationElement.style.padding = '0';
+            conversationElement.style.margin = '0';
+            
+            setTimeout(() => {
+                conversationElement.remove();
+                // Re-dodaj event listeners dla nowego elementu
+                setTimeout(addContextMenuListeners, 100);
+            }, 300);
         }
 
         // Usuń konwersację (tylko frontend)
