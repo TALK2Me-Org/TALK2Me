@@ -25,7 +25,12 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.3.6",
-    "openai": "^4.0.0"
+    "openai": "^4.0.0",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.8",
+    "utf-8-validate": "^6.0.4"
   },
   "keywords": [
     "ai",
