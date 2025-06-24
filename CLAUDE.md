@@ -90,6 +90,27 @@ Projekt jest **~96% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI AI + PWA 
 4. **Testy jednostkowe** - zero coverage
 5. **Lepsze ikony PWA** - obecnie placeholder, potrzebny design
 
+### 🚨 KNOWN ISSUES (Parkowane problemy)
+
+#### ❌ Funkcja "Dodaj do ulubionych" nie przenosi konwersacji
+**Status**: NIENAPRAWIONE - parkowane 24.06.2025
+**Problem**: Context menu działa, brak błędów JS, ale konwersacje nie przenoszą się wizualnie do sekcji "Ulubione"
+**Co działa**: 
+- ✅ Long-press/right-click menu
+- ✅ Context menu pokazuje się poprawnie  
+- ✅ Brak błędów null/undefined (naprawione)
+- ✅ Debug logi wyświetlają się
+
+**Co nie działa**:
+- ❌ Wizualne przenoszenie do sekcji "Ulubione"
+- ❌ Prawdopodobnie API call lub moveConversationToFavorites() 
+
+**Do sprawdzenia w przyszłości**:
+1. Czy API call `/api/conversations/{id}` się wykonuje
+2. Czy response.ok === true  
+3. Czy moveConversationToFavorites() znajduje elementy DOM
+4. Czy favoriteSection istnieje i ma właściwy content
+
 ## 🏗️ ARCHITEKTURA PROJEKTU
 
 ### 📁 Struktura Katalogów - KOMPLETNA (Stan na 19.06.2025)
