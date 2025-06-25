@@ -128,7 +128,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Message is required' })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = (supabaseUrl, supabaseServiceKey)
     
     // Sprawdź czy user jest zalogowany
     let userId = null
@@ -439,6 +439,7 @@ export default async function handler(req, res) {
         let functionCall = null
         let functionName = ''
         let functionArgs = ''
+        let functionCallCompleted = false
 
         for await (const chunk of stream) {
           const delta = chunk.choices[0]?.delta
@@ -469,41 +470,96 @@ export default async function handler(req, res) {
           // Check if function call is complete
           if (chunk.choices[0]?.finish_reason === 'function_call') {
             console.log('✅ Function call completed, processing...')
-            try {
-              const args = JSON.parse(functionArgs)
-              console.log(`🔧 Function call: ${functionName}`, args)
-              
-              if (functionName === 'remember_this') {
-                // 5. OBSŁUGA FUNCTION CALLING
-                // Gdy AI wywołuje remember_this(), zapisujemy do memories_v2
-                console.log('📝 Processing remember_this function', {
-                  hasMemoryManager: !!memoryManager,
-                  hasUserId: !!userId,
-                  userId: userId
-                })
-                
-                if (memoryManager && userId) {
-                  console.log('💾 Saving memory...')
-                  await memoryManager.saveMemory(
-                    userId,
-                    message, // original content
-                    args.summary,
-                    args.importance,
-                    args.type,
-                    activeConversationId
-                  )
-                  console.log(`✅ Memory saved: "${args.summary}" (importance: ${args.importance})`)
-                  
-                } else {
-                  console.log('⚠️ Cannot save memory:', {
-                    memoryManager: !!memoryManager,
-                    userId: userId
-                  })
-                }
-              }
-            } catch (error) {
-              console.error('❌ Failed to process function call:', error)
+            functionCallCompleted = true
+            break // Exit first stream to process function call
+          }
+        }
+        
+        // Process function call if detected
+        if (functionCallCompleted && functionName === 'remember_this') {
+          try {
+            const args = JSON.parse(functionArgs)
+            console.log(`🔧 Function call: ${functionName}`, args)
+            
+            // Execute remember_this function
+            console.log('📝 Processing remember_this function', {
+              hasMemoryManager: !!memoryManager,
+              hasUserId: !!userId,
+              userId: userId
+            })
+            
+            let functionResult = { success: false }
+            if (memoryManager && userId) {
+              console.log('💾 Saving memory...')
+              await memoryManager.saveMemory(
+                userId,
+                message, // original content
+                args.summary,
+                args.importance,
+                args.type,
+                activeConversationId
+              )
+              console.log(`✅ Memory saved: "${args.summary}" (importance: ${args.importance})`)
+              functionResult = { success: true, saved: args.summary }
+            } else {
+              console.log('⚠️ Cannot save memory:', {
+                memoryManager: !!memoryManager,
+                userId: userId
+              })
+              functionResult = { success: false, error: 'Memory manager not available' }
             }
+
+            // Continue conversation with function result
+            console.log('🔄 Continuing conversation with function result...')
+            
+            // Prepare messages for continuation
+            const messagesWithFunction = [
+              ...aiMessages,
+              { 
+                role: 'assistant', 
+                content: null,
+                function_call: { 
+                  name: functionName, 
+                  arguments: functionArgs 
+                }
+              },
+              {
+                role: 'function',
+                name: functionName,
+                content: JSON.stringify(functionResult)
+              }
+            ]
+
+            // Make continuation call to OpenAI
+            const continuationStream = await openai.chat.completions.create({
+              model: openaiModel,
+              messages: messagesWithFunction,
+              temperature: parseFloat(configMap.temperature) || 0.7,
+              max_tokens: parseInt(configMap.max_tokens) || 1000,
+              stream: true
+            })
+
+            // Stream the continuation response
+            for await (const chunk of continuationStream) {
+              const delta = chunk.choices[0]?.delta
+              const content = delta?.content || ''
+              
+              if (content) {
+                fullResponse += content
+                res.write(`data: ${JSON.stringify({ content })}\n\n`)
+              }
+              
+              // Check if continuation is complete
+              if (chunk.choices[0]?.finish_reason === 'stop') {
+                console.log('✅ Continuation completed')
+                break
+              }
+            }
+            
+          } catch (error) {
+            console.error('❌ Failed to process function call or continuation:', error)
+            // Send error to user but continue
+            res.write(`data: ${JSON.stringify({ content: 'Zapisałem to w pamięci i kontynuuję...' })}\n\n`)
           }
         }
         
