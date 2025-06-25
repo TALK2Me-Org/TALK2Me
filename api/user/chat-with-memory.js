@@ -128,7 +128,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Message is required' })
     }
 
-    const supabase = (supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
     // Sprawdź czy user jest zalogowany
     let userId = null
