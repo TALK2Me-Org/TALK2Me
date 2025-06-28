@@ -56,16 +56,9 @@ let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
 try {
   console.log('📦 Loading API handlers...');
   
-  // Try to load memory-enabled chat, fallback to basic if fails
-  try {
-    chatHandler = (await import('./api/user/chat-with-memory.js')).default;
-    console.log('✅ Loaded: chat-with-memory handler');
-  } catch (memoryError) {
-    console.warn('⚠️  Failed to load memory chat:', memoryError.message);
-    console.log('📌 Falling back to basic chat handler');
-    chatHandler = (await import('./api/user/chat-with-memory.js')).default;
-    console.log('✅ Loaded: basic chat handler');
-  }
+  // Load memory-enabled chat handler
+  chatHandler = (await import('./api/user/chat-with-memory.js')).default;
+  console.log('✅ Loaded: chat-with-memory handler');
   
   // Load other handlers
   historyHandler = (await import('./api/user/history.js')).default;
