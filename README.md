@@ -20,7 +20,7 @@
 
 ## 👥 Kontakt & Zespół
 - **👩‍💼 Natalia Rybarczyk** (Owner) - natalia@example.com
-- **👨‍💻 Maciej** (Developer) - maciej@example.com
+- **👨‍🏫 Maciej** (Mentor) - maciej@example.com
 
 ---
 

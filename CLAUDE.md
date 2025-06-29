@@ -3,7 +3,7 @@
 ## 📋 O Projekcie
 **TALK2Me** - Aplikacja mobilna AI do pomocy w komunikacji w związkach
 - **Właściciel**: Natalia Rybarczyk (Nat-thelifecreator)
-- **Współpracownik**: Maciej (narzeczony Natalii)
+- **Mentor**: Maciej (narzeczony Natalii)
 - **Repo GitHub**: https://github.com/Nat-thelifecreator/TALK2Me 
 
 ## 🚀 AKTUALNE ŚRODOWISKA (Czerwiec 2025)
@@ -18,7 +18,7 @@
 ## 🌿 **BRANCH STRATEGY** (Zatwierdzona 29.06.2025)
 
 ### **📋 OFICJALNA STRATEGIA BRANCHOWANIA**
-**Zatwierdzone przez**: Natalia Rybarczyk (Owner) + Maciej (Developer)  
+**Zatwierdzone przez**: Natalia Rybarczyk (Owner) + Maciej (Mentor)  
 **Data zatwierdzenia**: 29 czerwca 2025  
 **Status**: AKTYWNA
 
