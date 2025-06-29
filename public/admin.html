@@ -1718,29 +1718,47 @@ Loading prompt...
         
         async function reloadMemorySystem() {
             const resultDiv = document.getElementById('reload-result');
-            const button = event.target;
+            const button = event?.target; // Safe optional chaining
+            
+            console.log('🔄 reloadMemorySystem called, button:', button ? 'found' : 'not found');
             
             if (button) {
                 button.disabled = true;
                 button.textContent = '🔄 Reloading...';
             }
             
-            resultDiv.innerHTML = '<span style="color: #666;">Reloading memory system...</span>';
+            // Update result div if it exists
+            if (resultDiv) {
+                resultDiv.innerHTML = '<span style="color: #666;">Reloading memory system...</span>';
+            }
             
             try {
+                console.log('🔄 Calling /api/memory/reload...');
                 const response = await fetch('/api/memory/reload', { method: 'POST' });
                 const data = await response.json();
                 
+                console.log('🔄 Reload response:', data);
+                
                 if (data.success) {
-                    resultDiv.innerHTML = `<span style="color: #28a745;">✅ Memory system reloaded successfully!</span>`;
+                    if (resultDiv) {
+                        resultDiv.innerHTML = `<span style="color: #28a745;">✅ Memory system reloaded successfully!</span>`;
+                    }
                     
-                    // Reload status
+                    // Reload status after delay
                     setTimeout(loadMemoryProviderStatus, 1000);
+                    return data; // Return success result
                 } else {
-                    resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Reload failed: ${data.error}</span>`;
+                    if (resultDiv) {
+                        resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Reload failed: ${data.error}</span>`;
+                    }
+                    throw new Error(data.error || 'Reload failed');
                 }
             } catch (error) {
-                resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Error: ${error.message}</span>`;
+                console.error('❌ reloadMemorySystem error:', error);
+                if (resultDiv) {
+                    resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Error: ${error.message}</span>`;
+                }
+                throw error; // Re-throw for caller
             } finally {
                 if (button) {
                     button.disabled = false;
