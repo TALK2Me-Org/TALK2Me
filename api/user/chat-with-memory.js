@@ -308,7 +308,7 @@ export default async function handler(req, res) {
     let memoryContext = ''
     if (memoryManager && userId) {
       try {
-        const relevantMemories = await memoryManager.getRelevantMemories(userId, message, 5, 0.7)
+        const relevantMemories = await memoryManager.getRelevantMemories(userId, message, 5, 0.4)
         if (relevantMemories.length > 0) {
           memoryContext = memoryManager.formatMemoriesForContext(relevantMemories)
           console.log(`📚 Found ${relevantMemories.length} relevant memories`)
