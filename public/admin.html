@@ -1750,13 +1750,20 @@ Loading prompt...
         }
         
         async function saveConfigValue(key, value) {
+            console.log(`💾 Saving config: ${key} = ${value}`);
+            
             const response = await fetch('/api/admin/config', {
-                method: 'POST',
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ [key]: value })
+                body: JSON.stringify({ 
+                    config_key: key, 
+                    config_value: value 
+                })
             });
             
             const data = await response.json();
+            console.log('💾 Save config response:', data);
+            
             if (!data.success) {
                 throw new Error(data.error || 'Failed to save config');
             }
