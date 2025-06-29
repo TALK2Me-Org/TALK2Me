@@ -21,7 +21,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
-import MemoryManager from '../memory/manager.js'
+import memoryRouter from '../memory/router.js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -33,9 +33,9 @@ export const promptCache = {
   source: 'none'
 }
 
-// MemoryManager instances - not using singleton anymore to avoid initialization issues
-// Each request will create its own instance if needed
-const memoryManagerCache = new Map() // userId -> MemoryManager
+// Memory Router - modular provider system
+// Handles multiple memory providers (Local, Mem0) with automatic fallback
+// No caching needed as router manages provider instances internally
 
 // Function definition for remember_this
 const MEMORY_FUNCTION = {
@@ -250,77 +250,73 @@ export default async function handler(req, res) {
 
     const activeModel = configMap.active_model || 'openai'
     
-    // 2. INICJALIZUJ MEMORY MANAGER
-    // MemoryManager odpowiada za zapisywanie i odczytywanie wspomnień
-    // Używa OpenAI embeddings + pgvector do semantic search
-    let memoryManager = null
+    // 2. INICJALIZUJ MEMORY ROUTER
+    // Memory Router zarządza providerami pamięci (Local, Mem0) z automatycznym fallback
+    // Obsługuje modular provider system z hot reload capabilities
     let memorySystemEnabled = false
     
     if (userId) {
-      // Check cache first
-      memoryManager = memoryManagerCache.get(userId)
-      
-      // Create new instance if not in cache or if OpenAI key changed
-      const openaiKey = configMap.openai_api_key || process.env.OPENAI_API_KEY
-      console.log('🔑 OpenAI key source in chat:', {
-        fromConfig: !!configMap.openai_api_key,
-        fromEnv: !!process.env.OPENAI_API_KEY,
-        finalKey: openaiKey ? `${openaiKey.substring(0, 10)}...` : 'missing'
-      })
-      
-      if (!memoryManager || memoryManager.openaiKey !== openaiKey) {
-        try {
-          console.log('🧠 Creating new MemoryManager for user:', userId)
-          // Create MemoryManager instance (will work even without OpenAI key)
-          memoryManager = new MemoryManager(supabaseUrl, supabaseServiceKey, openaiKey)
-          await memoryManager.initialize()
-          memorySystemEnabled = memoryManager.enabled
-          
-          // Cache the instance
-          memoryManagerCache.set(userId, memoryManager)
-          
-          // Limit cache size to prevent memory leaks
-          if (memoryManagerCache.size > 100) {
-            const firstKey = memoryManagerCache.keys().next().value
-            memoryManagerCache.delete(firstKey)
-          }
+      try {
+        console.log('🧠 Initializing Memory Router for user:', userId)
         
-          if (memorySystemEnabled) {
-            console.log('✅ MemoryManager initialized with full features for user:', userId)
-          } else {
-            console.log('⚠️ MemoryManager initialized without memory features (no OpenAI key)')
-          }
-        } catch (error) {
-          console.error('❌ Failed to initialize MemoryManager:', error.message)
-          console.error('Stack trace:', error.stack)
-          // Remove from cache so it can be retried next time
-          memoryManagerCache.delete(userId)
-          // Continue without memory system
-          memoryManager = null
-          memorySystemEnabled = false
+        // Initialize router if not already done
+        if (!memoryRouter.initialized) {
+          console.log('🚀 Memory Router: First-time initialization...')
+          await memoryRouter.initialize()
         }
-      } else {
-        memorySystemEnabled = memoryManager?.enabled || false
-        console.log('📦 Using cached MemoryManager for user:', userId, 'enabled:', memorySystemEnabled)
+        
+        // Check if memory system is available
+        const status = memoryRouter.getStatus()
+        memorySystemEnabled = status.initialized && status.activeProvider?.enabled
+        
+        if (memorySystemEnabled) {
+          console.log('✅ Memory Router ready:', {
+            provider: status.activeProvider.name,
+            enabled: status.activeProvider.enabled,
+            fallback: status.fallbackProvider?.name || 'none'
+          })
+        } else {
+          console.log('⚠️ Memory Router not enabled:', {
+            initialized: status.initialized,
+            activeProvider: status.activeProvider?.name || 'none',
+            enabled: status.activeProvider?.enabled || false
+          })
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize Memory Router:', error.message)
+        console.error('Stack trace:', error.stack)
+        // Continue without memory system
+        memorySystemEnabled = false
       }
     } else {
       console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
     // 3. POBIERZ RELEVANTNĄ PAMIĘĆ
-    // Wyszukuje podobne wspomnienia do aktualnej wiadomości użytkownika
-    // Używa similarity search na embeddingach (cosine similarity)
+    // Wyszukuje podobne wspomnienia przez Memory Router z automatycznym fallback
+    // Używa aktywnego providera (Local/Mem0) z similarity search
     let memoryContext = ''
-    if (memoryManager && userId) {
+    if (memorySystemEnabled && userId) {
       try {
-        // MEMORY FIX (Sesja 21): Threshold zmieniony z 0.7 → 0.4 dla lepszego matchowania
-        const relevantMemories = await memoryManager.getRelevantMemories(userId, message, 5, 0.4)
-        if (relevantMemories.length > 0) {
-          memoryContext = memoryManager.formatMemoriesForContext(relevantMemories)
-          console.log(`📚 Found ${relevantMemories.length} relevant memories`)
+        console.log('🔍 Retrieving relevant memories via Memory Router...')
+        const result = await memoryRouter.getRelevantMemories(userId, message, 5)
+        
+        if (result.success && result.memories && result.memories.length > 0) {
+          // Format memories for AI context (using LocalProvider's format as standard)
+          const formattedMemories = result.memories.map((memory, index) => {
+            const date = new Date(memory.created_at).toLocaleDateString()
+            const importance = '★'.repeat(memory.importance || 1)
+            
+            return `[Memory ${index + 1}] (${date}, ${importance})\nType: ${memory.memory_type || 'personal'}\nSummary: ${memory.summary}\nContent: ${memory.content}\n`
+          }).join('\n---\n')
+          
+          memoryContext = formattedMemories
+          console.log(`📚 Found ${result.memories.length} relevant memories via ${memoryRouter.activeProvider?.providerName}`)
+        } else {
+          console.log('📚 No relevant memories found')
         }
       } catch (error) {
-        console.error('Failed to retrieve memories:', error)
+        console.error('❌ Failed to retrieve memories via router:', error)
       }
     }
     
@@ -396,20 +392,21 @@ export default async function handler(req, res) {
 
           // 4. PRZYGOTUJ FUNKCJĘ remember_this
           // AI może wywołać tę funkcję aby zapisać ważną informację do pamięci
-          // Automatycznie wykrywa imiona, daty, relacje i inne entities
-          if (userId && memoryManager && memorySystemEnabled) {
+          // Używa Memory Router z automatycznym fallback między providerami
+          if (userId && memorySystemEnabled) {
             chatOptions.functions = [MEMORY_FUNCTION]
             chatOptions.function_call = 'auto'
-            console.log('🔧 Function calling enabled for memory system', {
+            console.log('🔧 Function calling enabled for Memory Router', {
               model: openaiModel,
               userId: userId,
-              memoryEnabled: memorySystemEnabled
+              memoryEnabled: memorySystemEnabled,
+              activeProvider: memoryRouter.activeProvider?.providerName || 'none'
             })
           } else {
             console.log('⚠️ Function calling disabled:', {
               userId: !!userId,
-              memoryManager: !!memoryManager,
-              memorySystemEnabled
+              memorySystemEnabled,
+              routerInitialized: memoryRouter.initialized
             })
           }
 
@@ -425,13 +422,14 @@ export default async function handler(req, res) {
               stream: true
             }
 
-            if (userId && memoryManager && memorySystemEnabled) {
+            if (userId && memorySystemEnabled) {
               chatOptions.functions = [MEMORY_FUNCTION]
               chatOptions.function_call = 'auto'
-              console.log('🔧 Function calling enabled for memory system (fallback)', {
+              console.log('🔧 Function calling enabled for Memory Router (fallback)', {
                 model: 'gpt-3.5-turbo',
                 userId: userId,
-                memoryEnabled: memorySystemEnabled
+                memoryEnabled: memorySystemEnabled,
+                activeProvider: memoryRouter.activeProvider?.providerName || 'none'
               })
             }
 
@@ -487,32 +485,45 @@ export default async function handler(req, res) {
             const args = JSON.parse(functionArgs)
             console.log(`🔧 Function call: ${functionName}`, args)
             
-            // Execute remember_this function
-            console.log('📝 Processing remember_this function', {
-              hasMemoryManager: !!memoryManager,
-              hasUserId: !!userId,
-              userId: userId
+            // Execute remember_this function via Memory Router
+            console.log('📝 Processing remember_this function via Memory Router', {
+              memorySystemEnabled,
+              userId: userId,
+              activeProvider: memoryRouter.activeProvider?.providerName || 'none'
             })
             
             let functionResult = { success: false }
-            if (memoryManager && userId) {
-              console.log('💾 Saving memory...')
-              await memoryManager.saveMemory(
-                userId,
-                message, // original content
-                args.summary,
-                args.importance,
-                args.type,
-                activeConversationId
-              )
-              console.log(`✅ Memory saved: "${args.summary}" (importance: ${args.importance})`)
-              functionResult = { success: true, saved: args.summary }
+            if (memorySystemEnabled && userId) {
+              try {
+                console.log('💾 Saving memory via Memory Router...')
+                const saveResult = await memoryRouter.saveMemory(
+                  userId,
+                  message, // original content
+                  {
+                    summary: args.summary,
+                    importance: args.importance,
+                    memory_type: args.type,
+                    conversation_id: activeConversationId
+                  }
+                )
+                
+                if (saveResult.success) {
+                  console.log(`✅ Memory saved via ${memoryRouter.activeProvider?.providerName}: "${args.summary}" (importance: ${args.importance})`)
+                  functionResult = { success: true, saved: args.summary, provider: memoryRouter.activeProvider?.providerName }
+                } else {
+                  console.error('❌ Memory save failed:', saveResult.error)
+                  functionResult = { success: false, error: saveResult.error }
+                }
+              } catch (error) {
+                console.error('❌ Memory save error via router:', error)
+                functionResult = { success: false, error: error.message }
+              }
             } else {
               console.log('⚠️ Cannot save memory:', {
-                memoryManager: !!memoryManager,
+                memorySystemEnabled,
                 userId: userId
               })
-              functionResult = { success: false, error: 'Memory manager not available' }
+              functionResult = { success: false, error: 'Memory system not available' }
             }
 
             // Continue conversation with function result
