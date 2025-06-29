@@ -1176,12 +1176,15 @@
                 }
                 
                 const data = await response.json();
-                const conversations = data.conversations || [];
+                const allConversations = data.conversations || [];
                 
-                console.log(`✅ Załadowano ${conversations.length} konwersacji:`, conversations);
+                // FILTR: Wyświetl tylko konwersacje które NIE SĄ ulubione
+                // Ulubione są wyświetlane osobno w sekcji "Ulubione"
+                const nonFavoriteConversations = allConversations.filter(conv => conv.is_favorite !== true);
+                console.log(`📋 Wszystkich konwersacji: ${allConversations.length}, Nieulubionych: ${nonFavoriteConversations.length}`);
                 
                 // Wyświetl konwersacje w sidebar
-                displayConversations(conversations);
+                displayConversations(nonFavoriteConversations);
                 
             } catch (error) {
                 console.error('❌ Błąd podczas ładowania konwersacji:', error);
