@@ -13,6 +13,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import LocalProvider from './providers/localProvider.js';
+import Mem0Provider from './providers/mem0Provider.js';
 
 class MemoryRouter {
   constructor() {
@@ -292,5 +294,11 @@ class MemoryRouter {
 
 // Singleton instance
 const memoryRouter = new MemoryRouter();
+
+// Register providers immediately
+memoryRouter.registerProvider('local', LocalProvider);
+memoryRouter.registerProvider('mem0', Mem0Provider);
+
+console.log('🚦 MemoryRouter: Providers registered:', Array.from(memoryRouter.providers.keys()));
 
 export default memoryRouter;
