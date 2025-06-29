@@ -16,9 +16,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    // TYMCZASOWO - wyłączona autoryzacja
-    console.log('⚠️ UWAGA: Panel admina działa bez hasła - tylko do testów!')
-
+    // ADMIN AUTHORIZATION - sprawdź hasło
+    const adminPassword = req.headers['x-admin-password']
+    const expectedPassword = 'qwe123' // Hardcoded for now
+    
+    if (!adminPassword || adminPassword !== expectedPassword) {
+      console.log('🚫 Admin access denied - wrong password')
+      return res.status(401).json({ 
+        error: 'Unauthorized - admin password required',
+        success: false 
+      })
+    }
+    
+    console.log('✅ Admin access granted')
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     if (req.method === 'GET') {

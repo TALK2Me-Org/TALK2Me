@@ -782,10 +782,21 @@ Loading prompt...
             modelInfo.textContent = modelDescriptions[selectedModel] || '';
         }
         
+        // Helper function to get admin headers
+        function getAdminHeaders() {
+            const password = document.getElementById('admin_password')?.value || 'qwe123';
+            return {
+                'Content-Type': 'application/json',
+                'X-Admin-Password': password
+            };
+        }
+
         // Load configuration
         async function loadConfig() {
             try {
-                const response = await fetch('/api/admin/config');
+                const response = await fetch('/api/admin/config', {
+                    headers: getAdminHeaders()
+                });
                 
                 const data = await response.json();
                 
@@ -906,9 +917,7 @@ Loading prompt...
             try {
                 const response = await fetch('/api/admin/config', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAdminHeaders(),
                     body: JSON.stringify({
                         config_key: configKey,
                         config_value: valueToSave
@@ -951,7 +960,9 @@ Loading prompt...
         // Load prompt information
         async function loadPrompt() {
             try {
-                const response = await fetch('/api/admin/config?action=get-prompt');
+                const response = await fetch('/api/admin/config?action=get-prompt', {
+                    headers: getAdminHeaders()
+                });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -991,9 +1002,7 @@ Loading prompt...
             try {
                 const response = await fetch('/api/admin/config', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAdminHeaders(),
                     body: JSON.stringify({ action: 'refresh-prompt' })
                 });
                 
@@ -1388,9 +1397,7 @@ Loading prompt...
                 // Then refresh the prompt from OpenAI to verify connection
                 const response = await fetch('/api/admin/config', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAdminHeaders(),
                     body: JSON.stringify({ action: 'refresh-prompt' })
                 });
                 
@@ -1426,9 +1433,7 @@ Loading prompt...
             try {
                 const response = await fetch('/api/admin/config', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: getAdminHeaders(),
                     body: JSON.stringify({ action: 'list-assistants' })
                 });
                 
