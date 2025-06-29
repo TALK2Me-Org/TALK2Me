@@ -3041,30 +3041,69 @@
             });
         }
 
-        // Usuń konwersację (tylko frontend)
-        function deleteConversationFromMenu() {
+        // Usuń konwersację (PERMANENTNIE z bazy danych)
+        async function deleteConversationFromMenu() {
             if (!currentContextMenuConversation) return;
             
-            const title = currentContextMenuConversation.title;
-            console.log('🗑️ Usuwanie konwersacji z frontend:', title);
+            console.log('🗑️ Usuwanie konwersacji:', currentContextMenuConversation.title);
+            
+            // Skopiuj dane PRZED wywołaniem hideContextMenu()
+            const conversationId = currentContextMenuConversation.id;
+            const conversationTitle = currentContextMenuConversation.title;
             
             hideContextMenu();
             
-            if (confirm(`Czy na pewno chcesz usunąć konwersację "${title}"?\n\n⚠️ Ta akcja ukryje konwersację tylko w tej sesji. Rzeczywiste dane pozostaną w bazie.`)) {
-                const conversationItem = currentContextMenuConversation.titleElement.closest('.chat-item');
-                if (conversationItem) {
-                    conversationItem.style.transition = 'opacity 0.3s ease, height 0.3s ease';
-                    conversationItem.style.opacity = '0';
-                    conversationItem.style.height = '0';
-                    conversationItem.style.padding = '0';
-                    conversationItem.style.margin = '0';
+            // Potwierdzenie usunięcia
+            const confirmed = confirm(`Czy na pewno chcesz PERMANENTNIE usunąć konwersację "${conversationTitle}"?\n\n⚠️ Ta akcja nie może być cofnięta!\n\n✅ Konwersacja zostanie usunięta z bazy danych wraz ze wszystkimi wiadomościami.`);
+            
+            if (!confirmed) {
+                console.log('🚫 Anulowano usuwanie konwersacji');
+                return;
+            }
+            
+            console.log(`🗑️ Usuwam konwersację z bazy danych: ${conversationId}`);
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/conversations/${conversationId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Konwersacja usunięta z bazy danych');
                     
-                    setTimeout(() => {
-                        conversationItem.remove();
-                    }, 300);
+                    // Przeładuj listy konwersacji z serwera (SOURCE OF TRUTH)
+                    console.log('🔄 Przeładowuję listy po usunięciu konwersacji...');
+                    await Promise.all([
+                        loadConversations(),
+                        loadFavoriteChats()
+                    ]);
                     
-                    console.log('✅ Konwersacja usunięta z interfejsu');
+                    // Pokaż sukces użytkownikowi
+                    showUserMessage(`Konwersacja "${conversationTitle}" została permanentnie usunięta`, 'success');
+                    
+                    // Jeśli usunięto aktualnie otwartą konwersację, wyczyść chat
+                    if (currentConversationId === conversationId) {
+                        console.log('🔄 Wyczyszczam aktualnie otwartą konwersację');
+                        currentConversationId = null;
+                        const messagesContainer = document.getElementById('messages');
+                        if (messagesContainer) {
+                            messagesContainer.innerHTML = '<div class="welcome-message">Wybierz konwersację lub rozpocznij nową rozmowę</div>';
+                        }
+                    }
+                    
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Błąd podczas usuwania konwersacji. Status:', response.status, 'Response:', errorText);
+                    showUserMessage(`Błąd podczas usuwania: ${errorText}`, 'error');
                 }
+            } catch (error) {
+                console.error('❌ Błąd sieci podczas usuwania konwersacji:', error);
+                showUserMessage('Wystąpił błąd podczas usuwania konwersacji: ' + error.message, 'error');
             }
         }
 
