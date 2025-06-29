@@ -7,13 +7,26 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password')
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
 
   try {
+    // ADMIN AUTHORIZATION - sprawdź hasło
+    const adminPassword = req.headers['x-admin-password']
+    const expectedPassword = 'qwe123' // Hardcoded for now
+    
+    if (!adminPassword || adminPassword !== expectedPassword) {
+      console.log('🚫 Admin debug access denied - wrong password')
+      return res.status(401).json({ 
+        error: 'Unauthorized - admin password required',
+        success: false 
+      })
+    }
+    
+    console.log('✅ Admin debug access granted')
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
     // Sprawdź co jest w app_config

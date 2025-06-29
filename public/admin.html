@@ -1029,7 +1029,9 @@ Loading prompt...
         // Load users for memory management
         async function loadUsers() {
             try {
-                const response = await fetch('/api/admin/memory?action=users');
+                const response = await fetch('/api/admin/memory?action=users', {
+                    headers: getAdminHeaders()
+                });
                 const data = await response.json();
                 
                 const userSelector = document.getElementById('user_selector');
@@ -1072,7 +1074,9 @@ Loading prompt...
             tableBody.innerHTML = '<tr><td colspan="5" class="memory-loading">Loading memories</td></tr>';
             
             try {
-                const response = await fetch(`/api/admin/memory?user_id=${userId}`);
+                const response = await fetch(`/api/admin/memory?user_id=${userId}`, {
+                    headers: getAdminHeaders()
+                });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -1223,7 +1227,7 @@ Loading prompt...
             try {
                 const response = await fetch(`/api/admin/memory?id=${memoryId}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAdminHeaders(),
                     body: JSON.stringify({ summary: newSummary })
                 });
                 
@@ -1299,7 +1303,7 @@ Loading prompt...
             try {
                 const response = await fetch(`/api/admin/memory?id=${memoryId}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAdminHeaders(),
                     body: JSON.stringify({ importance: newImportance })
                 });
                 
@@ -1338,7 +1342,8 @@ Loading prompt...
             
             try {
                 const response = await fetch(`/api/admin/memory?id=${memoryId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: getAdminHeaders()
                 });
                 
                 const data = await response.json();
