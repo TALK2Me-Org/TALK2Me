@@ -8,7 +8,6 @@
     "dev": "node --watch server.js",
     "build": "echo 'Build complete'",
     "start": "node server.js",
-    "vercel-dev": "vercel dev",
     "test:db": "node test-db-connection.js",
     "test:memory": "node test-memory-local.js",
     "migrate": "node migrate.js"

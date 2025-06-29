@@ -22,12 +22,10 @@
 - **Deploy**: Auto-deploy przy każdym push na `main`
 - **Status**: ✅ AKTYWNE - branch main skonfigurowany w Railway Dashboard
 
-### 🟡 BACKUP (Vercel) - STARE
-- **URL**: https://tk2me.vercel.app
-- **Branch**: `main` (może konflikować)
-- **Platforma**: Vercel (Serverless Functions)
-- **Deploy**: Auto-deploy z main (do wyłączenia)
-- **Status**: ⚠️ Może powodować konflikty
+### ❌ USUNIĘTE DEPLOYMENTS
+- **Vercel backup**: tk2me.vercel.app (USUNIĘTY - 29.06.2025)
+  - Eliminacja konfliktów z Railway
+  - Uproszenie infrastruktury
 
 ## 🎯 Aktualny Stan (29 Czerwca 2025, 03:00)
 Projekt jest **~97% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI NAPRAWIONY + BEZPIECZEŃSTWO POPRAWIONE + PWA GOTOWE! 🎉🚀🧠🔒✅
@@ -122,7 +120,6 @@ Projekt jest **~97% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI NAPRAWION
 │   ├── 📄 railway.json                 # Railway deployment config (healthcheck, build)
 │   ├── 📄 nixpacks.toml               # Railway build process config (Node 18)
 │   ├── 📄 package.json                 # Dependencies (LangChain, OpenAI, Supabase)
-│   ├── 📄 vercel.json                  # Stara konfiguracja Vercel (backup)
 │   └── 📄 .gitignore                   # Ignorowane pliki (package-lock.json)
 │
 ├── 📚 DOKUMENTACJA
@@ -309,15 +306,10 @@ Projekt jest **~97% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI NAPRAWION
    - Region: europe-west4
    - URL: https://talk2me.up.railway.app
 
-5. **Vercel** (https://vercel.com) - BACKUP
-   - Stary hosting (serverless functions)
-   - URL: https://tk2me.vercel.app
-   - Branch: main (nieaktywny)
-
-6. **GitHub** (https://github.com/Nat-thelifecreator/TALK2Me)
+5. **GitHub** (https://github.com/Nat-thelifecreator/TALK2Me)
    - Version control
-   - Webhooks dla auto-deploy
-   - Branch strategy: `railway-migration` (prod), `main` (legacy)
+   - Webhooks dla auto-deploy Railway
+   - Branch strategy: `main` (production)
 
 #### 🔑 Klucze API (przechowywane w Supabase app_config):
 - `openai_api_key` - klucz OpenAI
