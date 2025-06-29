@@ -2834,6 +2834,8 @@
         }
 
         // Przełącz ulubione
+        // REFACTORED: Simplified favorites toggle without manual DOM manipulation
+        // Source of truth: Backend API - UI always reflects server state
         async function toggleFavoriteFromMenu() {
             console.log('❤️ toggleFavoriteFromMenu wywołane');
             console.log('🔍 currentContextMenuConversation:', currentContextMenuConversation);
@@ -2847,20 +2849,14 @@
             
             // WAŻNE: Skopiuj dane PRZED wywołaniem hideContextMenu() 
             // bo hideContextMenu() resetuje currentContextMenuConversation na null
-            const conversation = {
-                id: currentContextMenuConversation.id,
-                titleElement: currentContextMenuConversation.titleElement,
-                title: currentContextMenuConversation.title
-            };
+            const conversationId = currentContextMenuConversation.id;
+            const conversationTitle = currentContextMenuConversation.title;
             
             hideContextMenu();
             
-            const conversationId = conversation.id;
-            console.log('📋 Skopiowane dane konwersacji:', conversation);
-            
             if (!conversationId) {
                 console.error('❌ conversationId jest null lub undefined!', conversationId);
-                alert('Błąd: Nie można określić ID konwersacji');
+                showUserMessage('Błąd: Nie można określić ID konwersacji', 'error');
                 return;
             }
             
@@ -2887,97 +2883,103 @@
                 });
                 
                 if (response.ok) {
-                    console.log('✅ Status ulubionej konwersacji zaktualizowany');
+                    console.log('✅ Status ulubionej konwersacji zaktualizowany w bazie danych');
                     
-                    // Przenieś konwersację między sekcjami
-                    const conversationElement = conversation.titleElement.closest('.chat-item');
-                    if (conversationElement) {
-                        if (newFavoriteStatus) {
-                            // Dodaj do ulubionych - przenieś do sekcji ulubionych
-                            moveConversationToFavorites(conversationElement, conversation);
-                        } else {
-                            // Usuń z ulubionych - przenieś do sekcji ostatnich
-                            moveConversationToRecent(conversationElement, conversation);
-                        }
-                    }
+                    // FIX: Przeładuj listy z serwera (SOURCE OF TRUTH)
+                    // Usunięto manual DOM manipulation - tylko API calls
+                    console.log('🔄 Przeładowuję listy z aktualnych danych serwera...');
+                    await Promise.all([
+                        loadConversations(),
+                        loadFavoriteChats()
+                    ]);
                     
-                    // Odśwież listy aby mieć aktualny stan
-                    setTimeout(() => {
-                        loadConversations();
-                        loadFavoriteChats();
-                    }, 100);
+                    // Pokaż sukces użytkownikowi
+                    const action = newFavoriteStatus ? 'dodana do' : 'usunięta z';
+                    showUserMessage(`Konwersacja "${conversationTitle}" została ${action} ulubionych`, 'success');
                     
                 } else {
                     console.error('❌ Błąd podczas aktualizacji statusu ulubionej');
-                    alert('Nie udało się zaktualizować statusu ulubionej konwersacji');
+                    showUserMessage('Nie udało się zaktualizować statusu ulubionej konwersacji', 'error');
                 }
             } catch (error) {
                 console.error('❌ Błąd sieci:', error);
-                alert('Wystąpił błąd podczas aktualizacji');
+                showUserMessage('Wystąpił błąd podczas aktualizacji: ' + error.message, 'error');
             }
         }
         
-        // Pomocnicze funkcje do przenoszenia konwersacji między sekcjami
-        function moveConversationToFavorites(conversationElement, conversation) {
-            console.log('📌 Przenoszę konwersację do ulubionych');
-            
-            // Znajdź sekcję ulubionych
-            const favoriteSection = document.getElementById('favoriteChats');
-            if (!favoriteSection) return;
-            
-            // Sprawdź czy sekcja jest pusta (zawiera placeholder)
-            if (favoriteSection.innerHTML.includes('Brak ulubionych')) {
-                favoriteSection.innerHTML = '';
+        // REMOVED: moveConversationToFavorites() and moveConversationToRecent()
+        // These functions caused race conditions with API data loading
+        // All UI updates now happen through loadConversations() and loadFavoriteChats()
+        // which maintain consistency with server state
+
+        // Simple toast notification system for user feedback
+        function showUserMessage(message, type = 'info') {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 10000;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(toastContainer);
             }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
+            toast.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 12px 20px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                max-width: 350px;
+                font-size: 14px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                pointer-events: auto;
+                cursor: pointer;
+            `;
+            toast.textContent = message;
             
-            // Sklonuj element i dodaj do ulubionych
-            const clonedElement = conversationElement.cloneNode(true);
-            clonedElement.style.borderLeft = '3px solid #FF69B4'; // Różowy border dla ulubionych
-            favoriteSection.appendChild(clonedElement);
+            // Add to container
+            toastContainer.appendChild(toast);
             
-            // Usuń z sekcji ostatnich z animacją
-            conversationElement.style.transition = 'opacity 0.3s ease, height 0.3s ease';
-            conversationElement.style.opacity = '0';
-            conversationElement.style.height = '0';
-            conversationElement.style.padding = '0';
-            conversationElement.style.margin = '0';
-            
+            // Animate in
             setTimeout(() => {
-                conversationElement.remove();
-                // Re-dodaj event listeners dla nowego elementu
-                setTimeout(addContextMenuListeners, 100);
-            }, 300);
-        }
-        
-        function moveConversationToRecent(conversationElement, conversation) {
-            console.log('📋 Przenoszę konwersację do ostatnich');
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
             
-            // Znajdź sekcję ostatnich
-            const recentSection = document.getElementById('recentChats');
-            if (!recentSection) return;
-            
-            // Sprawdź czy sekcja jest pusta
-            if (recentSection.innerHTML.includes('Brak') || recentSection.children.length === 0) {
-                recentSection.innerHTML = '';
-            }
-            
-            // Sklonuj element i dodaj do ostatnich
-            const clonedElement = conversationElement.cloneNode(true);
-            clonedElement.style.borderLeft = ''; // Usuń border
-            recentSection.insertBefore(clonedElement, recentSection.firstChild);
-            
-            // Usuń z sekcji ulubionych z animacją
-            conversationElement.style.transition = 'opacity 0.3s ease, height 0.3s ease';
-            conversationElement.style.opacity = '0';
-            conversationElement.style.height = '0';
-            conversationElement.style.padding = '0';
-            conversationElement.style.margin = '0';
-            
+            // Auto remove after 4 seconds
             setTimeout(() => {
-                conversationElement.remove();
-                // Re-dodaj event listeners dla nowego elementu
-                setTimeout(addContextMenuListeners, 100);
-            }, 300);
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 4000);
+            
+            // Click to dismiss
+            toast.addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
         }
 
         // Usuń konwersację (tylko frontend)
