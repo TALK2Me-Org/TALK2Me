@@ -103,8 +103,9 @@ class MemoryRouter {
       this.config = { default_memory_provider: 'local' };
     }
 
-    // Determine active and fallback providers
+    // Determine active and fallback providers (always default to 'local')
     const requestedProvider = this.config.default_memory_provider || 'local';
+    console.log(`🎯 MemoryRouter: Requested provider: '${requestedProvider}' (from config: ${!!this.config.default_memory_provider})`);
     
     try {
       await this.setActiveProvider(requestedProvider);
@@ -134,15 +135,38 @@ class MemoryRouter {
       const provider = await this.createProviderInstance(providerName);
       
       if (provider && await provider.initialize()) {
+        // Check if provider is actually enabled after initialization
+        if (!provider.isEnabled()) {
+          console.warn(`⚠️ MemoryRouter: ${providerName} provider initialized but not enabled`);
+          if (providerName === 'local') {
+            // If local provider is not enabled, we have a serious problem
+            throw new Error(`Local provider not enabled - check OpenAI API key and Supabase config`);
+          }
+          // For other providers, fall back to local
+          throw new Error(`${providerName} provider not enabled`);
+        }
+        
         this.activeProvider = provider;
         
         // Set fallback provider (always local if not already local)
         if (providerName !== 'local') {
-          this.fallbackProvider = await this.createProviderInstance('local');
-          await this.fallbackProvider.initialize();
+          console.log('🛡️ MemoryRouter: Setting up Local provider as fallback...');
+          try {
+            this.fallbackProvider = await this.createProviderInstance('local');
+            const fallbackInit = await this.fallbackProvider.initialize();
+            if (!fallbackInit || !this.fallbackProvider.isEnabled()) {
+              console.warn('⚠️ MemoryRouter: Fallback provider (local) not available');
+              this.fallbackProvider = null;
+            } else {
+              console.log('✅ MemoryRouter: Fallback provider (local) ready');
+            }
+          } catch (fallbackError) {
+            console.warn('⚠️ MemoryRouter: Could not setup fallback provider:', fallbackError.message);
+            this.fallbackProvider = null;
+          }
         }
         
-        console.log(`✅ MemoryRouter: Active provider set to '${providerName}'`);
+        console.log(`✅ MemoryRouter: Active provider set to '${providerName}' (enabled: ${provider.isEnabled()})`);
         return true;
       } else {
         throw new Error(`Failed to initialize ${providerName} provider`);

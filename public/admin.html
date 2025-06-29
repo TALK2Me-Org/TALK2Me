@@ -473,10 +473,16 @@
                 <div style="padding: 20px;">
                     <div style="margin-bottom: 20px;">
                         <label for="memory_provider_selector" style="font-weight: 600; margin-bottom: 10px; display: block;">Active Memory Provider:</label>
-                        <select id="memory_provider_selector" style="width: 100%; margin-bottom: 15px;" onchange="switchMemoryProvider()">
-                            <option value="local">🏠 LocalProvider (Supabase + pgvector)</option>
-                            <option value="mem0">🌐 Mem0Provider (Mem0 API)</option>
-                        </select>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                            <select id="memory_provider_selector" style="flex: 1;" onchange="highlightSaveButton()">
+                                <option value="local">🏠 LocalProvider (Supabase + pgvector)</option>
+                                <option value="mem0">🌐 Mem0Provider (Mem0 API)</option>
+                            </select>
+                            <button id="save_provider_btn" onclick="switchMemoryProvider()" disabled style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px;">
+                                💾 Save Provider
+                            </button>
+                        </div>
+                        <div id="provider_switch_status" style="font-size: 12px; margin-bottom: 10px;"></div>
                     </div>
                     
                     <div class="model-selector">
@@ -1618,21 +1624,66 @@ Loading prompt...
             }
         }
         
+        function highlightSaveButton() {
+            const selector = document.getElementById('memory_provider_selector');
+            const saveButton = document.getElementById('save_provider_btn');
+            const statusDiv = document.getElementById('provider_switch_status');
+            
+            saveButton.disabled = false;
+            saveButton.style.background = '#FF69B4';
+            saveButton.innerHTML = '💾 Save Provider Change';
+            statusDiv.innerHTML = '<span style="color: #FF69B4;">⚠️ Provider selection changed - click Save to apply</span>';
+        }
+        
         async function switchMemoryProvider() {
             const selector = document.getElementById('memory_provider_selector');
+            const saveButton = document.getElementById('save_provider_btn');
+            const statusDiv = document.getElementById('provider_switch_status');
             const selectedProvider = selector.value;
             
+            // Disable button and show loading
+            saveButton.disabled = true;
+            saveButton.style.background = '#6c757d';
+            saveButton.innerHTML = '🔄 Saving...';
+            statusDiv.innerHTML = '<span style="color: #666;">Switching memory provider...</span>';
+            
             try {
-                showStatus('adminStatus', `Switching to ${selectedProvider} provider...`, 'success');
+                console.log(`🔄 Switching to ${selectedProvider} provider...`);
                 
                 // Update config in database
+                console.log('💾 Saving provider config to database...');
                 await saveConfigValue('default_memory_provider', selectedProvider);
                 
+                statusDiv.innerHTML = '<span style="color: #007bff;">✅ Config saved, reloading memory system...</span>';
+                
                 // Reload memory system
+                console.log('🔄 Reloading memory system...');
                 await reloadMemorySystem();
                 
+                // Success state
+                saveButton.style.background = '#28a745';
+                saveButton.innerHTML = '✅ Provider Saved';
+                statusDiv.innerHTML = `<span style="color: #28a745;">✅ Successfully switched to ${selectedProvider} provider</span>`;
+                
+                // Reload provider status after delay
+                setTimeout(() => {
+                    loadMemoryProviderStatus();
+                    saveButton.disabled = true;
+                    saveButton.style.background = '#28a745';
+                    saveButton.innerHTML = '💾 Save Provider';
+                }, 2000);
+                
+                showStatus('adminStatus', `Memory provider switched to ${selectedProvider}`, 'success');
+                
             } catch (error) {
-                console.error('Failed to switch memory provider:', error);
+                console.error('❌ Failed to switch memory provider:', error);
+                
+                // Error state
+                saveButton.style.background = '#dc3545';
+                saveButton.innerHTML = '❌ Save Failed';
+                saveButton.disabled = false;
+                statusDiv.innerHTML = `<span style="color: #dc3545;">❌ Failed to switch provider: ${error.message}</span>`;
+                
                 showStatus('adminStatus', `Failed to switch provider: ${error.message}`, 'error');
             }
         }
