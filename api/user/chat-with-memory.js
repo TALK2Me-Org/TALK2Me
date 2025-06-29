@@ -147,13 +147,18 @@ export default async function handler(req, res) {
           .eq('config_key', 'jwt_secret')
           .single()
         
-        const jwtSecret = config?.config_value || 'talk2me-secret-key-2024'
-        
-        // Import jwt dynamically
-        const jwt = await import('jsonwebtoken')
-        const decoded = jwt.default.verify(token, jwtSecret)
-        userId = decoded.id
-        console.log('✅ Token verified, userId:', userId)
+        const jwtSecret = config?.config_value
+        if (!jwtSecret) {
+          console.error('❌ JWT secret not configured in database')
+          // Continue as guest user - don't fail chat completely
+          userId = null
+        } else {
+          // Import jwt dynamically
+          const jwt = await import('jsonwebtoken')
+          const decoded = jwt.default.verify(token, jwtSecret)
+          userId = decoded.id
+          console.log('✅ Token verified, userId:', userId)
+        }
       } catch (error) {
         console.log('❌ Invalid token:', error.message)
         // Kontynuuj jako gość jeśli token nieprawidłowy

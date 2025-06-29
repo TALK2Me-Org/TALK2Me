@@ -54,7 +54,11 @@ export default async function handler(req, res) {
       .eq('config_key', 'jwt_secret')
       .single()
     
-    const jwtSecret = config?.config_value || 'talk2me-secret-key-2024'
+    const jwtSecret = config?.config_value
+    if (!jwtSecret) {
+      console.error('❌ JWT secret not configured in database')
+      return res.status(500).json({ error: 'Authentication system misconfigured' })
+    }
 
     // Generuj JWT token
     const token = jwt.sign(
