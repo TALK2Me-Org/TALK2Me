@@ -2823,14 +2823,64 @@
         // ===== FUNKCJE AKCJI MENU =====
 
         // Zmień nazwę konwersacji
-        function renameConversationFromMenu() {
+        async function renameConversationFromMenu() {
             if (!currentContextMenuConversation) return;
             
             console.log('✏️ Zmiana nazwy konwersacji:', currentContextMenuConversation.title);
+            
+            // Skopiuj dane PRZED wywołaniem hideContextMenu()
+            const conversationId = currentContextMenuConversation.id;
+            const currentTitle = currentContextMenuConversation.title;
+            
             hideContextMenu();
             
-            // TODO: Implementacja edycji nazwy
-            alert('Funkcja edycji nazwy będzie dostępna wkrótce!');
+            // Prompt użytkownika o nową nazwę
+            const newTitle = prompt('Podaj nową nazwę konwersacji:', currentTitle);
+            
+            // Sprawdź czy użytkownik anulował lub podał pustą nazwę
+            if (!newTitle || newTitle.trim() === '' || newTitle.trim() === currentTitle) {
+                console.log('🚫 Anulowano zmianę nazwy lub nazwa nie zmieniła się');
+                return;
+            }
+            
+            const trimmedTitle = newTitle.trim();
+            console.log(`✏️ Zmieniam nazwę z "${currentTitle}" na "${trimmedTitle}"`);
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/conversations/${conversationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        title: trimmedTitle
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Nazwa konwersacji zaktualizowana w bazie danych');
+                    
+                    // Przeładuj listy konwersacji z serwera (SOURCE OF TRUTH)
+                    console.log('🔄 Przeładowuję listy z aktualnych danych serwera...');
+                    await Promise.all([
+                        loadConversations(),
+                        loadFavoriteChats()
+                    ]);
+                    
+                    // Pokaż sukces użytkownikowi
+                    showUserMessage(`Nazwa konwersacji została zmieniona na "${trimmedTitle}"`, 'success');
+                    
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Błąd podczas zmiany nazwy konwersacji. Status:', response.status, 'Response:', errorText);
+                    showUserMessage(`Błąd API ${response.status}: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Błąd sieci podczas zmiany nazwy:', error);
+                showUserMessage('Wystąpił błąd podczas zmiany nazwy: ' + error.message, 'error');
+            }
         }
 
         // Przełącz ulubione
