@@ -306,35 +306,16 @@ export default async function handler(req, res) {
     // Wyszukuje podobne wspomnienia do aktualnej wiadomości użytkownika
     // Używa similarity search na embeddingach (cosine similarity)
     let memoryContext = ''
-    console.log('🔍 Memory system check:', {
-      memoryManager: !!memoryManager,
-      userId: userId,
-      memoryManagerEnabled: memoryManager?.enabled,
-      message: message.substring(0, 50) + '...'
-    })
-    
     if (memoryManager && userId) {
       try {
-        console.log('🔎 Searching for memories with threshold 0.4...')
         const relevantMemories = await memoryManager.getRelevantMemories(userId, message, 5, 0.4)
-        console.log(`🧠 Memory search result: ${relevantMemories.length} memories found`)
-        
         if (relevantMemories.length > 0) {
           memoryContext = memoryManager.formatMemoriesForContext(relevantMemories)
           console.log(`📚 Found ${relevantMemories.length} relevant memories`)
-          console.log(`📝 Memory context length: ${memoryContext.length} chars`)
-          console.log(`📄 First memory sample: ${relevantMemories[0]?.summary || 'none'}`)
-        } else {
-          console.log('⚠️ No memories found for this query and user')
         }
       } catch (error) {
-        console.error('❌ Failed to retrieve memories:', error)
+        console.error('Failed to retrieve memories:', error)
       }
-    } else {
-      console.log('❌ Memory system disabled:', {
-        noMemoryManager: !memoryManager,
-        noUserId: !userId
-      })
     }
     
     // Przygotuj streaming response
