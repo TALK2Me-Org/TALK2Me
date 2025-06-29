@@ -601,9 +601,9 @@
                 const preview = title.length > 50 ? title.substring(0, 50) + '...' : title;
                 
                 html += `
-                    <div class="chat-item" style="border-left: 3px solid #FF69B4; position: relative;">
+                    <div class="chat-item" style="position: relative;">
                         <div onclick="loadConversation('${conversation.id}')" style="cursor: pointer; flex: 1;">
-                            <div class="chat-item-title" id="title-${conversation.id}">${title} ❤️</div>
+                            <div class="chat-item-title" id="title-${conversation.id}">${title}</div>
                             <div class="chat-item-preview">${preview}</div>
                             <div class="chat-item-date">${formatDate(date)}</div>
                         </div>
