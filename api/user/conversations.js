@@ -49,6 +49,12 @@ export default async function handler(req, res) {
 
     // Routing based on URL structure  
     const conversationId = req.params.id || req.query.conversationId
+    console.log('🔍 Debugging conversations API:');
+    console.log('   Method:', req.method);
+    console.log('   URL:', req.url);
+    console.log('   req.params:', req.params);
+    console.log('   req.query:', req.query);
+    console.log('   Extracted conversationId:', conversationId);
 
     // GET /api/conversations - lista konwersacji
     if (req.method === 'GET' && !conversationId) {
@@ -190,24 +196,39 @@ export default async function handler(req, res) {
 
     // PUT /api/conversations/[id] - aktualizacja konwersacji
     if (req.method === 'PUT' && conversationId) {
+      console.log('🔄 PUT /api/conversations/:id - conversationId:', conversationId);
+      console.log('👤 userId:', userId);
+      console.log('📋 body:', req.body);
+      
       const { title, is_archived, is_favorite } = req.body
 
       // Sprawdź czy użytkownik ma dostęp
-      const { data: conv } = await supabase
+      console.log('🔍 Sprawdzam dostęp do konwersacji...');
+      const { data: conv, error: findError } = await supabase
         .from('conversations')
         .select('id')
         .eq('id', conversationId)
         .eq('user_id', userId)
         .single()
 
+      if (findError) {
+        console.error('❌ Błąd podczas wyszukiwania konwersacji:', findError);
+        return res.status(500).json({ error: 'Database error while finding conversation', details: findError })
+      }
+
       if (!conv) {
+        console.error('❌ Konwersacja nie znaleziona dla conversationId:', conversationId, 'userId:', userId);
         return res.status(404).json({ error: 'Conversation not found' })
       }
+
+      console.log('✅ Konwersacja znaleziona:', conv);
 
       const updates = {}
       if (title !== undefined) updates.title = title
       if (is_archived !== undefined) updates.is_archived = is_archived
       if (is_favorite !== undefined) updates.is_favorite = is_favorite
+
+      console.log('🔄 Aktualizuję konwersację z:', updates);
 
       const { data: updated, error } = await supabase
         .from('conversations')
@@ -217,8 +238,11 @@ export default async function handler(req, res) {
         .single()
 
       if (error) {
+        console.error('❌ Błąd podczas aktualizacji konwersacji:', error);
         return res.status(500).json({ error: 'Update failed', details: error })
       }
+
+      console.log('✅ Konwersacja zaktualizowana:', updated);
 
       return res.json({
         success: true,

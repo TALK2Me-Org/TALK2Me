@@ -2898,8 +2898,9 @@
                     showUserMessage(`Konwersacja "${conversationTitle}" została ${action} ulubionych`, 'success');
                     
                 } else {
-                    console.error('❌ Błąd podczas aktualizacji statusu ulubionej');
-                    showUserMessage('Nie udało się zaktualizować statusu ulubionej konwersacji', 'error');
+                    const errorText = await response.text();
+                    console.error('❌ Błąd podczas aktualizacji statusu ulubionej. Status:', response.status, 'Response:', errorText);
+                    showUserMessage(`Błąd API ${response.status}: ${errorText}`, 'error');
                 }
             } catch (error) {
                 console.error('❌ Błąd sieci:', error);
