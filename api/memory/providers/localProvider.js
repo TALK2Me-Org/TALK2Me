@@ -182,16 +182,23 @@ export default class LocalProvider extends MemoryProvider {
     if (!this.initialized) await this.initialize();
     
     if (!this.isEnabled()) {
+      console.log('⚠️ LocalProvider: Not enabled, returning empty memories');
       return { success: true, memories: [] };
     }
 
     try {
-      console.log('🔍 LocalProvider: Getting relevant memories for:', query);
+      console.log('🔍 LOCAL DEBUG: Getting relevant memories...');
+      console.log('🔍 LOCAL DEBUG: User ID:', userId);
+      console.log('🔍 LOCAL DEBUG: Query:', query.substring(0, 100) + '...');
+      console.log('🔍 LOCAL DEBUG: Limit:', limit);
       
       // Create embedding for query
+      console.log('🔍 LOCAL DEBUG: Creating embedding for query...');
       const queryEmbedding = await this.embeddings.embedQuery(query);
+      console.log('🔍 LOCAL DEBUG: Query embedding created, dimension:', queryEmbedding.length);
       
       // Search with similarity
+      console.log('🔍 LOCAL DEBUG: Calling match_memories RPC...');
       const { data, error } = await this.supabase.rpc('match_memories', {
         user_id_param: userId,
         query_embedding: JSON.stringify(queryEmbedding),
@@ -200,11 +207,23 @@ export default class LocalProvider extends MemoryProvider {
       });
 
       if (error) {
-        console.error('❌ LocalProvider: Similarity search error:', error);
+        console.error('❌ LOCAL DEBUG: Similarity search error:', error);
+        console.error('❌ LOCAL DEBUG: Error code:', error.code);
+        console.error('❌ LOCAL DEBUG: Error details:', error.details);
         return { success: false, error: error.message };
       }
 
-      console.log(`✅ LocalProvider: Found ${data?.length || 0} relevant memories`);
+      console.log(`✅ LOCAL DEBUG: RPC returned ${data?.length || 0} memories`);
+      
+      if (data && data.length > 0) {
+        console.log('🔍 LOCAL DEBUG: Memory details:', data.map(m => ({
+          id: m.id?.substring(0, 8) + '...',
+          summary: m.summary?.substring(0, 30) + '...',
+          similarity: m.similarity_score,
+          type: m.memory_type,
+          user_id: m.user_id
+        })));
+      }
       
       return { 
         success: true, 
@@ -212,7 +231,8 @@ export default class LocalProvider extends MemoryProvider {
         count: data?.length || 0
       };
     } catch (error) {
-      console.error('❌ LocalProvider: getRelevantMemories error:', error);
+      console.error('❌ LOCAL DEBUG: getRelevantMemories exception:', error);
+      console.error('❌ LOCAL DEBUG: Exception stack:', error.stack);
       return { success: false, error: error.message };
     }
   }

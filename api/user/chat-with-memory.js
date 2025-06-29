@@ -298,10 +298,29 @@ export default async function handler(req, res) {
     let memoryContext = ''
     if (memorySystemEnabled && userId) {
       try {
-        console.log('🔍 Retrieving relevant memories via Memory Router...')
+        console.log('🔍 MEMORY DEBUG: Starting memory retrieval...')
+        console.log('🔍 MEMORY DEBUG: User ID:', userId)
+        console.log('🔍 MEMORY DEBUG: Message query:', message.substring(0, 100) + '...')
+        console.log('🔍 MEMORY DEBUG: Router status:', memoryRouter.getStatus())
+        
         const result = await memoryRouter.getRelevantMemories(userId, message, 5)
         
+        console.log('🔍 MEMORY DEBUG: getRelevantMemories result:', {
+          success: result.success,
+          memoriesCount: result.memories?.length || 0,
+          error: result.error,
+          provider: memoryRouter.activeProvider?.providerName
+        })
+        
         if (result.success && result.memories && result.memories.length > 0) {
+          console.log('🔍 MEMORY DEBUG: Found memories details:', result.memories.map(m => ({
+            id: m.id,
+            summary: m.summary?.substring(0, 50) + '...',
+            type: m.memory_type,
+            importance: m.importance,
+            created: m.created_at
+          })))
+          
           // Format memories for AI context (using LocalProvider's format as standard)
           const formattedMemories = result.memories.map((memory, index) => {
             const date = new Date(memory.created_at).toLocaleDateString()
@@ -311,13 +330,22 @@ export default async function handler(req, res) {
           }).join('\n---\n')
           
           memoryContext = formattedMemories
-          console.log(`📚 Found ${result.memories.length} relevant memories via ${memoryRouter.activeProvider?.providerName}`)
+          console.log(`📚 MEMORY DEBUG: Formatted ${result.memories.length} memories for AI context`)
+          console.log(`📚 MEMORY DEBUG: Memory context length: ${memoryContext.length} chars`)
+        } else if (result.success) {
+          console.log('📚 MEMORY DEBUG: No relevant memories found (empty result)')
         } else {
-          console.log('📚 No relevant memories found')
+          console.error('❌ MEMORY DEBUG: Memory retrieval failed:', result.error)
         }
       } catch (error) {
-        console.error('❌ Failed to retrieve memories via router:', error)
+        console.error('❌ MEMORY DEBUG: Exception during memory retrieval:', error)
+        console.error('❌ MEMORY DEBUG: Error stack:', error.stack)
       }
+    } else {
+      console.log('⚠️ MEMORY DEBUG: Memory retrieval skipped:', {
+        memorySystemEnabled,
+        userId: !!userId
+      })
     }
     
     // Przygotuj streaming response
