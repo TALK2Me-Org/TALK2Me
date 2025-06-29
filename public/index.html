@@ -1205,13 +1205,18 @@
                 return;
             }
             
-            if (conversations.length === 0) {
-                console.log('📭 Brak konwersacji do wyświetlenia');
-                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #999;">Brak konwersacji (nowy system)</div>`;
+            // FILTRUJ: Usuń ulubione konwersacje z sekcji "Recent Conversations" 
+            // aby uniknąć dublowania z sekcją "Favorites"
+            const nonFavoriteConversations = conversations.filter(conv => !conv.is_favorite);
+            console.log('🔄 Filtrowanie: z', conversations.length, 'konwersacji, po usunięciu ulubionych zostało', nonFavoriteConversations.length);
+            
+            if (nonFavoriteConversations.length === 0) {
+                console.log('📭 Brak konwersacji do wyświetlenia (wszystkie są ulubione lub brak konwersacji)');
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #999;">Brak ostatnich rozmów<br><small>Wszystkie rozmowy są w ulubionych</small></div>`;
                 return;
             }
             
-            const html = conversations.map(conversation => {
+            const html = nonFavoriteConversations.map(conversation => {
                 const date = new Date(conversation.last_message_at);
                 const title = conversation.title || 'Bez tytułu';
                 const preview = title.length > 50 ? title.substring(0, 50) + '...' : title;
