@@ -467,6 +467,59 @@
                 </div>
             </div>
             
+            <!-- Memory Providers Section -->
+            <div class="config-section">
+                <div class="config-header">🧠 Memory Providers Configuration</div>
+                <div style="padding: 20px;">
+                    <div style="margin-bottom: 20px;">
+                        <label for="memory_provider_selector" style="font-weight: 600; margin-bottom: 10px; display: block;">Active Memory Provider:</label>
+                        <select id="memory_provider_selector" style="width: 100%; margin-bottom: 15px;" onchange="switchMemoryProvider()">
+                            <option value="local">🏠 LocalProvider (Supabase + pgvector)</option>
+                            <option value="mem0">🌐 Mem0Provider (Mem0 API)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="model-selector">
+                        <!-- Local Provider Card -->
+                        <div class="model-card" id="provider-local">
+                            <div class="model-status" id="local-status">🔍 CHECKING...</div>
+                            <h3>🏠 Local Provider</h3>
+                            <p>Supabase + pgvector</p>
+                            <p style="font-size: 12px; color: #666;">Uses existing database and OpenAI embeddings</p>
+                            <div style="margin-top: 15px;">
+                                <button onclick="testProvider('local')" style="background: #007bff; color: white; border: none; border-radius: 4px; padding: 8px 15px; cursor: pointer; font-size: 12px;">
+                                    🧪 Test Connection
+                                </button>
+                            </div>
+                            <div id="local-test-result" style="margin-top: 10px; font-size: 11px;"></div>
+                        </div>
+                        
+                        <!-- Mem0 Provider Card -->
+                        <div class="model-card" id="provider-mem0">
+                            <div class="model-status" id="mem0-status">🔍 CHECKING...</div>
+                            <h3>🌐 Mem0 Provider</h3>
+                            <p>Mem0 API Service</p>
+                            <p style="font-size: 12px; color: #666;">External memory service with AI features</p>
+                            <div style="margin-top: 15px;">
+                                <button onclick="testProvider('mem0')" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 15px; cursor: pointer; font-size: 12px;">
+                                    🧪 Test Connection
+                                </button>
+                            </div>
+                            <div id="mem0-test-result" style="margin-top: 10px; font-size: 11px;"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #FF69B4;">
+                        <div style="font-weight: 600; margin-bottom: 10px;">🔄 Hot Reload</div>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Switch providers without restarting the application</p>
+                        <button onclick="reloadMemorySystem()" style="background: #FF69B4; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 13px;">
+                            🔄 Reload Memory System
+                        </button>
+                        <div id="reload-result" style="margin-top: 10px; font-size: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- API Keys Section -->
             <div class="config-section">
                 <div class="config-header">🔑 API Keys</div>
@@ -491,6 +544,20 @@
                         </select>
                         <input type="text" id="assistant_id" placeholder="asst_..." style="font-family: monospace; font-size: 12px;" readonly>
                         <button class="btn-save" onclick="saveConfig('assistant_id')" id="save_assistant_btn" disabled>Save</button>
+                    </div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Mem0 API Key:</div>
+                    <div class="config-value">
+                        <input type="text" id="mem0_api_key" placeholder="mem0-key-..." style="font-family: monospace; font-size: 12px;">
+                        <button class="btn-save" onclick="saveConfig('mem0_api_key')">Save</button>
+                    </div>
+                </div>
+                <div class="config-item">
+                    <div class="config-label">Mem0 User ID:</div>
+                    <div class="config-value">
+                        <input type="text" id="mem0_user_id" placeholder="default-user" style="font-family: monospace; font-size: 12px;">
+                        <button class="btn-save" onclick="saveConfig('mem0_user_id')">Save</button>
                     </div>
                 </div>
             </div>
@@ -1497,10 +1564,161 @@ Loading prompt...
             }
         }
         
+        // Memory Provider Functions
+        async function loadMemoryProviderStatus() {
+            try {
+                const response = await fetch('/api/memory/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update dropdown selection
+                    const selector = document.getElementById('memory_provider_selector');
+                    if (data.activeProvider) {
+                        selector.value = data.activeProvider.name === 'LocalProvider' ? 'local' : 'mem0';
+                    }
+                    
+                    // Update provider cards
+                    updateProviderCard('local', data.activeProvider?.name === 'LocalProvider', data.activeProvider?.enabled);
+                    updateProviderCard('mem0', data.activeProvider?.name === 'Mem0Provider', data.activeProvider?.enabled);
+                    
+                    console.log('Memory system status:', data);
+                } else {
+                    console.error('Failed to load memory provider status:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading memory provider status:', error);
+                updateProviderCard('local', false, false, 'ERROR');
+                updateProviderCard('mem0', false, false, 'ERROR');
+            }
+        }
+        
+        function updateProviderCard(providerId, isActive, isEnabled, errorStatus = null) {
+            const card = document.getElementById(`provider-${providerId}`);
+            const status = document.getElementById(`${providerId}-status`);
+            
+            if (errorStatus) {
+                status.textContent = `❌ ${errorStatus}`;
+                status.className = 'model-status disabled';
+                card.className = 'model-card disabled';
+                return;
+            }
+            
+            if (isActive && isEnabled) {
+                status.textContent = '✅ ACTIVE';
+                status.className = 'model-status active';
+                card.className = 'model-card primary active';
+            } else if (isEnabled) {
+                status.textContent = '🟡 ENABLED';
+                status.className = 'model-status';
+                card.className = 'model-card';
+            } else {
+                status.textContent = '❌ DISABLED';
+                status.className = 'model-status disabled';
+                card.className = 'model-card disabled';
+            }
+        }
+        
+        async function switchMemoryProvider() {
+            const selector = document.getElementById('memory_provider_selector');
+            const selectedProvider = selector.value;
+            
+            try {
+                showStatus('adminStatus', `Switching to ${selectedProvider} provider...`, 'success');
+                
+                // Update config in database
+                await saveConfigValue('default_memory_provider', selectedProvider);
+                
+                // Reload memory system
+                await reloadMemorySystem();
+                
+            } catch (error) {
+                console.error('Failed to switch memory provider:', error);
+                showStatus('adminStatus', `Failed to switch provider: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testProvider(providerId) {
+            const resultDiv = document.getElementById(`${providerId}-test-result`);
+            const button = event.target;
+            
+            button.disabled = true;
+            button.textContent = '🔄 Testing...';
+            resultDiv.innerHTML = '<span style="color: #666;">Testing connection...</span>';
+            
+            try {
+                const response = await fetch(`/api/memory/test?provider=${providerId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<span style="color: #28a745;">✅ ${data.message}</span>`;
+                    if (data.details) {
+                        resultDiv.innerHTML += `<br><small style="color: #666;">${JSON.stringify(data.details)}</small>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<span style="color: #dc3545;">❌ ${data.message || 'Test failed'}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Error: ${error.message}</span>`;
+            } finally {
+                button.disabled = false;
+                button.textContent = '🧪 Test Connection';
+            }
+        }
+        
+        async function reloadMemorySystem() {
+            const resultDiv = document.getElementById('reload-result');
+            const button = event.target;
+            
+            if (button) {
+                button.disabled = true;
+                button.textContent = '🔄 Reloading...';
+            }
+            
+            resultDiv.innerHTML = '<span style="color: #666;">Reloading memory system...</span>';
+            
+            try {
+                const response = await fetch('/api/memory/reload', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<span style="color: #28a745;">✅ Memory system reloaded successfully!</span>`;
+                    
+                    // Reload status
+                    setTimeout(loadMemoryProviderStatus, 1000);
+                } else {
+                    resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Reload failed: ${data.error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span style="color: #dc3545;">❌ Error: ${error.message}</span>`;
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = '🔄 Reload Memory System';
+                }
+            }
+        }
+        
+        async function saveConfigValue(key, value) {
+            const response = await fetch('/api/admin/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [key]: value })
+            });
+            
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to save config');
+            }
+            return data;
+        }
+        
         // Load config on page load
         console.log('⚠️ Panel admina bez hasła - tylko do testów!');
         loadConfig();
         loadPrompt();
+        
+        // Load memory provider status
+        loadMemoryProviderStatus();
         
         // Load users for memory management
         loadUsers();

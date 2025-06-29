@@ -52,6 +52,7 @@ let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
 let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
+let memoryStatusHandler, memoryTestHandler, memoryReloadHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -131,6 +132,28 @@ try {
     console.log('✅ Loaded: summarize-memories handler');
   } catch (e) {
     console.log('⚠️ Could not load summarize-memories handler:', e.message);
+  }
+  
+  // Memory Provider System handlers
+  try {
+    memoryStatusHandler = (await import('./api/memory/status.js')).default;
+    console.log('✅ Loaded: memory-status handler');
+  } catch (e) {
+    console.log('⚠️ Could not load memory-status handler:', e.message);
+  }
+  
+  try {
+    memoryTestHandler = (await import('./api/memory/test.js')).default;
+    console.log('✅ Loaded: memory-test handler');
+  } catch (e) {
+    console.log('⚠️ Could not load memory-test handler:', e.message);
+  }
+  
+  try {
+    memoryReloadHandler = (await import('./api/memory/reload.js')).default;
+    console.log('✅ Loaded: memory-reload handler');
+  } catch (e) {
+    console.log('⚠️ Could not load memory-reload handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -316,6 +339,22 @@ if (updateProfileHandler) {
 if (summarizeMemoriesHandler) {
   app.post('/api/summarize-memories', summarizeMemoriesHandler);
   console.log('✅ Registered route: POST /api/summarize-memories');
+}
+
+// Memory Provider System endpoints
+if (memoryStatusHandler) {
+  app.get('/api/memory/status', memoryStatusHandler);
+  console.log('✅ Registered route: GET /api/memory/status');
+}
+
+if (memoryTestHandler) {
+  app.get('/api/memory/test', memoryTestHandler);
+  console.log('✅ Registered route: GET /api/memory/test');
+}
+
+if (memoryReloadHandler) {
+  app.post('/api/memory/reload', memoryReloadHandler);
+  console.log('✅ Registered route: POST /api/memory/reload');
 }
 
 // Root endpoint - handle both health checks and static files
