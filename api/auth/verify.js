@@ -36,6 +36,8 @@ export default async function handler(req, res) {
       .eq('config_key', 'jwt_secret')
       .single()
     
+    // SECURITY FIX (Sesja 21): Usunięto hardcoded fallback 'talk2me-secret-key-2024'
+    // Teraz system fail-secure zamiast używać znanego hasła
     const jwtSecret = config?.config_value
     if (!jwtSecret) {
       console.error('❌ JWT secret not configured in database')

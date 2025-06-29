@@ -313,6 +313,7 @@ export default async function handler(req, res) {
     let memoryContext = ''
     if (memoryManager && userId) {
       try {
+        // MEMORY FIX (Sesja 21): Threshold zmieniony z 0.7 → 0.4 dla lepszego matchowania
         const relevantMemories = await memoryManager.getRelevantMemories(userId, message, 5, 0.4)
         if (relevantMemories.length > 0) {
           memoryContext = memoryManager.formatMemoriesForContext(relevantMemories)

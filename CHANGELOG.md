@@ -7,6 +7,123 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.10.0] - 2025-06-29
+
+### Sesja 21 - System Memory Fix & Critical Security Patch (29.06.2025, 01:00-03:00)
+**Developer**: Claude (AI Assistant)
+
+### 🔐 KRYTYCZNA NAPRAWA BEZPIECZEŃSTWA + SYSTEM PAMIĘCI! ✅
+
+#### 🚨 **GŁÓWNE PROBLEMY ROZWIĄZANE:**
+
+##### **1. 🧠 System Pamięci - Kompletna Naprawa**
+- **Problem**: AI nie pamiętał użytkowników mimo że backend był gotowy
+- **Przyczyna**: Nieważny/wygasły token JWT w localStorage użytkownika
+- **Rozwiązanie**: Przelogowanie użytkownika + optymalizacja similarity threshold
+- **Szczegóły techniczne**:
+  - Similarity threshold zmieniony z 0.7 → 0.4 (lepsze matchowanie wspomnień)
+  - Dodano szczegółowe debugowanie memory search process
+  - Verified: 25 wspomnień w bazie dla głównego konta użytkownika
+  - Test: AI teraz pamięta imię, partnera, dzieci, preferencje
+
+##### **2. 🔐 KRYTYCZNA NAPRAWA BEZPIECZEŃSTWA - Hardcoded JWT Secret**
+- **Problem**: Hardcoded fallback `'talk2me-secret-key-2024'` w 8 plikach
+- **Ryzyko**: Wysoki - kompromitacja bezpieczeństwa jeśli baza danych nie działa
+- **Rozwiązanie**: Usunięto wszystkie hardcoded fallbacks, dodano proper error handling
+- **Pliki naprawione**:
+  - `/api/auth/verify.js` - weryfikacja JWT
+  - `/api/auth/login.js` - logowanie użytkowników
+  - `/api/auth/register.js` - rejestracja nowych użytkowników
+  - `/api/auth/me.js` - informacje o zalogowanym użytkowniku
+  - `/api/user/chat-with-memory.js` - chat z systemem pamięci (graceful degradation)
+  - `/api/user/history.js` - historia rozmów
+  - `/api/user/conversations.js` - zarządzanie konwersacjami
+  - `/api/user/favorites.js` - ulubione wiadomości
+
+##### **3. 🔧 Naprawa Fallback Handler**
+- **Problem**: Błędny fallback w server.js (duplikowany import tego samego pliku)
+- **Rozwiązanie**: Usunięto redundantny try/catch, pozostawiono tylko memory handler
+- **Wpływ**: Cleaner kod, lepszy error handling
+
+##### **4. 🧹 Code Cleanup**
+- **Usunięto**: Verbose debugging logs po naprawie systemu pamięci
+- **Zachowano**: Kluczowe logi typu "Found X relevant memories"
+- **Cel**: Nie zaśmiecać logów Railway niepotrzebnymi informacjami
+
+#### 🛠️ **Technologie i narzędzia użyte:**
+
+##### **Backend/API:**
+- **Node.js + Express.js** - server aplikacji
+- **Supabase + pgvector** - baza danych z wektorowym wyszukiwaniem
+- **OpenAI API** - chat completion + embeddings (text-embedding-ada-002)
+- **LangChain** - orchestracja AI workflows i memory management
+- **JWT (jsonwebtoken)** - autoryzacja użytkowników
+
+##### **Bezpieczeństwo:**
+- **Supabase Service Role Key** - backend database operations
+- **JWT Secret** - stored securely in database (app_config table)
+- **Error Handling** - fail-secure approach zamiast hardcoded fallbacks
+
+##### **Deployment & Monitoring:**
+- **Railway** - główne środowisko produkcyjne (auto-deploy z main branch)
+- **Git** - version control z systematycznymi commitami
+- **curl** - testowanie API endpoints w produkcji
+
+##### **Debugging Tools:**
+- **Developer Tools Console** - analiza błędów autoryzacji w przeglądarce
+- **Railway Logs** - monitoring działania aplikacji
+- **grep/rg** - wyszukiwanie hardcoded secrets w codebase
+
+#### 📊 **Stan końcowy systemu:**
+
+##### **✅ Co działa:**
+- **System pamięci**: W pełni funkcjonalny z automatic function calling
+- **Autoryzacja**: Bezpieczna bez hardcoded fallbacks
+- **Chat streaming**: Real-time odpowiedzi AI z Server-Sent Events
+- **Memory context**: AI otrzymuje relevantne wspomnienia w każdej rozmowie
+- **Database**: 25+ wspomnień użytkownika properly indexed z embeddings
+
+##### **🔒 Bezpieczeństwo:**
+- **JWT Secrets**: Tylko z bazy danych, brak hardcoded fallbacks
+- **Error Handling**: Fail-secure approach w wszystkich auth endpoints
+- **Database**: Proper isolation z Supabase Service Role Key
+
+##### **🧠 Memory System Architecture:**
+- **Embeddings**: OpenAI text-embedding-ada-002 (1536D vectors)
+- **Storage**: Supabase memories_v2 table z pgvector extension
+- **Search**: Similarity search z threshold 0.4 (optimized)
+- **Function Calling**: Automatic `remember_this()` gdy AI wykrywa ważne info
+- **Context**: Formatted memories dodawane do system prompt
+
+#### 🐛 **Bugs odkryte (do naprawy w przyszłości):**
+
+##### **🚨 Wysokai priorytet:**
+1. **Funkcja "Dodaj do ulubionych"** - context menu działa ale konwersacje nie przenoszą się wizualnie
+2. **Branch deployment confusion** - dokumentacja mówi o railway-migration ale pracujemy na main
+
+##### **🔧 Średni priorytet:**
+3. **Vercel backup deployment** - może powodować konflikty (do wyłączenia)
+4. **Error handling** - niektóre async operations bez comprehensive error handling
+
+##### **📝 Niski priorytet:**
+5. **Documentation consistency** - niektóre ścieżki plików nieaktualne
+6. **PWA icons** - placeholder design zamiast professional branding
+
+#### 📋 **Commity tej sesji:**
+1. `🔧 Fix: Usunięcie błędnego fallback handlera w server.js`
+2. `🔧 Fix: Obniżenie similarity threshold z 0.7 na 0.4`
+3. `🔧 Debug: Dodanie szczegółowego logowania systemu pamięci`
+4. `🧹 Cleanup: Usunięcie verbose debugging po naprawie`
+5. `🔐 SECURITY FIX: Usunięcie hardcoded JWT secret fallback ze wszystkich endpointów`
+
+#### ⚡ **Performance & Reliability:**
+- **Memory Manager**: Per-user caching, graceful initialization
+- **Error Recovery**: Chat continuation jako guest jeśli auth failuje
+- **Database Queries**: Optimized similarity search z pgvector
+- **Streaming**: Stable SSE implementation z proper error handling
+
+---
+
 ## [1.9.1] - 2025-06-19
 
 ### Sesja 16 - Testing API & Database Constraints Update (19.06.2025, 20:00-00:00)
