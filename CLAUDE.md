@@ -8,19 +8,32 @@
 
 ## 🚀 AKTUALNE ŚRODOWISKA (Czerwiec 2025)
 
-### 🟢 PRODUKCJA (Railway) - GŁÓWNE
+### 🟢 PRODUKCJA (Railway) - JEDYNE ŚRODOWISKO
 - **URL**: https://talk2me.up.railway.app
-- **Branch**: `railway-migration` ⚠️ (NIE main!)
-- **Platforma**: Railway.app (Express.js server)
-- **Deploy**: Auto-deploy przy każdym push na `railway-migration`
-- **Status**: ✅ DZIAŁA POPRAWNIE - system pamięci w pełni funkcjonalny
-
-### 🟢 PRODUKCJA (Railway) - AKTYWNE
-- **URL**: https://talk2me.up.railway.app
-- **Branch**: `main` ✅ (AKTYWNE!)
+- **Branch**: `main` ✅ **TYLKO MAIN!**
 - **Platforma**: Railway.app (Express.js server)
 - **Deploy**: Auto-deploy przy każdym push na `main`
-- **Status**: ✅ AKTYWNE - branch main skonfigurowany w Railway Dashboard
+- **Status**: ✅ AKTYWNE I STABILNE
+
+## 🌿 **BRANCH STRATEGY** (Zatwierdzona 29.06.2025)
+
+### **📋 OFICJALNA STRATEGIA BRANCHOWANIA**
+**Zatwierdzone przez**: Natalia Rybarczyk (Owner) + Maciej (Developer)  
+**Data zatwierdzenia**: 29 czerwca 2025  
+**Status**: AKTYWNA
+
+### **🎯 ZASADY:**
+- **PRODUCTION = `main` branch ONLY** 
+- **Zero confusion** - jedna gałąź produkcyjna
+- **Auto-deploy** z `main` na Railway
+- **Wszystkie feature work** → direct to `main` (small team)
+
+### **🗑️ USUNIĘTE BRANCHE:**
+- `railway-migration` ❌ (merged to main, deleted 29.06.2025)
+- `backup-branch` ❌ (deleted 29.06.2025)
+- `fix-chat-handler-nostream` ❌ (deleted 29.06.2025)
+- `origin/Mac` ❌ (deleted 29.06.2025)
+- `origin/feature/base-memory` ❌ (deleted 29.06.2025)
 
 ### ❌ USUNIĘTE DEPLOYMENTS
 - **Vercel backup**: tk2me.vercel.app (USUNIĘTY - 29.06.2025)
@@ -301,7 +314,7 @@ Projekt jest **~97% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI NAPRAWION
    - Brak wsparcia dla function calling
 
 4. **Railway** (https://railway.app) - GŁÓWNY HOSTING
-   - Auto-deploy z branch `railway-migration`
+   - Auto-deploy z branch `main`
    - Health checks co 10s
    - Region: europe-west4
    - URL: https://talk2me.up.railway.app
@@ -423,7 +436,7 @@ NODE_ENV=production
 - **pgvector** - PostgreSQL extension dla wektorów
 - **OpenAI Embeddings** - tworzenie embeddings
 - **Railway logs** - debugging deployment
-- **Git** - version control z branch `railway-migration`
+- **Git** - version control z branch `main`
 
 #### 📊 Stan końcowy:
 - System pamięci zaimplementowany ale nie działa w produkcji
@@ -484,7 +497,7 @@ NODE_ENV=production
 ## 🚨 WAŻNE DLA KOLEJNYCH DEVELOPERÓW
 
 ### Zasady pracy:
-1. **ZAWSZE pracuj na branchu `railway-migration`** (nie main!)
+1. **ZAWSZE pracuj na branchu `main`** (jedyny branch!)
 2. **ZAWSZE aktualizuj CHANGELOG.md** po każdej sesji
 3. **ZAWSZE testuj lokalnie** przed deployem
 4. **ZAWSZE sprawdzaj logi Railway** po deploy
@@ -546,7 +559,7 @@ NODE_ENV=production
 - **pgvector** - PostgreSQL extension dla wektorów
 - **OpenAI Embeddings** - model text-embedding-ada-002
 - **Railway** - hosting z auto-deploy
-- **Git** - version control na branch `railway-migration`
+- **Git** - version control na branch `main`
 
 #### 📦 Stan końcowy:
 - System pamięci DZIAŁA w produkcji
@@ -666,7 +679,7 @@ NODE_ENV=production
 ## 📋 INSTRUKCJE DLA PRZYSZŁYCH DEVELOPERÓW
 
 ### 🚨 KRYTYCZNE ZASADY (AKTUALIZACJA SESJA 21)
-1. **ZAWSZE pracuj na branchu `main`** - railway-migration jest już nieaktywny
+1. **ZAWSZE pracuj na branchu `main`** - jedyny aktywny branch
 2. **ZAWSZE aktualizuj CHANGELOG.md** po każdej sesji roboczej z pełnym opisem
 3. **ZAWSZE dodawaj komentarze w kodzie** opisujące nowe funkcje i ważne zmiany
 4. **ZAWSZE testuj w Railway** po każdym deploy - auto-deploy z main branch
@@ -693,8 +706,8 @@ NODE_ENV=production
 
 1. **Przed rozpoczęciem pracy:**
    ```bash
-   git checkout railway-migration
-   git pull origin railway-migration
+   git checkout main
+   git pull origin main
    ```
 
 2. **Podczas pracy:**
@@ -707,7 +720,7 @@ NODE_ENV=production
    - Aktualizuj CLAUDE.md z nowym stanem projektu
    - Dodaj komentarze w kodzie tam gdzie ich brakowało
    - Scommituj dokumentację
-   - Push na `railway-migration`
+   - Push na `main`
 
 ### 🔍 Testowanie systemu pamięci:
 1. **Test podstawowy**: `/api/test-memory` → status: "ok"
