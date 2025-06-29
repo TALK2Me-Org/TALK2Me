@@ -98,7 +98,7 @@ export default async function handler(req, res) {
           content: msg.content,
           created_at: msg.created_at
         })),
-        is_favorite: false // TODO: implement favorites in new system
+        is_favorite: false
       }
     }) || []
 

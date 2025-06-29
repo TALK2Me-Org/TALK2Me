@@ -5,7 +5,6 @@ import OpenAI from 'openai'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-// const adminPassword = process.env.ADMIN_PASSWORD || 'qwe123' // TODO: pobrać z bazy po włączeniu autoryzacji
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')

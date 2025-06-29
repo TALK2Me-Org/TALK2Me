@@ -17,7 +17,6 @@
     "@langchain/core": "^0.3.58",
     "@langchain/openai": "^0.3.14",
     "@supabase/supabase-js": "^2.39.0",
-    "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -25,7 +24,6 @@
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.3.6",
     "openai": "^4.0.0",
-    "ws": "^8.18.0"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8",
