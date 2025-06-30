@@ -39,6 +39,12 @@ export default class LocalProvider extends MemoryProvider {
     if (this.initialized) return true;
 
     console.log('🚀 LocalProvider: Starting initialization...');
+    console.log('🔧 LocalProvider: Config check:', {
+      hasSupabaseUrl: !!this.supabase,
+      hasOpenaiApiKey: !!this.openaiApiKey,
+      openaiKeyLength: this.openaiApiKey?.length || 0,
+      enabled: this.enabled
+    });
 
     if (!this.enabled) {
       console.warn('⚠️ LocalProvider: Missing required config - disabled');
@@ -48,12 +54,15 @@ export default class LocalProvider extends MemoryProvider {
 
     try {
       // Initialize OpenAI embeddings
+      console.log('🔧 LocalProvider: Initializing OpenAI embeddings...');
       this.embeddings = new OpenAIEmbeddings({
         openAIApiKey: this.openaiApiKey,
         modelName: 'text-embedding-ada-002'
       });
+      console.log('✅ LocalProvider: OpenAI embeddings initialized');
 
       // Test database connection and table access
+      console.log('🔧 LocalProvider: Testing database access...');
       const { data, error } = await this.supabase
         .from('memories_v2')
         .select('count')
@@ -68,11 +77,14 @@ export default class LocalProvider extends MemoryProvider {
         return false;
       }
 
+      console.log('✅ LocalProvider: Database access confirmed');
       this.initialized = true;
       console.log('✅ LocalProvider: Initialized successfully');
       return true;
     } catch (error) {
       console.error('❌ LocalProvider: Initialization failed:', error);
+      console.error('❌ LocalProvider: Error details:', error.message);
+      console.error('❌ LocalProvider: Error stack:', error.stack);
       this.enabled = false;
       this.initialized = true;
       return false;

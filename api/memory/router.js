@@ -202,8 +202,15 @@ class MemoryRouter {
         providerConfig = {
           supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
           supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-          openaiApiKey: this.config.openai_api_key
+          openaiApiKey: this.config.openai_api_key || process.env.OPENAI_API_KEY // Fallback do env
         };
+        
+        console.log('🔧 MemoryRouter: LocalProvider config prepared:', {
+          supabaseUrl: !!providerConfig.supabaseUrl,
+          supabaseKey: !!providerConfig.supabaseKey,
+          openaiApiKey: !!providerConfig.openaiApiKey,
+          openaiApiKeySource: this.config.openai_api_key ? 'database' : 'environment'
+        });
         break;
       case 'mem0':
         providerConfig = {
@@ -264,7 +271,24 @@ class MemoryRouter {
   }
 
   async getRelevantMemories(userId, query, limit = 10) {
-    return await this.executeWithFallback('getRelevantMemories', userId, query, limit);
+    console.log('🔍 ROUTER DEBUG: getRelevantMemories called:', {
+      userId: userId,
+      queryLength: query?.length || 0,
+      limit: limit,
+      activeProvider: this.activeProvider?.providerName || 'none',
+      initialized: this.initialized
+    });
+    
+    const result = await this.executeWithFallback('getRelevantMemories', userId, query, limit);
+    
+    console.log('🔍 ROUTER DEBUG: getRelevantMemories result:', {
+      success: result.success,
+      memoriesCount: result.memories?.length || 0,
+      error: result.error,
+      provider: this.activeProvider?.providerName
+    });
+    
+    return result;
   }
 
   async getAllMemories(userId, filters = {}) {
