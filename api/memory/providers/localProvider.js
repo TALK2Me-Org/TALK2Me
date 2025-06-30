@@ -210,12 +210,19 @@ export default class LocalProvider extends MemoryProvider {
       console.log('🔍 LOCAL DEBUG: Query embedding created, dimension:', queryEmbedding.length);
       
       // Search with similarity
-      console.log('🔍 LOCAL DEBUG: Calling match_memories RPC...');
-      const { data, error } = await this.supabase.rpc('match_memories', {
-        user_id_param: userId,
+      console.log('🔍 LOCAL DEBUG: Calling match_memories_v2 RPC...');
+      console.log('🔍 LOCAL DEBUG: RPC parameters:', {
+        query_embedding: 'VECTOR(' + queryEmbedding.length + 'D)',
+        match_user_id: userId,
+        match_count: limit,
+        match_threshold: 0.4
+      });
+      
+      const { data, error } = await this.supabase.rpc('match_memories_v2', {
         query_embedding: JSON.stringify(queryEmbedding),
-        match_threshold: 0.4,
-        match_count: limit
+        match_user_id: userId,
+        match_count: limit,
+        match_threshold: 0.4
       });
 
       if (error) {
