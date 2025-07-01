@@ -85,10 +85,13 @@ export default async function handler(req, res) {
 
     // Step 3: Test simple API call
     console.log('🔍 MEM0 DEBUG: Testing getAll API call...');
-    console.log('🔍 MEM0 DEBUG: Call parameters:', { userId: trimmedUserId });
+    console.log('🔍 MEM0 DEBUG: Call parameters:', { userId: trimmedUserId, app_id: 'talk2me' });
 
     const startTime = Date.now();
-    const memories = await client.getAll({ userId: trimmedUserId });
+    const memories = await client.getAll({ 
+      userId: trimmedUserId,
+      app_id: 'talk2me'
+    });
     const latency = Date.now() - startTime;
 
     console.log('✅ MEM0 DEBUG: API call successful!', {

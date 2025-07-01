@@ -52,7 +52,10 @@ export default class Mem0Provider extends MemoryProvider {
       
       // Test connection by attempting to get memories (should work even if empty)
       console.log(`🔧 Mem0Provider: Testing API connection with userId: ${this.userId}`);
-      const testResult = await this.client.getAll({ userId: this.userId });
+      const testResult = await this.client.getAll({ 
+        userId: this.userId,
+        app_id: 'talk2me'
+      });
       console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
       this.initialized = true;
@@ -86,7 +89,10 @@ export default class Mem0Provider extends MemoryProvider {
       console.log('🧪 Mem0Provider: Testing real API connection...');
       
       // Test real API call - get memories count
-      const memories = await this.client.getAll({ userId: this.userId });
+      const memories = await this.client.getAll({ 
+        userId: this.userId,
+        app_id: 'talk2me'
+      });
       
       const latency = Date.now() - startTime;
       
@@ -224,7 +230,10 @@ export default class Mem0Provider extends MemoryProvider {
       console.log('📋 Mem0Provider: Getting all memories from real API:', { userId, filters });
 
       // Call real Mem0 getAll API
-      const allMemories = await this.client.getAll({ userId: userId });
+      const allMemories = await this.client.getAll({ 
+        userId: userId,
+        app_id: 'talk2me'
+      });
 
       console.log(`📋 Mem0Provider: API returned ${allMemories.length} total memories`);
 
