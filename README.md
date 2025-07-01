@@ -26,4 +26,4 @@
 
 **📅 Ostatnia aktualizacja**: 29.06.2025  
 **🏷️ Wersja**: 1.0.0  
-**🌟 Repository**: [TALK2Me-Org/TALK2Me](https://github.com/TALK2Me-Org/TALK2Me)
+**🌟 Repository**: [TALK2Me-Org/TALK2Me](https://github.com/TALK2Me-Org/TALK2Me)# Force rebuild for mem0ai dependency
