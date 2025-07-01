@@ -51,10 +51,9 @@ export default class Mem0Provider extends MemoryProvider {
       this.client = new MemoryClient({ apiKey: this.apiKey });
       
       // Test connection by attempting to get memories (should work even if empty)
-      console.log(`🔧 Mem0Provider: Testing API connection with userId: ${this.userId}`);
+      console.log(`🔧 Mem0Provider: Testing API connection with agent_id: talk2me-agent`);
       const testResult = await this.client.getAll({ 
-        userId: this.userId,
-        app_id: 'talk2me'
+        agent_id: 'talk2me-agent'
       });
       console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
@@ -90,8 +89,7 @@ export default class Mem0Provider extends MemoryProvider {
       
       // Test real API call - get memories count
       const memories = await this.client.getAll({ 
-        userId: this.userId,
-        app_id: 'talk2me'
+        agent_id: 'talk2me-agent'
       });
       
       const latency = Date.now() - startTime;
@@ -138,13 +136,14 @@ export default class Mem0Provider extends MemoryProvider {
           summary: metadata.summary || content.substring(0, 100),
           importance: metadata.importance || 5,
           memory_type: metadata.memory_type || 'personal',
-          conversation_id: metadata.conversation_id
+          conversation_id: metadata.conversation_id,
+          user_id: userId  // Store actual user_id in metadata
         }
       };
 
-      // Call real Mem0 API
+      // Call real Mem0 API with agent_id approach
       const result = await this.client.add(memoryData.messages, {
-        userId: memoryData.userId,
+        agent_id: 'talk2me-agent',
         metadata: memoryData.metadata
       });
 
@@ -187,7 +186,7 @@ export default class Mem0Provider extends MemoryProvider {
       
       // Call real Mem0 search API
       const searchResults = await this.client.search(query, { 
-        userId: userId,
+        agent_id: 'talk2me-agent',
         limit: limit 
       });
 
@@ -231,8 +230,7 @@ export default class Mem0Provider extends MemoryProvider {
 
       // Call real Mem0 getAll API
       const allMemories = await this.client.getAll({ 
-        userId: userId,
-        app_id: 'talk2me'
+        agent_id: 'talk2me-agent'
       });
 
       console.log(`📋 Mem0Provider: API returned ${allMemories.length} total memories`);
