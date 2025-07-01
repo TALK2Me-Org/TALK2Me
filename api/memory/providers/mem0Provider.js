@@ -18,12 +18,16 @@ export default class Mem0Provider extends MemoryProvider {
     
     this.providerName = 'Mem0Provider';
     this.apiKey = config.apiKey;
-    this.userId = config.userId || 'default-user';
+    
+    // Use UUID format for Mem0 API compatibility
+    // Mem0 requires proper user_id format, not just "default-user"
+    this.userId = config.userId || '550e8400-e29b-41d4-a716-446655440000';
     this.client = null;
     
     console.log('🏗️ Mem0Provider constructor:', {
       apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'missing',
-      userId: this.userId
+      userId: this.userId,
+      userIdSource: config.userId ? 'config' : 'fallback-uuid'
     });
 
     this.enabled = !!this.apiKey;
@@ -46,8 +50,9 @@ export default class Mem0Provider extends MemoryProvider {
       this.client = new MemoryClient({ apiKey: this.apiKey });
       
       // Test connection by attempting to get memories (should work even if empty)
-      console.log('🔧 Mem0Provider: Testing API connection...');
-      await this.client.getAll({ userId: this.userId });
+      console.log(`🔧 Mem0Provider: Testing API connection with userId: ${this.userId}`);
+      const testResult = await this.client.getAll({ userId: this.userId });
+      console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
       this.initialized = true;
       console.log('✅ Mem0Provider: Initialized successfully with real API');
@@ -55,6 +60,14 @@ export default class Mem0Provider extends MemoryProvider {
     } catch (error) {
       console.error('❌ Mem0Provider: Initialization failed:', error);
       console.error('❌ Mem0Provider: Error details:', error.message);
+      
+      // Check for specific user_id related errors
+      if (error.message && error.message.includes('user_id')) {
+        console.error('💡 Mem0Provider: This appears to be a user_id format issue');
+        console.error(`💡 Mem0Provider: Current userId: "${this.userId}"`);
+        console.error('💡 Mem0Provider: Mem0 API requires valid UUID format for user_id');
+      }
+      
       this.enabled = false;
       this.initialized = true;
       return false;
