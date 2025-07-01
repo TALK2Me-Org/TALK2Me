@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     }
 
     const trimmedApiKey = config.mem0_api_key.trim();
-    const trimmedUserId = (config.mem0_user_id || '550e8400-e29b-41d4-a716-446655440000').trim();
+    const trimmedUserId = (config.mem0_user_id || 'test-user').trim();
 
     console.log('🔍 MEM0 DEBUG: Using trimmed values:', {
       apiKeyLength: trimmedApiKey.length,

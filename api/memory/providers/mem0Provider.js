@@ -19,10 +19,10 @@ export default class Mem0Provider extends MemoryProvider {
     this.providerName = 'Mem0Provider';
     this.apiKey = config.apiKey ? config.apiKey.trim() : null;
     
-    // Use UUID format for Mem0 API compatibility
-    // Mem0 requires proper user_id format, not just "default-user"
+    // Use simple string format for Mem0 API compatibility
+    // Mem0 expects simple string user IDs like "alex", "john", "test-user"
     // IMPORTANT: Trim any spaces from config values
-    this.userId = (config.userId || '550e8400-e29b-41d4-a716-446655440000').trim();
+    this.userId = (config.userId || 'default-user').trim();
     this.client = null;
     
     console.log('🏗️ Mem0Provider constructor:', {
