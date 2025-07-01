@@ -52,7 +52,7 @@ let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
 let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
-let memoryStatusHandler, memoryTestHandler, memoryReloadHandler;
+let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -154,6 +154,13 @@ try {
     console.log('✅ Loaded: memory-reload handler');
   } catch (e) {
     console.log('⚠️ Could not load memory-reload handler:', e.message);
+  }
+  
+  try {
+    debugMem0Handler = (await import('./api/memory/debug-mem0.js')).default;
+    console.log('✅ Loaded: debug-mem0 handler');
+  } catch (e) {
+    console.log('⚠️ Could not load debug-mem0 handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -355,6 +362,11 @@ if (memoryTestHandler) {
 if (memoryReloadHandler) {
   app.post('/api/memory/reload', memoryReloadHandler);
   console.log('✅ Registered route: POST /api/memory/reload');
+}
+
+if (debugMem0Handler) {
+  app.get('/api/memory/debug-mem0', debugMem0Handler);
+  console.log('✅ Registered route: GET /api/memory/debug-mem0');
 }
 
 // Root endpoint - handle both health checks and static files
