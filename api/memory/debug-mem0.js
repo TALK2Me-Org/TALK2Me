@@ -94,19 +94,18 @@ export default async function handler(req, res) {
     const startTime = Date.now();
     
     // Try a simple add operation first (this might work better)
+    // According to error, we need one of: app_id, user_id, agent_id, run_id
     const testMemory = await client.add([
       { role: 'user', content: 'Test memory from TALK2Me debug endpoint' }
     ], {
-      user_id: trimmedUserId,
-      app_id: 'talk2me'
+      agent_id: 'talk2me-agent'
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
     
     // Now try to get all memories
     const memories = await client.getAll({ 
-      user_id: trimmedUserId,
-      app_id: 'talk2me'
+      agent_id: 'talk2me-agent'
     });
     
     const latency = Date.now() - startTime;
