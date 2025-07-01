@@ -1,14 +1,15 @@
 /**
- * Mem0Provider - Skeleton implementation for Mem0 API
+ * Mem0Provider - Real Mem0 API integration
  * 
- * Currently returns mock data for testing the provider system.
- * Will be replaced with real Mem0 API calls after architecture validation.
+ * Integrates with Mem0 cloud platform for memory management
+ * Uses mem0ai npm package for structured API calls
  * 
  * @author Claude (AI Assistant) - Memory Providers System
- * @date 29.06.2025
- * @status 🚧 SKELETON IMPLEMENTATION
+ * @date 01.07.2025
+ * @status ✅ REAL API IMPLEMENTATION
  */
 
+import { MemoryClient } from 'mem0ai';
 import MemoryProvider from '../interfaces/memoryProvider.js';
 
 export default class Mem0Provider extends MemoryProvider {
@@ -18,7 +19,7 @@ export default class Mem0Provider extends MemoryProvider {
     this.providerName = 'Mem0Provider';
     this.apiKey = config.apiKey;
     this.userId = config.userId || 'default-user';
-    this.apiBase = 'https://api.mem0.ai/v1'; // Placeholder URL
+    this.client = null;
     
     console.log('🏗️ Mem0Provider constructor:', {
       apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'missing',
@@ -40,15 +41,20 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      // Simulate initialization delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Initialize Mem0 client
+      console.log('🔧 Mem0Provider: Creating MemoryClient...');
+      this.client = new MemoryClient({ apiKey: this.apiKey });
       
-      // Mock initialization success
+      // Test connection by attempting to get memories (should work even if empty)
+      console.log('🔧 Mem0Provider: Testing API connection...');
+      await this.client.getAll({ userId: this.userId });
+      
       this.initialized = true;
-      console.log('✅ Mem0Provider: Initialized successfully (MOCK)');
+      console.log('✅ Mem0Provider: Initialized successfully with real API');
       return true;
     } catch (error) {
       console.error('❌ Mem0Provider: Initialization failed:', error);
+      console.error('❌ Mem0Provider: Error details:', error.message);
       this.enabled = false;
       this.initialized = true;
       return false;
@@ -63,22 +69,22 @@ export default class Mem0Provider extends MemoryProvider {
         return { success: false, message: 'Provider not enabled or initialized' };
       }
 
-      console.log('🧪 Mem0Provider: Testing connection (MOCK)...');
+      console.log('🧪 Mem0Provider: Testing real API connection...');
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Test real API call - get memories count
+      const memories = await this.client.getAll({ userId: this.userId });
       
       const latency = Date.now() - startTime;
       
-      // Mock success response
       return { 
         success: true, 
-        message: `Mem0Provider connected (${latency}ms) - MOCK`,
+        message: `Mem0Provider connected (${latency}ms) - Real API`,
         latency,
         details: {
-          api: 'Mock API v1.0',
+          api: 'Mem0 Cloud API v1',
           userId: this.userId,
-          status: 'Mock connection successful'
+          status: 'Real API connection successful',
+          memoriesCount: memories.length || 0
         }
       };
     } catch (error) {
@@ -98,32 +104,47 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('💾 Mem0Provider: Saving memory (MOCK):', {
+      console.log('💾 Mem0Provider: Saving memory to real API:', {
         userId,
         contentLength: content.length,
         metadata
       });
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Generate mock memory ID
-      const mockMemoryId = `mem0_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Mock successful save
-      const mockMemory = {
-        id: mockMemoryId,
-        user_id: userId,
-        content: content,
-        summary: metadata.summary || content.substring(0, 100) + '...',
-        importance: metadata.importance || 5,
-        memory_type: metadata.memory_type || 'personal',
-        created_at: new Date().toISOString(),
-        provider: 'mem0'
+      // Prepare memory data for Mem0 API
+      const memoryData = {
+        userId: userId,
+        messages: [{ role: 'user', content: content }],
+        metadata: {
+          summary: metadata.summary || content.substring(0, 100),
+          importance: metadata.importance || 5,
+          memory_type: metadata.memory_type || 'personal',
+          conversation_id: metadata.conversation_id
+        }
       };
 
-      console.log('✅ Mem0Provider: Memory saved successfully (MOCK)');
-      return { success: true, memoryId: mockMemoryId, memory: mockMemory };
+      // Call real Mem0 API
+      const result = await this.client.add(memoryData.messages, {
+        userId: memoryData.userId,
+        metadata: memoryData.metadata
+      });
+
+      console.log('✅ Mem0Provider: Memory saved successfully to real API');
+      
+      // Format response to match our provider interface
+      return { 
+        success: true, 
+        memoryId: result.id || `mem0_${Date.now()}`,
+        memory: {
+          id: result.id || `mem0_${Date.now()}`,
+          user_id: userId,
+          content: content,
+          summary: metadata.summary || content.substring(0, 100),
+          importance: metadata.importance || 5,
+          memory_type: metadata.memory_type || 'personal',
+          created_at: new Date().toISOString(),
+          provider: 'mem0'
+        }
+      };
     } catch (error) {
       console.error('❌ Mem0Provider: saveMemory error:', error);
       return { success: false, error: error.message };
@@ -138,34 +159,39 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('🔍 Mem0Provider: Getting relevant memories (MOCK):', {
+      console.log('🔍 Mem0Provider: Getting relevant memories from real API:', {
         userId,
-        query,
+        query: query.substring(0, 50) + '...',
         limit
       });
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 400));
+      // Call real Mem0 search API
+      const searchResults = await this.client.search(query, { 
+        userId: userId,
+        limit: limit 
+      });
 
-      // Generate mock relevant memories
-      const mockMemories = Array.from({ length: Math.min(limit, 3) }, (_, index) => ({
-        id: `mem0_mock_${Date.now()}_${index}`,
+      console.log(`🔍 Mem0Provider: API returned ${searchResults.length} memories`);
+
+      // Format results to match our provider interface
+      const formattedMemories = searchResults.map(memory => ({
+        id: memory.id,
         user_id: userId,
-        content: `Mock memory ${index + 1} related to: ${query}`,
-        summary: `Summary of mock memory ${index + 1}`,
-        importance: Math.floor(Math.random() * 5) + 1,
-        memory_type: ['personal', 'relationship', 'preference'][index % 3],
-        created_at: new Date(Date.now() - index * 86400000).toISOString(),
-        similarity_score: 0.8 - (index * 0.1),
+        content: memory.memory || memory.content || '',
+        summary: memory.memory || memory.content || '',
+        importance: memory.score ? Math.round(memory.score * 5) : 3, // Convert score to 1-5
+        memory_type: memory.metadata?.memory_type || 'personal',
+        created_at: memory.created_at || new Date().toISOString(),
+        similarity_score: memory.score || 0.5,
         provider: 'mem0'
       }));
 
-      console.log(`✅ Mem0Provider: Found ${mockMemories.length} relevant memories (MOCK)`);
+      console.log(`✅ Mem0Provider: Found ${formattedMemories.length} relevant memories from real API`);
       
       return { 
         success: true, 
-        memories: mockMemories,
-        count: mockMemories.length
+        memories: formattedMemories,
+        count: formattedMemories.length
       };
     } catch (error) {
       console.error('❌ Mem0Provider: getRelevantMemories error:', error);
@@ -181,34 +207,41 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('📋 Mem0Provider: Getting all memories (MOCK):', { userId, filters });
+      console.log('📋 Mem0Provider: Getting all memories from real API:', { userId, filters });
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 250));
+      // Call real Mem0 getAll API
+      const allMemories = await this.client.getAll({ userId: userId });
 
-      // Generate mock memories list
-      const mockMemories = Array.from({ length: 5 }, (_, index) => ({
-        id: `mem0_all_${Date.now()}_${index}`,
+      console.log(`📋 Mem0Provider: API returned ${allMemories.length} total memories`);
+
+      // Format results to match our provider interface
+      let formattedMemories = allMemories.map(memory => ({
+        id: memory.id,
         user_id: userId,
-        content: `Mock memory content ${index + 1} for user ${userId}`,
-        summary: `Mock summary ${index + 1}`,
-        importance: Math.floor(Math.random() * 5) + 1,
-        memory_type: ['personal', 'relationship', 'preference', 'event'][index % 4],
-        created_at: new Date(Date.now() - index * 172800000).toISOString(),
-        updated_at: new Date(Date.now() - index * 86400000).toISOString(),
+        content: memory.memory || memory.content || '',
+        summary: memory.memory || memory.content || '',
+        importance: 3, // Default importance for Mem0 memories
+        memory_type: memory.metadata?.memory_type || 'personal',
+        created_at: memory.created_at || new Date().toISOString(),
+        updated_at: memory.updated_at || memory.created_at || new Date().toISOString(),
         provider: 'mem0'
       }));
 
-      // Apply mock filters
-      let filteredMemories = mockMemories;
+      // Apply filters (client-side filtering for Mem0)
       if (filters.memory_type) {
-        filteredMemories = mockMemories.filter(m => m.memory_type === filters.memory_type);
+        formattedMemories = formattedMemories.filter(m => m.memory_type === filters.memory_type);
       }
+      
+      if (filters.importance_min) {
+        formattedMemories = formattedMemories.filter(m => m.importance >= filters.importance_min);
+      }
+
+      console.log(`✅ Mem0Provider: Returning ${formattedMemories.length} filtered memories from real API`);
 
       return { 
         success: true, 
-        memories: filteredMemories,
-        count: filteredMemories.length
+        memories: formattedMemories,
+        count: formattedMemories.length
       };
     } catch (error) {
       console.error('❌ Mem0Provider: getAllMemories error:', error);
@@ -222,10 +255,12 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('🗑️ Mem0Provider: Deleting memory (MOCK):', memoryId);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('🗑️ Mem0Provider: Deleting memory from real API:', memoryId);
       
-      console.log('✅ Mem0Provider: Memory deleted successfully (MOCK)');
+      // Call real Mem0 delete API
+      await this.client.delete(memoryId);
+      
+      console.log('✅ Mem0Provider: Memory deleted successfully from real API');
       return { success: true };
     } catch (error) {
       console.error('❌ Mem0Provider: deleteMemory error:', error);
@@ -239,19 +274,30 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('✏️ Mem0Provider: Updating memory (MOCK):', { memoryId, updates });
-      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log('✏️ Mem0Provider: Updating memory with real API:', { memoryId, updates });
+      
+      // Call real Mem0 update API
+      const updatedMemory = await this.client.update(memoryId, {
+        data: updates.content || updates.summary,
+        metadata: {
+          memory_type: updates.memory_type,
+          importance: updates.importance
+        }
+      });
 
-      // Mock updated memory
-      const mockUpdatedMemory = {
+      // Format response to match our provider interface
+      const formattedMemory = {
         id: memoryId,
-        ...updates,
+        content: updates.content || updates.summary,
+        summary: updates.summary,
+        importance: updates.importance,
+        memory_type: updates.memory_type,
         updated_at: new Date().toISOString(),
         provider: 'mem0'
       };
 
-      console.log('✅ Mem0Provider: Memory updated successfully (MOCK)');
-      return { success: true, memory: mockUpdatedMemory };
+      console.log('✅ Mem0Provider: Memory updated successfully with real API');
+      return { success: true, memory: formattedMemory };
     } catch (error) {
       console.error('❌ Mem0Provider: updateMemory error:', error);
       return { success: false, error: error.message };
