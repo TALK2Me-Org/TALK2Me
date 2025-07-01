@@ -83,15 +83,32 @@ export default async function handler(req, res) {
     const client = new MemoryClient({ apiKey: trimmedApiKey });
     console.log('✅ MEM0 DEBUG: MemoryClient created successfully');
 
-    // Step 3: Test simple API call
-    console.log('🔍 MEM0 DEBUG: Testing getAll API call...');
-    console.log('🔍 MEM0 DEBUG: Call parameters:', { userId: trimmedUserId, app_id: 'talk2me' });
+    // Step 3: Inspect the client object first
+    console.log('🔍 MEM0 DEBUG: Inspecting MemoryClient methods...');
+    console.log('🔍 MEM0 DEBUG: Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(client)));
+    console.log('🔍 MEM0 DEBUG: Client object keys:', Object.keys(client));
 
+    // Step 4: Try different API call approach
+    console.log('🔍 MEM0 DEBUG: Testing add API call first (safer than getAll)...');
+    
     const startTime = Date.now();
-    const memories = await client.getAll({ 
-      userId: trimmedUserId,
+    
+    // Try a simple add operation first (this might work better)
+    const testMemory = await client.add([
+      { role: 'user', content: 'Test memory from TALK2Me debug endpoint' }
+    ], {
+      user_id: trimmedUserId,
       app_id: 'talk2me'
     });
+    
+    console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
+    
+    // Now try to get all memories
+    const memories = await client.getAll({ 
+      user_id: trimmedUserId,
+      app_id: 'talk2me'
+    });
+    
     const latency = Date.now() - startTime;
 
     console.log('✅ MEM0 DEBUG: API call successful!', {
@@ -107,8 +124,10 @@ export default async function handler(req, res) {
         apiKey: `${trimmedApiKey.substring(0, 10)}...`,
         userId: trimmedUserId,
         latency: `${latency}ms`,
+        testMemoryAdded: testMemory,
         memoriesFound: memories.length,
-        sampleMemories: memories.slice(0, 2)
+        sampleMemories: memories.slice(0, 2),
+        clientMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(client))
       }
     });
 
