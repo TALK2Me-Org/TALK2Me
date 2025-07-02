@@ -96,8 +96,8 @@ export default async function handler(req, res) {
     
     const startTime = Date.now();
     
-    // Try a simple add operation first with graph memory enabled
-    // 🚀 CLEAN Mem0 V2 API call with conversation format for better relations
+    // Try a simple add operation first with optimized async mode
+    // 🚀 OPTIMIZED Mem0 V2 API call with async mode + graph memory
     const testMemory = await client.add([
       { role: 'user', content: 'Mój mąż Maciej jest programistą i mentorem tego projektu' },
       { role: 'assistant', content: 'Rozumiem! Maciej jest Twoim mężem i jednocześnie pracuje jako programista. To wspaniałe, że może być również mentorem Twojego projektu TALK2Me. Czy często razem pracujecie nad rozwojem aplikacji?' },
@@ -105,7 +105,8 @@ export default async function handler(req, res) {
     ], {
       user_id: trimmedUserId,  // 🎯 Use readable user_id for dashboard
       version: 'v2',           // 🚀 V2 API for performance
-      enable_graph: true       // 🔗 Enable graph memory for relationship mapping
+      enable_graph: true,      // 🔗 Enable graph memory for relationship mapping
+      async: true              // 🚀 PERFORMANCE: Enable async mode for faster response
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
@@ -121,11 +122,12 @@ export default async function handler(req, res) {
       usersResult = { error: error.message };
     }
     
-    // Now try to get all memories for this specific user with graph enabled
+    // Now try to get all memories for this specific user with optimized async mode
     const memoriesResponse = await client.getAll({ 
       user_id: trimmedUserId,  // ✅ Use actual user_id for proper separation
       version: 'v2',           // 🚀 V2 API for performance
-      enable_graph: true       // 🔗 Enable graph memory to get relations
+      enable_graph: true,      // 🔗 Enable graph memory to get relations
+      async: true              // 🚀 PERFORMANCE: Enable async mode for faster retrieval
     });
     
     // Handle graph response format

@@ -762,35 +762,39 @@ export default async function handler(req, res) {
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', activeConversationId)
 
-      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider - CLEAN V2 API
+      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider - BACKGROUND PROCESSING
       const isMem0Provider = memoryRouter.activeProvider?.providerName === 'Mem0Provider'
       if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
-        try {
-          console.log('💾 Auto-saving conversation to Mem0Provider with clean V2 API...')
-          
-          // 🚀 CLEAN Mem0 V2 format - simple conversation messages
-          const conversationMessages = [
-            { role: 'user', content: message },
-            { role: 'assistant', content: fullResponse }
-          ]
-          
-          const saveResult = await memoryRouter.saveMemory(
-            userId,
-            message, // original content for fallback
-            {
-              conversation_messages: conversationMessages
+        // 🚀 PERFORMANCE: Background processing - don't block response
+        setImmediate(async () => {
+          try {
+            console.log('💾 Background auto-saving conversation to Mem0Provider with async V2 API...')
+            
+            // 🚀 OPTIMIZED Mem0 V2 format with async mode
+            const conversationMessages = [
+              { role: 'user', content: message },
+              { role: 'assistant', content: fullResponse }
+            ]
+            
+            const saveResult = await memoryRouter.saveMemory(
+              userId,
+              message, // original content for fallback
+              {
+                conversation_messages: conversationMessages
+              }
+            )
+            
+            if (saveResult.success) {
+              console.log(`✅ Mem0Provider: Background auto-saved (${saveResult.latency}ms)`)
+            } else {
+              console.warn('⚠️ Mem0Provider: Background auto-save failed:', saveResult.error)
             }
-          )
-          
-          if (saveResult.success) {
-            console.log(`✅ Mem0Provider: Auto-saved simple message (${saveResult.latency}ms)`)
-          } else {
-            console.warn('⚠️ Mem0Provider: Auto-save failed:', saveResult.error)
+          } catch (error) {
+            console.error('❌ Mem0Provider: Background auto-save error:', error.message)
+            // Background process - errors don't affect user experience
           }
-        } catch (error) {
-          console.error('❌ Mem0Provider: Auto-save error:', error.message)
-          // Don't fail the whole chat if auto-save fails
-        }
+        })
+        console.log('🚀 Mem0Provider: Auto-save queued for background processing')
       }
     }
 
