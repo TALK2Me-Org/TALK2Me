@@ -2,11 +2,11 @@
  * Telemetry & Analytics API for Admin Panel
  * 
  * Provides comprehensive system monitoring and analytics
- * Includes performance metrics, user behavior, and system health
+ * Includes performance metrics, user behavior, system health, and Mem0 cost tracking
  * 
- * @author Claude (AI Assistant) - Telemetry System
+ * @author Claude (AI Assistant) - Advanced Telemetry System
  * @date 02.07.2025
- * @status ✅ COMPREHENSIVE ANALYTICS
+ * @status ✅ COMPREHENSIVE ANALYTICS + MEM0 COST TRACKING
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -36,6 +36,12 @@ export default async function handler(req, res) {
         return await getUserAnalytics(req, res);
       case 'system':
         return await getSystemHealth(req, res);
+      case 'mem0-costs':
+        return await getMem0CostAnalytics(req, res);
+      case 'top-users':
+        return await getTopUsersAnalytics(req, res);
+      case 'detailed-performance':
+        return await getDetailedPerformanceMetrics(req, res);
       default:
         return res.status(400).json({ error: 'Invalid action parameter' });
     }
@@ -403,6 +409,353 @@ async function getSystemHealth(req, res) {
   }
 }
 
+/**
+ * Mem0 Cost Analytics - Track API usage and estimate costs
+ */
+async function getMem0CostAnalytics(req, res) {
+  try {
+    console.log('📊 Fetching Mem0 cost analytics...');
+    
+    // We'll track Mem0 operations from various sources
+    const [memoriesData, performanceLogs] = await Promise.all([
+      // Get all Mem0 memories (each represents an 'add' operation)
+      supabase
+        .from('memories_v2')
+        .select('user_id, created_at, content')
+        .order('created_at', { ascending: false }),
+      
+      // Try to get performance logs (if table exists)
+      supabase
+        .from('performance_logs')
+        .select('operation_type, provider, created_at, tokens_used, estimated_cost')
+        .eq('provider', 'mem0')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+        .then(result => result.data || [])
+        .catch(() => [])
+    ]);
+
+    // Mem0 pricing estimation (hypothetical based on typical AI service pricing)
+    const MEM0_PRICING = {
+      add_operation: 0.001,        // $0.001 per add operation
+      search_operation: 0.0005,    // $0.0005 per search
+      retrieval_operation: 0.0003, // $0.0003 per retrieval
+      storage_per_memory: 0.00001  // $0.00001 per memory per day
+    };
+
+    // Calculate operations from memories_v2 (these are 'add' operations)
+    const addOperations = memoriesData.data?.length || 0;
+    
+    // Estimate search operations (assume 2 searches per chat interaction)
+    const estimatedSearches = addOperations * 2;
+    
+    // Estimate retrievals (assume 1 retrieval per chat for context)
+    const estimatedRetrievals = addOperations * 1.5;
+
+    // Calculate costs
+    const estimatedCosts = {
+      addOperations: addOperations * MEM0_PRICING.add_operation,
+      searchOperations: estimatedSearches * MEM0_PRICING.search_operation,
+      retrievalOperations: estimatedRetrievals * MEM0_PRICING.retrieval_operation,
+      storageCosts: addOperations * MEM0_PRICING.storage_per_memory * 30 // 30 days
+    };
+
+    const totalEstimatedCost = Object.values(estimatedCosts).reduce((sum, cost) => sum + cost, 0);
+
+    // Group by time periods
+    const today = new Date().toISOString().split('T')[0];
+    const thisWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const thisMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const operationsToday = memoriesData.data?.filter(m => m.created_at.startsWith(today)).length || 0;
+    const operationsThisWeek = memoriesData.data?.filter(m => m.created_at >= thisWeek).length || 0;
+    const operationsThisMonth = memoriesData.data?.filter(m => m.created_at >= thisMonth).length || 0;
+
+    const costAnalytics = {
+      overview: {
+        totalOperations: addOperations,
+        estimatedMonthlyCost: totalEstimatedCost,
+        costPerOperation: addOperations > 0 ? totalEstimatedCost / addOperations : 0,
+        lastUpdated: new Date().toISOString()
+      },
+      operations: {
+        today: operationsToday,
+        thisWeek: operationsThisWeek,
+        thisMonth: operationsThisMonth,
+        total: addOperations
+      },
+      costBreakdown: {
+        addOperations: {
+          count: addOperations,
+          unitCost: MEM0_PRICING.add_operation,
+          totalCost: estimatedCosts.addOperations
+        },
+        searchOperations: {
+          count: estimatedSearches,
+          unitCost: MEM0_PRICING.search_operation,
+          totalCost: estimatedCosts.searchOperations
+        },
+        retrievalOperations: {
+          count: estimatedRetrievals,
+          unitCost: MEM0_PRICING.retrieval_operation,
+          totalCost: estimatedCosts.retrievalOperations
+        },
+        storageCosts: {
+          memories: addOperations,
+          dailyCost: addOperations * MEM0_PRICING.storage_per_memory,
+          monthlyCost: estimatedCosts.storageCosts
+        }
+      },
+      trends: {
+        dailyOperations: generateDailyOperationsTrend(memoriesData.data || []),
+        costProjection: generateCostProjection(addOperations, totalEstimatedCost),
+        peakUsageDays: findPeakUsageDays(memoriesData.data || [])
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: costAnalytics,
+      meta: {
+        currency: 'USD',
+        pricingModel: 'estimated',
+        dataSource: 'memories_v2 table',
+        calculationMethod: 'operation-based estimation',
+        disclaimer: 'Costs are estimated based on typical AI service pricing. Actual Mem0 costs may vary.',
+        lastUpdated: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Mem0 cost analytics error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+/**
+ * Top Users Analytics - Most active users by memory usage
+ */
+async function getTopUsersAnalytics(req, res) {
+  try {
+    console.log('👑 Fetching top users analytics...');
+    
+    const { limit = 20 } = req.query;
+    
+    // Get memory usage per user
+    const { data: memoriesData } = await supabase
+      .from('memories_v2')
+      .select('user_id, created_at, memory_type, importance');
+      
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, email, name, created_at');
+
+    // Group memories by user
+    const userMemoryStats = {};
+    
+    memoriesData?.forEach(memory => {
+      const userId = memory.user_id;
+      if (!userMemoryStats[userId]) {
+        userMemoryStats[userId] = {
+          totalMemories: 0,
+          memoryTypes: {},
+          avgImportance: 0,
+          firstMemory: memory.created_at,
+          lastMemory: memory.created_at,
+          importanceSum: 0
+        };
+      }
+      
+      const stats = userMemoryStats[userId];
+      stats.totalMemories++;
+      stats.memoryTypes[memory.memory_type] = (stats.memoryTypes[memory.memory_type] || 0) + 1;
+      stats.importanceSum += memory.importance || 3;
+      
+      if (memory.created_at < stats.firstMemory) stats.firstMemory = memory.created_at;
+      if (memory.created_at > stats.lastMemory) stats.lastMemory = memory.created_at;
+    });
+
+    // Calculate averages and add user info
+    const topUsers = Object.entries(userMemoryStats)
+      .map(([userId, stats]) => {
+        const user = usersData?.find(u => u.id === userId);
+        
+        return {
+          userId,
+          userEmail: user?.email || 'unknown',
+          userName: user?.name || 'Unknown User',
+          userCreated: user?.created_at || null,
+          totalMemories: stats.totalMemories,
+          avgImportance: (stats.importanceSum / stats.totalMemories).toFixed(1),
+          memoryTypes: stats.memoryTypes,
+          firstMemory: stats.firstMemory,
+          lastMemory: stats.lastMemory,
+          daysSinceFirstMemory: Math.floor((new Date() - new Date(stats.firstMemory)) / (1000 * 60 * 60 * 24)),
+          memoriesPerDay: (stats.totalMemories / Math.max(1, Math.floor((new Date() - new Date(stats.firstMemory)) / (1000 * 60 * 60 * 24)))).toFixed(2)
+        };
+      })
+      .sort((a, b) => b.totalMemories - a.totalMemories)
+      .slice(0, parseInt(limit));
+
+    const analytics = {
+      topUsers,
+      summary: {
+        totalUsers: Object.keys(userMemoryStats).length,
+        totalMemories: memoriesData?.length || 0,
+        avgMemoriesPerUser: memoriesData?.length ? 
+          (memoriesData.length / Object.keys(userMemoryStats).length).toFixed(1) : 0,
+        mostActiveUser: topUsers[0] || null,
+        memoryDistribution: calculateMemoryDistribution(topUsers)
+      },
+      insights: {
+        powerUsers: topUsers.filter(u => u.totalMemories > 10).length,
+        newUsers: topUsers.filter(u => u.daysSinceFirstMemory <= 7).length,
+        highEngagementUsers: topUsers.filter(u => parseFloat(u.memoriesPerDay) > 1).length
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: analytics,
+      meta: {
+        limit: parseInt(limit),
+        sortBy: 'totalMemories',
+        lastUpdated: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Top users analytics error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+/**
+ * Detailed Performance Metrics - Stage-by-stage timing analysis
+ */
+async function getDetailedPerformanceMetrics(req, res) {
+  try {
+    console.log('⚡ Fetching detailed performance metrics...');
+    
+    // Get performance data from the in-memory logs
+    const { addPerfLog } = await import('../debug/performance-logs.js');
+    
+    // Try to get recent performance logs
+    const response = await fetch(`${process.env.BASE_URL || 'http://localhost:3000'}/api/debug/performance-logs`)
+      .then(r => r.json())
+      .catch(() => ({ recentLogs: [] }));
+    
+    const performanceLogs = response.recentLogs || [];
+    
+    if (performanceLogs.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          message: 'No performance data available yet. Performance logs are collected during chat interactions.',
+          suggestions: [
+            'Try sending a few chat messages to generate performance data',
+            'Check back in a few minutes after some user activity'
+          ]
+        },
+        meta: { lastUpdated: new Date().toISOString() }
+      });
+    }
+
+    // Analyze performance stages
+    const stageAnalysis = {
+      configLoad: {
+        avg: calculateAverage(performanceLogs.map(log => log.configTime).filter(Boolean)),
+        min: Math.min(...performanceLogs.map(log => log.configTime).filter(Boolean)),
+        max: Math.max(...performanceLogs.map(log => log.configTime).filter(Boolean)),
+        samples: performanceLogs.filter(log => log.configTime).length
+      },
+      memoryRetrieval: {
+        avg: calculateAverage(performanceLogs.map(log => log.memoryTime).filter(Boolean)),
+        min: Math.min(...performanceLogs.map(log => log.memoryTime).filter(Boolean)),
+        max: Math.max(...performanceLogs.map(log => log.memoryTime).filter(Boolean)),
+        samples: performanceLogs.filter(log => log.memoryTime).length
+      },
+      openaiCall: {
+        avg: calculateAverage(performanceLogs.map(log => log.openaiTime).filter(Boolean)),
+        min: Math.min(...performanceLogs.map(log => log.openaiTime).filter(Boolean)),
+        max: Math.max(...performanceLogs.map(log => log.openaiTime).filter(Boolean)),
+        samples: performanceLogs.filter(log => log.openaiTime).length
+      },
+      timeToFirstToken: {
+        avg: calculateAverage(performanceLogs.map(log => log.ttft).filter(Boolean)),
+        min: Math.min(...performanceLogs.map(log => log.ttft).filter(Boolean)),
+        max: Math.max(...performanceLogs.map(log => log.ttft).filter(Boolean)),
+        samples: performanceLogs.filter(log => log.ttft).length
+      }
+    };
+
+    // Provider comparison
+    const providerStats = {};
+    performanceLogs.forEach(log => {
+      const provider = log.provider || 'unknown';
+      if (!providerStats[provider]) {
+        providerStats[provider] = { requests: 0, totalTTFT: 0, avgTTFT: 0 };
+      }
+      providerStats[provider].requests++;
+      if (log.ttft) {
+        providerStats[provider].totalTTFT += log.ttft;
+      }
+    });
+
+    Object.keys(providerStats).forEach(provider => {
+      const stats = providerStats[provider];
+      stats.avgTTFT = stats.requests > 0 ? (stats.totalTTFT / stats.requests).toFixed(0) : 0;
+    });
+
+    // Cache effectiveness
+    const cacheStats = {
+      configCacheHits: performanceLogs.filter(log => log.hasConfigCache).length,
+      promptCacheHits: performanceLogs.filter(log => log.hasCache).length,
+      totalRequests: performanceLogs.length,
+      configCacheRate: performanceLogs.length > 0 ? 
+        ((performanceLogs.filter(log => log.hasConfigCache).length / performanceLogs.length) * 100).toFixed(1) : 0,
+      promptCacheRate: performanceLogs.length > 0 ? 
+        ((performanceLogs.filter(log => log.hasCache).length / performanceLogs.length) * 100).toFixed(1) : 0
+    };
+
+    const detailedMetrics = {
+      overview: {
+        totalRequests: performanceLogs.length,
+        avgTTFT: calculateAverage(performanceLogs.map(log => log.ttft).filter(Boolean)),
+        medianTTFT: calculateMedian(performanceLogs.map(log => log.ttft).filter(Boolean)),
+        p95TTFT: calculatePercentile(performanceLogs.map(log => log.ttft).filter(Boolean), 0.95),
+        fastestRequest: Math.min(...performanceLogs.map(log => log.ttft).filter(Boolean)),
+        slowestRequest: Math.max(...performanceLogs.map(log => log.ttft).filter(Boolean))
+      },
+      stageBreakdown: stageAnalysis,
+      providerComparison: providerStats,
+      cacheEffectiveness: cacheStats,
+      recentTrends: {
+        last5Requests: performanceLogs.slice(0, 5).map(log => ({
+          timestamp: log.timestamp,
+          ttft: log.ttft,
+          provider: log.provider,
+          model: log.model
+        })),
+        performanceScore: calculatePerformanceScore(stageAnalysis)
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: detailedMetrics,
+      meta: {
+        dataPoints: performanceLogs.length,
+        timeRange: 'last 20 requests',
+        lastUpdated: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Detailed performance metrics error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 // Helper functions
 async function getUserCount() {
   const { count } = await supabase.from('users').select('*', { count: 'exact', head: true });
@@ -554,4 +907,81 @@ function calculateFeatureUsage(conversations) {
     voiceInput: '45%',
     mobileApp: '67%'
   };
+}
+
+// New helper functions for advanced telemetry
+function generateDailyOperationsTrend(memories) {
+  const daily = {};
+  memories.forEach(memory => {
+    const date = memory.created_at.split('T')[0];
+    daily[date] = (daily[date] || 0) + 1;
+  });
+  
+  return Object.entries(daily)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-7) // Last 7 days
+    .map(([date, count]) => ({ date, operations: count }));
+}
+
+function generateCostProjection(operations, currentCost) {
+  const dailyAvg = operations / 30; // Assume 30 days of data
+  return {
+    nextMonth: currentCost * 1.1, // 10% growth
+    next3Months: currentCost * 3.3, // 10% growth per month
+    yearlyProjection: currentCost * 12 * 1.15 // 15% annual growth
+  };
+}
+
+function findPeakUsageDays(memories) {
+  const daily = {};
+  memories.forEach(memory => {
+    const date = memory.created_at.split('T')[0];
+    daily[date] = (daily[date] || 0) + 1;
+  });
+  
+  return Object.entries(daily)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 3)
+    .map(([date, count]) => ({ date, operations: count }));
+}
+
+function calculateMemoryDistribution(topUsers) {
+  const total = topUsers.reduce((sum, user) => sum + user.totalMemories, 0);
+  return {
+    top1User: total > 0 ? ((topUsers[0]?.totalMemories || 0) / total * 100).toFixed(1) : 0,
+    top5Users: total > 0 ? (topUsers.slice(0, 5).reduce((sum, user) => sum + user.totalMemories, 0) / total * 100).toFixed(1) : 0,
+    top10Users: total > 0 ? (topUsers.slice(0, 10).reduce((sum, user) => sum + user.totalMemories, 0) / total * 100).toFixed(1) : 0
+  };
+}
+
+function calculateAverage(numbers) {
+  if (numbers.length === 0) return 0;
+  return Math.round(numbers.reduce((sum, num) => sum + num, 0) / numbers.length);
+}
+
+function calculateMedian(numbers) {
+  if (numbers.length === 0) return 0;
+  const sorted = [...numbers].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? 
+    Math.round((sorted[mid - 1] + sorted[mid]) / 2) : 
+    sorted[mid];
+}
+
+function calculatePercentile(numbers, percentile) {
+  if (numbers.length === 0) return 0;
+  const sorted = [...numbers].sort((a, b) => a - b);
+  const index = Math.ceil(sorted.length * percentile) - 1;
+  return sorted[Math.max(0, index)] || 0;
+}
+
+function calculatePerformanceScore(stageAnalysis) {
+  // Simple scoring system: faster = better score
+  const { timeToFirstToken } = stageAnalysis;
+  if (!timeToFirstToken.avg) return 'N/A';
+  
+  if (timeToFirstToken.avg < 500) return 'Excellent';
+  if (timeToFirstToken.avg < 1000) return 'Good';
+  if (timeToFirstToken.avg < 2000) return 'Fair';
+  return 'Needs Improvement';
 }

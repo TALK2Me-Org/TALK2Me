@@ -97,9 +97,11 @@ export default async function handler(req, res) {
     const startTime = Date.now();
     
     // Try a simple add operation first with graph memory enabled
-    // 🚀 CLEAN Mem0 V2 API call (matching production mem0Provider.js)
+    // 🚀 CLEAN Mem0 V2 API call with conversation format for better relations
     const testMemory = await client.add([
-      { role: 'user', content: 'Test memory from TALK2Me debug endpoint - Natalia Rybarczyk jest właścicielem TALK2Me i pracuje z Maciejem jako mentor projektu' }
+      { role: 'user', content: 'Mój mąż Maciej jest programistą i mentorem tego projektu' },
+      { role: 'assistant', content: 'Rozumiem! Maciej jest Twoim mężem i jednocześnie pracuje jako programista. To wspaniałe, że może być również mentorem Twojego projektu TALK2Me. Czy często razem pracujecie nad rozwojem aplikacji?' },
+      { role: 'user', content: 'Tak, Maciej pomaga mi z częścią techniczną, a ja jestem właścicielką i założycielką TALK2Me' }
     ], {
       user_id: trimmedUserId,  // 🎯 Use readable user_id for dashboard
       version: 'v2',           // 🚀 V2 API for performance
