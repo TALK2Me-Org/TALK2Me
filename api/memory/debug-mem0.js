@@ -94,18 +94,18 @@ export default async function handler(req, res) {
     const startTime = Date.now();
     
     // Try a simple add operation first (this might work better)
-    // According to error, we need one of: app_id, user_id, agent_id, run_id
+    // ✅ FIXED: Use user_id for proper user separation instead of agent_id
     const testMemory = await client.add([
       { role: 'user', content: 'Test memory from TALK2Me debug endpoint' }
     ], {
-      agent_id: 'talk2me-agent'
+      user_id: trimmedUserId  // ✅ FIXED: Use actual user_id for proper separation
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
     
-    // Now try to get all memories
+    // Now try to get all memories for this specific user
     const memories = await client.getAll({ 
-      agent_id: 'talk2me-agent'
+      user_id: trimmedUserId  // ✅ FIXED: Use actual user_id for proper separation
     });
     
     const latency = Date.now() - startTime;

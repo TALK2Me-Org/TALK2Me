@@ -51,9 +51,9 @@ export default class Mem0Provider extends MemoryProvider {
       this.client = new MemoryClient({ apiKey: this.apiKey });
       
       // Test connection by attempting to get memories (should work even if empty)
-      console.log(`🔧 Mem0Provider: Testing API connection with agent_id: talk2me-agent`);
+      console.log(`🔧 Mem0Provider: Testing API connection with user_id: ${this.userId}`);
       const testResult = await this.client.getAll({ 
-        agent_id: 'talk2me-agent'
+        user_id: this.userId  // ✅ FIXED: Use actual userId for proper user separation
       });
       console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
@@ -87,9 +87,9 @@ export default class Mem0Provider extends MemoryProvider {
 
       console.log('🧪 Mem0Provider: Testing real API connection...');
       
-      // Test real API call - get memories count
+      // Test real API call - get memories count for specific user
       const memories = await this.client.getAll({ 
-        agent_id: 'talk2me-agent'
+        user_id: this.userId  // ✅ FIXED: Use actual userId for proper user separation
       });
       
       const latency = Date.now() - startTime;
@@ -141,9 +141,9 @@ export default class Mem0Provider extends MemoryProvider {
         }
       };
 
-      // Call real Mem0 API with agent_id approach
+      // Call real Mem0 API with proper user_id for user separation
       const result = await this.client.add(memoryData.messages, {
-        agent_id: 'talk2me-agent',
+        user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
         metadata: memoryData.metadata
       });
 
@@ -184,9 +184,9 @@ export default class Mem0Provider extends MemoryProvider {
         limit
       });
       
-      // Call real Mem0 search API
+      // Call real Mem0 search API with proper user_id for user separation
       const searchResults = await this.client.search(query, { 
-        agent_id: 'talk2me-agent',
+        user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
         limit: limit 
       });
 
@@ -228,9 +228,9 @@ export default class Mem0Provider extends MemoryProvider {
     try {
       console.log('📋 Mem0Provider: Getting all memories from real API:', { userId, filters });
 
-      // Call real Mem0 getAll API
+      // Call real Mem0 getAll API with proper user_id for user separation
       const allMemories = await this.client.getAll({ 
-        agent_id: 'talk2me-agent'
+        user_id: userId  // ✅ FIXED: Use actual userId for proper user separation
       });
 
       console.log(`📋 Mem0Provider: API returned ${allMemories.length} total memories`);
