@@ -648,12 +648,15 @@ export default async function handler(req, res) {
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', activeConversationId)
 
-      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider
-      // Zapisz całą konwersację do Mem0 dla automatycznej ekstrakcji wspomnień
+      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider - WYŁĄCZONA
+      // TODO: Dodać auto-save gdy system będzie w pełni stabilny
+      // Problem: conversation_messages format powoduje błędy w client.add()
       const isMem0Provider = memoryRouter.activeProvider?.providerName === 'Mem0Provider'
-      if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
+      if (false && memorySystemEnabled && isMem0Provider && userId && fullResponse) {
         try {
           console.log('💾 Auto-saving conversation to Mem0Provider...')
+          
+          // Test z conversation_messages - bezpieczne formatowanie
           const conversationMessages = [
             { role: 'user', content: message },
             { role: 'assistant', content: fullResponse }
@@ -664,19 +667,19 @@ export default async function handler(req, res) {
             message, // original user message for context
             {
               conversation_messages: conversationMessages,
-              conversation_id: activeConversationId,
               auto_saved: true,
-              timestamp: new Date().toISOString()
+              conversation_id: activeConversationId
             }
           )
           
           if (saveResult.success) {
-            console.log(`✅ Mem0Provider: Auto-saved conversation (${saveResult.latency}ms)`)
+            console.log(`✅ Mem0Provider: Auto-saved simple message (${saveResult.latency}ms)`)
           } else {
             console.warn('⚠️ Mem0Provider: Auto-save failed:', saveResult.error)
           }
         } catch (error) {
           console.error('❌ Mem0Provider: Auto-save error:', error.message)
+          // Don't fail the whole chat if auto-save fails
         }
       }
     }
