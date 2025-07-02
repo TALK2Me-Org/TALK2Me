@@ -72,7 +72,10 @@ export default async function handler(req, res) {
     }
 
     const trimmedApiKey = config.mem0_api_key.trim();
-    const trimmedUserId = (config.mem0_user_id || 'test-user').trim();
+    const originalUserId = (config.mem0_user_id || 'test-user').trim();
+    
+    // 🎯 NEW: Convert to readable user_id for better dashboard display
+    const trimmedUserId = originalUserId.includes('550e8400') ? 'test-user-natalia' : originalUserId;
 
     console.log('🔍 MEM0 DEBUG: Using trimmed values:', {
       apiKeyLength: trimmedApiKey.length,
@@ -94,12 +97,20 @@ export default async function handler(req, res) {
     const startTime = Date.now();
     
     // Try a simple add operation first with graph memory enabled
-    // ✅ FIXED: Use user_id for proper user separation instead of agent_id
+    // 🎯 NEW: Add test memory with readable user_id and rich metadata
     const testMemory = await client.add([
-      { role: 'user', content: 'Test memory from TALK2Me debug endpoint - Natalia jest właścicielem TALK2Me i pracuje z Maciejem' }
+      { role: 'user', content: 'Test memory from TALK2Me debug endpoint - Natalia Rybarczyk jest właścicielem TALK2Me i pracuje z Maciejem jako mentor projektu' }
     ], {
-      user_id: trimmedUserId,  // ✅ FIXED: Use actual user_id for proper separation
-      enable_graph: true       // 🔗 NEW: Enable graph memory for relationship mapping
+      user_id: trimmedUserId,  // 🎯 NEW: Use readable user_id for dashboard
+      enable_graph: true,      // 🔗 Enable graph memory for relationship mapping
+      metadata: {
+        user_name: 'Test User Natalia',
+        user_email: 'test@nataliarybarczyk.pl',
+        user_role: 'Test User',
+        user_organization: 'TALK2Me',
+        user_type: 'test',
+        original_user_id: originalUserId
+      }
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
@@ -138,15 +149,17 @@ export default async function handler(req, res) {
       message: 'Mem0 API with Graph Memory working perfectly!',
       debug: {
         apiKey: `${trimmedApiKey.substring(0, 10)}...`,
-        userId: trimmedUserId,
+        originalUserId: originalUserId,  // 🎯 Show original UUID
+        readableUserId: trimmedUserId,   // 🎯 Show readable user_id for dashboard
         latency: `${latency}ms`,
         testMemoryAdded: testMemory,
         memoriesFound: memories.length,
-        relationsFound: relations.length,  // 🔗 NEW: Graph relations count
+        relationsFound: relations.length,  // 🔗 Graph relations count
         sampleMemories: memories.slice(0, 2),
-        sampleRelations: relations.slice(0, 3),  // 🔗 NEW: Sample relations
-        graphEnabled: true,  // 🔗 NEW: Graph memory indicator
-        usersMethodTest: usersResult || "not tested",  // 👥 NEW: Users method result
+        sampleRelations: relations.slice(0, 3),  // 🔗 Sample relations
+        graphEnabled: true,  // 🔗 Graph memory indicator
+        readableUserIdStrategy: 'UUID → readable conversion for dashboard',  // 🎯 Strategy info
+        usersMethodTest: usersResult || "not tested",  // 👥 Users method result
         clientMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(client))
       }
     });

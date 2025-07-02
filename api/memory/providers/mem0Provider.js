@@ -34,6 +34,76 @@ export default class Mem0Provider extends MemoryProvider {
     this.enabled = !!this.apiKey;
   }
 
+  /**
+   * Convert UUID or email to readable user_id for Mem0 dashboard
+   * @param {string} userId - UUID from Supabase or email
+   * @returns {string} - Readable user_id for Mem0
+   */
+  convertToReadableUserId(userId) {
+    // If it's an email, extract readable format
+    if (userId.includes('@')) {
+      if (userId.includes('kontakt@nataliarybarczyk.pl')) return 'natalia-rybarczyk';
+      if (userId.includes('fidziu@me.com')) return 'maciej-mentor';
+      // Generic email conversion: extract username part
+      return userId.split('@')[0].replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+    }
+    
+    // If it's UUID, provide meaningful fallback based on known UUIDs
+    if (userId.match(/^[0-9a-f-]{36}$/i)) {
+      // Map known UUIDs to readable names
+      const knownUUIDs = {
+        '550e8400-e29b-41d4-a716-446655440000': 'test-user-nati',
+        '9b2f5a20-4296-4981-8145-c61d1356d74a': 'user-maciej'
+      };
+      return knownUUIDs[userId] || `user-${userId.slice(0, 8)}`;
+    }
+    
+    // If already readable, return as-is
+    return userId.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+  }
+
+  /**
+   * Create rich user metadata for Mem0 dashboard display
+   * @param {string} originalUserId - Original UUID/email
+   * @param {string} readableUserId - Readable user_id
+   * @returns {object} - User metadata object
+   */
+  createUserMetadata(originalUserId, readableUserId) {
+    // Define known users with rich metadata
+    const userProfiles = {
+      'natalia-rybarczyk': {
+        user_name: 'Natalia Rybarczyk',
+        user_email: 'kontakt@nataliarybarczyk.pl',
+        user_role: 'Owner & Founder',
+        user_organization: 'TALK2Me',
+        user_type: 'admin'
+      },
+      'maciej-mentor': {
+        user_name: 'Maciej',
+        user_email: 'fidziu@me.com', 
+        user_role: 'Project Mentor',
+        user_organization: 'TALK2Me',
+        user_type: 'mentor'
+      },
+      'test-user-nati': {
+        user_name: 'Test User Natalia',
+        user_email: 'test@example.com',
+        user_role: 'Test User',
+        user_organization: 'TALK2Me',
+        user_type: 'test'
+      }
+    };
+
+    // Return metadata for known user or generic metadata
+    return userProfiles[readableUserId] || {
+      user_name: readableUserId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      user_email: originalUserId.includes('@') ? originalUserId : 'unknown@example.com',
+      user_role: 'User',
+      user_organization: 'TALK2Me',
+      user_type: 'user'
+    };
+  }
+
   async initialize() {
     if (this.initialized) return true;
 
@@ -129,29 +199,37 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
+      // 🎯 NEW: Convert to readable user_id for Mem0 dashboard
+      const readableUserId = this.convertToReadableUserId(userId);
+      
       console.log('💾 Mem0Provider: Saving memory to real API:', {
-        userId,
+        originalUserId: userId,
+        readableUserId: readableUserId,
         contentLength: content.length,
         metadata
       });
 
+      // 👥 NEW: Enhanced user metadata for dashboard display
+      const userMetadata = this.createUserMetadata(userId, readableUserId);
+
       // Prepare memory data for Mem0 API
       const memoryData = {
-        userId: userId,
+        userId: readableUserId,  // 🎯 Use readable user_id
         messages: [{ role: 'user', content: content }],
         metadata: {
           summary: metadata.summary || content.substring(0, 100),
           importance: metadata.importance || 5,
           memory_type: metadata.memory_type || 'personal',
           conversation_id: metadata.conversation_id,
-          user_id: userId  // Store actual user_id in metadata
+          original_user_id: userId,  // Store original UUID for reference
+          ...userMetadata  // 👥 Include user metadata for dashboard
         }
       };
 
-      // Call real Mem0 API with proper user_id for user separation + graph memory
+      // Call real Mem0 API with readable user_id + graph memory
       const result = await this.client.add(memoryData.messages, {
-        user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
-        enable_graph: true,  // 🔗 NEW: Enable graph memory for relationship mapping
+        user_id: readableUserId,  // 🎯 Use readable user_id for dashboard
+        enable_graph: true,  // 🔗 Enable graph memory for relationship mapping
         metadata: memoryData.metadata
       });
 
@@ -186,16 +264,20 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
+      // 🎯 NEW: Convert to readable user_id for Mem0 queries
+      const readableUserId = this.convertToReadableUserId(userId);
+      
       console.log('🔍 Mem0Provider: Getting relevant memories from real API:', {
-        userId,
+        originalUserId: userId,
+        readableUserId: readableUserId,
         query: query.substring(0, 50) + '...',
         limit
       });
       
-      // Call real Mem0 search API with proper user_id for user separation + graph memory
+      // Call real Mem0 search API with readable user_id + graph memory
       const searchResults = await this.client.search(query, { 
-        user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
-        enable_graph: true,  // 🔗 NEW: Enable graph memory for relationship-aware search
+        user_id: readableUserId,  // 🎯 Use readable user_id for queries
+        enable_graph: true,  // 🔗 Enable graph memory for relationship-aware search
         limit: limit 
       });
 
@@ -243,12 +325,19 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('📋 Mem0Provider: Getting all memories from real API:', { userId, filters });
+      // 🎯 NEW: Convert to readable user_id for Mem0 queries
+      const readableUserId = this.convertToReadableUserId(userId);
+      
+      console.log('📋 Mem0Provider: Getting all memories from real API:', { 
+        originalUserId: userId, 
+        readableUserId: readableUserId, 
+        filters 
+      });
 
-      // Call real Mem0 getAll API with proper user_id for user separation + graph memory
+      // Call real Mem0 getAll API with readable user_id + graph memory
       const allMemoriesResponse = await this.client.getAll({ 
-        user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
-        enable_graph: true  // 🔗 NEW: Enable graph memory for relationship mapping
+        user_id: readableUserId,  // 🎯 Use readable user_id for queries
+        enable_graph: true  // 🔗 Enable graph memory for relationship mapping
       });
 
       console.log(`📋 Mem0Provider: Graph getAll completed for user ${userId}`);
