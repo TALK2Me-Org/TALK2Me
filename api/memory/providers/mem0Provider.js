@@ -122,8 +122,7 @@ export default class Mem0Provider extends MemoryProvider {
         apiKey: this.apiKey,
         // 🚀 Performance optimizations
         timeout: 5000,  // 5s timeout instead of default
-        retries: 2,     // Fewer retries for faster failures
-        version: 'v2'   // Default to V2 API
+        retries: 2      // Fewer retries for faster failures
       });
       
       // Test connection by attempting to get memories (should work even if empty)
@@ -220,23 +219,19 @@ export default class Mem0Provider extends MemoryProvider {
         metadata
       });
 
-      // 🚀 ASYNC OPTIMIZATION: Prepare data and metadata in parallel
-      const [userMetadata, memoryData] = await Promise.all([
-        // Enhanced user metadata for dashboard display
-        Promise.resolve(this.createUserMetadata(userId, readableUserId)),
-        // Prepare memory data for Mem0 API
-        Promise.resolve({
-          userId: readableUserId,
-          messages: [{ role: 'user', content: content }],
-          metadata: {
-            summary: metadata.summary || content.substring(0, 100),
-            importance: metadata.importance || 5,
-            memory_type: metadata.memory_type || 'personal',
-            conversation_id: metadata.conversation_id,
-            original_user_id: userId
-          }
-        })
-      ]);
+      // Prepare user metadata and memory data
+      const userMetadata = this.createUserMetadata(userId, readableUserId);
+      const memoryData = {
+        userId: readableUserId,
+        messages: [{ role: 'user', content: content }],
+        metadata: {
+          summary: metadata.summary || content.substring(0, 100),
+          importance: metadata.importance || 5,
+          memory_type: metadata.memory_type || 'personal',
+          conversation_id: metadata.conversation_id,
+          original_user_id: userId
+        }
+      };
 
       // Merge user metadata
       memoryData.metadata = { ...memoryData.metadata, ...userMetadata };
@@ -302,22 +297,20 @@ export default class Mem0Provider extends MemoryProvider {
         limit: limit 
       });
 
-      // 🚀 ASYNC: Parallel processing of results
-      const [memories, relations, formattedMemories] = await Promise.all([
-        Promise.resolve(searchResults.results || searchResults),
-        Promise.resolve(searchResults.relations || []),
-        Promise.resolve((searchResults.results || searchResults).map(memory => ({
-          id: memory.id,
-          user_id: userId,
-          content: memory.memory || memory.content || '',
-          summary: memory.memory || memory.content || '',
-          importance: memory.score ? Math.round(memory.score * 5) : 3,
-          memory_type: memory.metadata?.memory_type || 'personal',
-          created_at: memory.created_at || new Date().toISOString(),
-          similarity_score: memory.score || 0.5,
-          provider: 'mem0'
-        })))
-      ]);
+      // Process search results
+      const memories = searchResults.results || searchResults;
+      const relations = searchResults.relations || [];
+      const formattedMemories = memories.map(memory => ({
+        id: memory.id,
+        user_id: userId,
+        content: memory.memory || memory.content || '',
+        summary: memory.memory || memory.content || '',
+        importance: memory.score ? Math.round(memory.score * 5) : 3,
+        memory_type: memory.metadata?.memory_type || 'personal',
+        created_at: memory.created_at || new Date().toISOString(),
+        similarity_score: memory.score || 0.5,
+        provider: 'mem0'
+      }));
 
       const latency = Date.now() - startTime;
       console.log(`✅ Mem0Provider: Found ${formattedMemories.length} memories, ${relations.length} relations (${latency}ms)`);
@@ -363,41 +356,30 @@ export default class Mem0Provider extends MemoryProvider {
         version: 'v2'
       });
 
-      // 🚀 ASYNC: Parallel processing of response data
-      const [allMemories, allRelations, formattedMemories] = await Promise.all([
-        Promise.resolve(allMemoriesResponse.results || allMemoriesResponse),
-        Promise.resolve(allMemoriesResponse.relations || []),
-        Promise.resolve((allMemoriesResponse.results || allMemoriesResponse).map(memory => ({
-          id: memory.id,
-          user_id: userId,
-          content: memory.memory || memory.content || '',
-          summary: memory.memory || memory.content || '',
-          importance: 3,
-          memory_type: memory.metadata?.memory_type || 'personal',
-          created_at: memory.created_at || new Date().toISOString(),
-          updated_at: memory.updated_at || memory.created_at || new Date().toISOString(),
-          provider: 'mem0'
-        })))
-      ]);
+      // Process all memories response
+      const allMemories = allMemoriesResponse.results || allMemoriesResponse;
+      const allRelations = allMemoriesResponse.relations || [];
+      const formattedMemories = allMemories.map(memory => ({
+        id: memory.id,
+        user_id: userId,
+        content: memory.memory || memory.content || '',
+        summary: memory.memory || memory.content || '',
+        importance: 3,
+        memory_type: memory.metadata?.memory_type || 'personal',
+        created_at: memory.created_at || new Date().toISOString(),
+        updated_at: memory.updated_at || memory.created_at || new Date().toISOString(),
+        provider: 'mem0'
+      }));
 
-      // 🚀 ASYNC: Parallel filtering operations
+      // Apply filters
       let filteredMemories = formattedMemories;
       
-      if (filters.memory_type || filters.importance_min) {
-        const filterPromises = [];
-        
-        if (filters.memory_type) {
-          filterPromises.push(Promise.resolve(filteredMemories.filter(m => m.memory_type === filters.memory_type)));
-        }
-        
-        if (filters.importance_min) {
-          filterPromises.push(Promise.resolve(filteredMemories.filter(m => m.importance >= filters.importance_min)));
-        }
-        
-        // Apply filters in sequence if multiple exist
-        for (const filterPromise of filterPromises) {
-          filteredMemories = await filterPromise;
-        }
+      if (filters.memory_type) {
+        filteredMemories = filteredMemories.filter(m => m.memory_type === filters.memory_type);
+      }
+      
+      if (filters.importance_min) {
+        filteredMemories = filteredMemories.filter(m => m.importance >= filters.importance_min);
       }
 
       const latency = Date.now() - startTime;
