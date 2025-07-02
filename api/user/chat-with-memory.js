@@ -120,6 +120,10 @@ const MEMORY_RULES = `
 `
 
 export default async function handler(req, res) {
+  // 🕒 PERFORMANCE DIAGNOSTICS: Track request timing
+  const requestStartTime = Date.now()
+  console.log(`🚀 PERF: Request started at ${new Date().toISOString()}`)
+  
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
@@ -249,15 +253,18 @@ export default async function handler(req, res) {
       }
     }
 
-    // 1. POBIERZ KONFIGURACJĘ Z BAZY (z cache dla performance)
-    // 🚀 PERFORMANCE: Cache config dla Mem0Provider (5min TTL)
+    // 1. POBIERZ KONFIGURACJĘ Z BAZY (z timing diagnostics)
+    const configStartTime = Date.now()
+    console.log(`🕒 PERF: Config fetch started at +${configStartTime - requestStartTime}ms`)
+    
     let configMap = {}
     
     if (configCache.config && Date.now() - configCache.timestamp < configCache.ttl) {
       configMap = configCache.config
-      console.log('⚡ Using cached config (age:', Math.round((Date.now() - configCache.timestamp) / 1000), 'seconds)')
+      const configTime = Date.now() - configStartTime
+      console.log(`⚡ PERF: Config from cache (${configTime}ms, age: ${Math.round((Date.now() - configCache.timestamp) / 1000)}s)`)
     } else {
-      console.log('🔄 Fetching fresh config from database...')
+      console.log('🔄 PERF: Fetching fresh config from database...')
       const { data: config } = await supabase
         .from('app_config')
         .select('config_key, config_value')
@@ -269,25 +276,31 @@ export default async function handler(req, res) {
       // Cache config for performance
       configCache.config = configMap
       configCache.timestamp = Date.now()
-      console.log('💾 Config cached for 5 minutes')
+      const configTime = Date.now() - configStartTime
+      console.log(`💾 PERF: Config fetched and cached (${configTime}ms)`)
     }
 
     const activeModel = configMap.active_model || 'openai'
     
-    // 2. INICJALIZUJ MEMORY ROUTER (z optymalizacją dla performance)
-    // 🚀 PERFORMANCE: Szybka inicjalizacja dla Mem0Provider
+    // 2. INICJALIZUJ MEMORY ROUTER (z timing diagnostics)
+    const memoryRouterStartTime = Date.now()
+    console.log(`🕒 PERF: Memory Router init started at +${memoryRouterStartTime - requestStartTime}ms`)
+    
     let memorySystemEnabled = false
     
     if (userId) {
       try {
-        console.log('🧠 Memory Router check for user:', userId)
+        console.log('🧠 PERF: Memory Router check for user:', userId)
         
-        // 🚀 FAST PATH: If already initialized, just check status
+        // Check if already initialized
         if (memoryRouter.initialized) {
-          console.log('⚡ Memory Router: Already initialized, checking status...')
+          const routerTime = Date.now() - memoryRouterStartTime
+          console.log(`⚡ PERF: Memory Router already initialized (${routerTime}ms)`)
         } else {
-          console.log('🚀 Memory Router: First-time initialization...')
+          console.log('🚀 PERF: Memory Router first-time initialization...')
           await memoryRouter.initialize()
+          const routerTime = Date.now() - memoryRouterStartTime
+          console.log(`🏁 PERF: Memory Router initialized (${routerTime}ms)`)
         }
         
         // Check if memory system is available
@@ -317,18 +330,20 @@ export default async function handler(req, res) {
       console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
-    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ - TYLKO dla LocalProvider
-    // Mem0Provider zarządza pamięcią automatycznie, nie potrzebuje manual retrieval
+    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ - TYLKO dla LocalProvider (z timing)
+    const memoryRetrievalStartTime = Date.now()
+    console.log(`🕒 PERF: Memory retrieval started at +${memoryRetrievalStartTime - requestStartTime}ms`)
+    
     let memoryContext = ''
     const isLocalProviderForMemory = memoryRouter.activeProvider?.providerName === 'LocalProvider'
     if (memorySystemEnabled && userId && isLocalProviderForMemory) {
       try {
-        console.log('🔍 MEMORY DEBUG: Starting memory retrieval...')
-        console.log('🔍 MEMORY DEBUG: User ID:', userId)
-        console.log('🔍 MEMORY DEBUG: Message query:', message.substring(0, 100) + '...')
-        console.log('🔍 MEMORY DEBUG: Router status:', memoryRouter.getStatus())
+        console.log('🔍 PERF: Starting LocalProvider memory retrieval...')
+        console.log('🔍 PERF: User ID:', userId, 'Query length:', message.length)
         
         const result = await memoryRouter.getRelevantMemories(userId, message, 5)
+        const memoryTime = Date.now() - memoryRetrievalStartTime
+        console.log(`🏁 PERF: Memory retrieval completed (${memoryTime}ms)`)
         
         console.log('🔍 MEMORY DEBUG: getRelevantMemories result:', {
           success: result.success,
@@ -394,41 +409,52 @@ export default async function handler(req, res) {
     
     if (activeModel === 'openai' && openaiKey) {
       try {
-        // 🚀 PERFORMANCE: Cache OpenAI client to avoid re-initialization
+        // 🕒 PERF: Track OpenAI operations timing
+        const openaiStartTime = Date.now()
+        console.log(`🕒 PERF: OpenAI operations started at +${openaiStartTime - requestStartTime}ms`)
+        
+        // OpenAI client creation/cache
         let openai
         if (openaiCache.client && openaiCache.apiKey === openaiKey) {
           openai = openaiCache.client
-          console.log('⚡ Using cached OpenAI client')
+          const clientTime = Date.now() - openaiStartTime
+          console.log(`⚡ PERF: Using cached OpenAI client (${clientTime}ms)`)
         } else {
-          console.log('🔄 Creating new OpenAI client...')
+          console.log('🔄 PERF: Creating new OpenAI client...')
           openai = new OpenAI({ apiKey: openaiKey })
           openaiCache.client = openai
           openaiCache.apiKey = openaiKey
-          console.log('💾 OpenAI client cached')
+          const clientTime = Date.now() - openaiStartTime
+          console.log(`💾 PERF: OpenAI client created and cached (${clientTime}ms)`)
         }
         
-        // Pobierz prompt z cache lub Assistant API
+        // Assistant API prompt fetch with timing
+        const assistantStartTime = Date.now()
         let systemPrompt = 'You are a helpful AI assistant.'
         
         if (promptCache.prompt && Date.now() - promptCache.timestamp < 3600000) {
           systemPrompt = promptCache.prompt
-          console.log('📋 Using cached prompt (length:', systemPrompt.length, 'chars)')
+          const assistantTime = Date.now() - assistantStartTime
+          console.log(`📋 PERF: Using cached prompt (${assistantTime}ms, length: ${systemPrompt.length} chars)`)
         } else if (assistantId) {
           try {
-            console.log('🔄 Fetching prompt from Assistant API, ID:', assistantId)
+            console.log(`🔄 PERF: Fetching prompt from Assistant API (ID: ${assistantId})...`)
             const assistant = await openai.beta.assistants.retrieve(assistantId)
             systemPrompt = assistant.instructions || systemPrompt
             
             promptCache.prompt = systemPrompt
             promptCache.timestamp = Date.now()
             promptCache.source = 'Assistant API'
-            console.log('✅ Prompt fetched successfully (length:', systemPrompt.length, 'chars)')
+            const assistantTime = Date.now() - assistantStartTime
+            console.log(`✅ PERF: Assistant API prompt fetched (${assistantTime}ms, length: ${systemPrompt.length} chars)`)
           } catch (err) {
-            console.error('❌ Failed to fetch assistant:', err.message)
+            const assistantTime = Date.now() - assistantStartTime
+            console.error(`❌ PERF: Assistant API failed (${assistantTime}ms):`, err.message)
             console.error('Using default prompt instead')
           }
         } else {
-          console.log('⚠️ No assistant_id configured, using default prompt')
+          const assistantTime = Date.now() - assistantStartTime
+          console.log(`⚠️ PERF: No assistant_id configured, using default prompt (${assistantTime}ms)`)
         }
 
         // Dodaj memory context i rules - TYLKO dla LocalProvider
@@ -489,6 +515,10 @@ export default async function handler(req, res) {
             })
           }
 
+          // 🕒 CRITICAL: Time To First Token measurement
+          const chatStartTime = Date.now()
+          console.log(`🕒 PERF: Chat completion started at +${chatStartTime - requestStartTime}ms`)
+          
           stream = await openai.chat.completions.create(chatOptions)
         } catch (modelError) {
           if (modelError.code === 'model_not_found' && openaiModel.includes('gpt-4')) {
@@ -512,11 +542,17 @@ export default async function handler(req, res) {
               })
             }
 
+            const chatStartTime = Date.now()
+            console.log(`🕒 PERF: Fallback chat completion started at +${chatStartTime - requestStartTime}ms`)
             stream = await openai.chat.completions.create(chatOptions)
           } else {
             throw modelError
           }
         }
+        
+        // 🕒 CRITICAL: Time To First Token tracking
+        let firstTokenReceived = false
+        let firstTokenTime = null
         
         // Stream chunks do klienta
         let functionCall = null
@@ -525,6 +561,14 @@ export default async function handler(req, res) {
         let functionCallCompleted = false
 
         for await (const chunk of stream) {
+          // 🚀 CRITICAL: Track Time To First Token
+          if (!firstTokenReceived) {
+            firstTokenTime = Date.now()
+            const ttft = firstTokenTime - requestStartTime
+            console.log(`🎯 PERF: 🔥 TIME TO FIRST TOKEN: ${ttft}ms 🔥`)
+            console.log(`🎯 PERF: Breakdown - Config: ${configStartTime - requestStartTime}ms, Memory: ${memoryRouterStartTime - configStartTime}ms, OpenAI: ${firstTokenTime - openaiStartTime}ms`)
+            firstTokenReceived = true
+          }
           const delta = chunk.choices[0]?.delta
           
           // Debug chunk
