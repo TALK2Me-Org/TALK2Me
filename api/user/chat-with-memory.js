@@ -292,11 +292,11 @@ export default async function handler(req, res) {
       console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
-    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ
-    // Wyszukuje podobne wspomnienia przez Memory Router z automatycznym fallback
-    // Używa aktywnego providera (Local/Mem0) z similarity search
+    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ - TYLKO dla LocalProvider
+    // Mem0Provider zarządza pamięcią automatycznie, nie potrzebuje manual retrieval
     let memoryContext = ''
-    if (memorySystemEnabled && userId) {
+    const isLocalProviderForMemory = memoryRouter.activeProvider?.providerName === 'LocalProvider'
+    if (memorySystemEnabled && userId && isLocalProviderForMemory) {
       try {
         console.log('🔍 MEMORY DEBUG: Starting memory retrieval...')
         console.log('🔍 MEMORY DEBUG: User ID:', userId)
@@ -341,10 +341,13 @@ export default async function handler(req, res) {
         console.error('❌ MEMORY DEBUG: Exception during memory retrieval:', error)
         console.error('❌ MEMORY DEBUG: Error stack:', error.stack)
       }
+    } else if (memorySystemEnabled && userId && !isLocalProviderForMemory) {
+      console.log('⚡ MEMORY DEBUG: Memory retrieval skipped for Mem0Provider (automatic memory management)')
     } else {
       console.log('⚠️ MEMORY DEBUG: Memory retrieval skipped:', {
         memorySystemEnabled,
-        userId: !!userId
+        userId: !!userId,
+        provider: memoryRouter.activeProvider?.providerName || 'none'
       })
     }
     
@@ -392,8 +395,18 @@ export default async function handler(req, res) {
           console.log('⚠️ No assistant_id configured, using default prompt')
         }
 
-        // Dodaj memory rules do system prompt
-        systemPrompt += memoryContext + (userId ? MEMORY_RULES : '')
+        // Dodaj memory context i rules - TYLKO dla LocalProvider
+        // Mem0Provider nie potrzebuje MEMORY_RULES (ma automatyczną pamięć)
+        const isLocalProviderForRules = memoryRouter.activeProvider?.providerName === 'LocalProvider'
+        if (isLocalProviderForRules && userId) {
+          systemPrompt += memoryContext + MEMORY_RULES
+          console.log('📋 Added memory context + rules for LocalProvider')
+        } else if (memoryContext) {
+          systemPrompt += memoryContext
+          console.log('📋 Added memory context only (no rules for Mem0Provider)')
+        } else {
+          console.log('⚡ Clean prompt for Mem0Provider (automatic memory)')
+        }
 
         // Buduj wiadomości
         aiMessages.push({ role: 'system', content: systemPrompt })

@@ -26,7 +26,8 @@
       "Bash(pkill:*)",
       "Bash(npm start)",
       "Bash(rg:*)",
-      "WebFetch(domain:docs.mem0.ai)"
+      "WebFetch(domain:docs.mem0.ai)",
+      "Bash(time:*)"
     ],
     "deny": []
   }
