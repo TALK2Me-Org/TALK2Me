@@ -22,6 +22,7 @@
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import memoryRouter from '../memory/router.js'
+import { addPerfLog } from '../debug/performance-logs.js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -567,6 +568,24 @@ export default async function handler(req, res) {
             const ttft = firstTokenTime - requestStartTime
             console.log(`🎯 PERF: 🔥 TIME TO FIRST TOKEN: ${ttft}ms 🔥`)
             console.log(`🎯 PERF: Breakdown - Config: ${configStartTime - requestStartTime}ms, Memory: ${memoryRouterStartTime - configStartTime}ms, OpenAI: ${firstTokenTime - openaiStartTime}ms`)
+            
+            // 📊 LOG PERFORMANCE DATA
+            try {
+              addPerfLog({
+                ttft: ttft,
+                configTime: configStartTime - requestStartTime,
+                memoryTime: memoryRouterStartTime - configStartTime,
+                openaiTime: firstTokenTime - openaiStartTime,
+                provider: memoryRouter.activeProvider?.providerName || 'none',
+                model: openaiModel,
+                messageLength: message.length,
+                hasCache: !!promptCache.prompt,
+                hasConfigCache: !!(configCache.config && Date.now() - configCache.timestamp < configCache.ttl)
+              })
+            } catch (perfLogError) {
+              console.error('Failed to log performance data:', perfLogError)
+            }
+            
             firstTokenReceived = true
           }
           const delta = chunk.choices[0]?.delta

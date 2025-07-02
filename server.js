@@ -53,7 +53,7 @@ let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
 let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
 let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler;
-let telemetryHandler;
+let telemetryHandler, performanceLogsHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -170,6 +170,14 @@ try {
     console.log('✅ Loaded: telemetry handler');
   } catch (e) {
     console.log('⚠️ Could not load telemetry handler:', e.message);
+  }
+  
+  // Performance logs handler
+  try {
+    performanceLogsHandler = (await import('./api/debug/performance-logs.js')).default;
+    console.log('✅ Loaded: performance-logs handler');
+  } catch (e) {
+    console.log('⚠️ Could not load performance-logs handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -382,6 +390,12 @@ if (debugMem0Handler) {
 if (telemetryHandler) {
   app.get('/api/admin/telemetry', telemetryHandler);
   console.log('✅ Registered route: GET /api/admin/telemetry');
+}
+
+// Performance logs endpoint
+if (performanceLogsHandler) {
+  app.get('/api/debug/performance-logs', performanceLogsHandler);
+  console.log('✅ Registered route: GET /api/debug/performance-logs');
 }
 
 // Root endpoint - handle both health checks and static files
