@@ -183,6 +183,11 @@ export default async function handler(req, res) {
       }
     } else {
       console.log('⚠️ No auth header or invalid format')
+      // 🧪 TEMPORARY: Test fallback dla demo Mem0 memory functionality
+      if (message && message.toLowerCase().includes('test mem0')) {
+        userId = '550e8400-e29b-41d4-a716-446655440000' // User with Mem0 memories
+        console.log('🧪 TEMP: Using test userId for Mem0 demo:', userId)
+      }
     }
 
     // Jeśli brak userId, nie możemy obsługiwać konwersacji ani pamięci
