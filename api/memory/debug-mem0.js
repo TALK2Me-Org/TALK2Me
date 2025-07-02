@@ -104,6 +104,17 @@ export default async function handler(req, res) {
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
     
+    // Step 4: Test users() method to see available functionality
+    console.log('🔍 MEM0 DEBUG: Testing users() method...');
+    let usersResult = null;
+    try {
+      usersResult = await client.users();
+      console.log('✅ MEM0 DEBUG: Users method successful!', usersResult);
+    } catch (error) {
+      console.log('⚠️ MEM0 DEBUG: Users method failed:', error.message);
+      usersResult = { error: error.message };
+    }
+    
     // Now try to get all memories for this specific user with graph enabled
     const memoriesResponse = await client.getAll({ 
       user_id: trimmedUserId,  // ✅ FIXED: Use actual user_id for proper separation
@@ -135,6 +146,7 @@ export default async function handler(req, res) {
         sampleMemories: memories.slice(0, 2),
         sampleRelations: relations.slice(0, 3),  // 🔗 NEW: Sample relations
         graphEnabled: true,  // 🔗 NEW: Graph memory indicator
+        usersMethodTest: usersResult || "not tested",  // 👥 NEW: Users method result
         clientMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(client))
       }
     });
