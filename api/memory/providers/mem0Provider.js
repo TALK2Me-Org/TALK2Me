@@ -19,16 +19,16 @@ export default class Mem0Provider extends MemoryProvider {
     this.providerName = 'Mem0Provider';
     this.apiKey = config.apiKey ? config.apiKey.trim() : null;
     
-    // Use simple string format for Mem0 API compatibility
-    // Mem0 expects simple string user IDs like "alex", "john", "test-user"
-    // IMPORTANT: Trim any spaces from config values
-    this.userId = (config.userId || 'default-user').trim();
+    // Mem0Provider is now stateless - no hardcoded userId
+    // Each method receives dynamic userId parameter from chat requests
+    // Test user ID for initialization/connection tests only
+    this.testUserId = (config.userId || 'test-user').trim();
     this.client = null;
     
     console.log('🏗️ Mem0Provider constructor:', {
       apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'missing',
-      userId: this.userId,
-      userIdSource: config.userId ? 'config' : 'fallback-uuid'
+      testUserId: this.testUserId,
+      userIdSource: config.userId ? 'config' : 'fallback-test-user'
     });
 
     this.enabled = !!this.apiKey;
@@ -127,9 +127,10 @@ export default class Mem0Provider extends MemoryProvider {
       });
       
       // Test connection by attempting to get memories (should work even if empty)
-      console.log(`🔧 Mem0Provider: Testing API connection with user_id: ${this.userId}`);
+      console.log(`🔧 Mem0Provider: Testing API connection with test user_id: ${this.testUserId}`);
+      // Use test user for initialization test only
       const testResult = await this.client.getAll({ 
-        user_id: this.userId,  // ✅ FIXED: Use actual userId for proper user separation
+        user_id: this.testUserId,  // For initialization test, use configured test user
         version: 'v2'  // 🚀 NEW: V2 API for 91% better latency
       });
       console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
@@ -144,7 +145,7 @@ export default class Mem0Provider extends MemoryProvider {
       // Check for specific user_id related errors
       if (error.message && error.message.includes('user_id')) {
         console.error('💡 Mem0Provider: This appears to be a user_id format issue');
-        console.error(`💡 Mem0Provider: Current userId: "${this.userId}"`);
+        console.error(`💡 Mem0Provider: Current testUserId: "${this.testUserId}"`);
         console.error('💡 Mem0Provider: Mem0 API requires valid UUID format for user_id');
       }
       
@@ -164,9 +165,9 @@ export default class Mem0Provider extends MemoryProvider {
 
       console.log('🧪 Mem0Provider: Testing real API connection...');
       
-      // Test real API call - get memories count for specific user with graph memory
+      // Test real API call - get memories count for test user with graph memory
       const memoriesResponse = await this.client.getAll({ 
-        user_id: this.userId,  // ✅ FIXED: Use actual userId for proper user separation
+        user_id: this.testUserId,  // For connection test, use configured test user
         enable_graph: true,    // 🔗 NEW: Enable graph memory for relationship mapping
         version: 'v2'         // 🚀 NEW: V2 API for 91% better latency
       });
@@ -183,7 +184,7 @@ export default class Mem0Provider extends MemoryProvider {
         latency,
         details: {
           api: 'Mem0 Cloud API v1',
-          userId: this.userId,
+          testUserId: this.testUserId,
           status: 'Real API connection successful',
           memoriesCount: memories.length || 0,
           relationsCount: relations.length || 0,  // 🔗 NEW: Graph relations count

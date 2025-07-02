@@ -40,8 +40,15 @@
   - Eliminacja konfliktów z Railway
   - Uproszenie infrastruktury
 
-## 🎯 Aktualny Stan (29 Czerwca 2025, 03:00)
-Projekt jest **~97% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI NAPRAWIONY + BEZPIECZEŃSTWO POPRAWIONE + PWA GOTOWE! 🎉🚀🧠🔒✅
+## 🎯 Aktualny Stan (02 Lipca 2025, 01:00)
+Projekt jest **~98% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI + GRAPH MEMORY + USER MANAGEMENT NAPRAWIONE! 🎉🚀🧠🔒✅
+
+### 🆕 **OSTATNIE OSIĄGNIĘCIA (Sesja #22 - 01.07.2025):**
+- ✅ **Mem0 Graph Memory AKTYWNE** - enable_graph: true we wszystkich API calls
+- ✅ **Readable User IDs** - UUID → human-readable conversion dla dashboard
+- ✅ **User separation naprawione** - każdy user ma swoją prywatną pamięć grafową
+- ✅ **Dashboard user dropdown** - pokazuje "test-user-natalia" zamiast UUIDs
+- ✅ **Rich user metadata** - name, email, role, organization w Mem0
 
 ### ✅ Co Działa
 1. **Chat z AI** - streaming odpowiedzi w czasie rzeczywistym
@@ -94,12 +101,18 @@ Projekt jest **~97% gotowy** - BACKEND API KOMPLETNY + SYSTEM PAMIĘCI NAPRAWION
 6. **Test scripts** - kompletne skrypty testowe dla każdego endpointu
 7. **JSDoc comments** - pełna dokumentacja w kodzie
 
-### ❌ Czego Brakuje (4% projektu)
-1. **UI konwersacji** - frontend dla systemu konwersacji (sidebar)
-2. **UI pamięci** - "Co o mnie wiesz?" sekcja dla użytkowników  
-3. **OAuth** - logowanie przez Google/Apple
-4. **Testy jednostkowe** - zero coverage
-5. **Lepsze ikony PWA** - obecnie placeholder, potrzebny design
+### ❌ Czego Brakuje (2% projektu)
+1. **🚀 PRIORITY 1: Mem0 Performance** - optymalizacja 3-7s → 100-300ms latency
+2. **🎯 PRIORITY 2: Dynamic User Mapping** - real users zamiast hardcoded
+3. **UI konwersacji** - frontend dla systemu konwersacji (sidebar)
+4. **UI pamięci** - "Co o mnie wiesz?" sekcja dla użytkowników  
+5. **OAuth** - logowanie przez Google/Apple
+
+### 🔄 **NASTĘPNE ZADANIA (Sesja #23 - jutro):**
+1. **Enable async_mode: true** w Mem0 API calls (performance boost)
+2. **Upgrade to V2 API** (version: 'v2') dla 91% lower latency
+3. **Test Graph visualization** w Mem0 dashboard
+4. **Dynamic user mapping** po email/imieniu z aplikacji
 
 ### 🚨 KNOWN ISSUES (Parkowane problemy)
 
@@ -386,6 +399,53 @@ NODE_ENV=production
 - `temperature`, `max_tokens` - parametry AI
 
 ## 📝 CHANGELOG
+
+### Sesja 22 - Mem0 Graph Memory + Readable User IDs (01.07.2025, 22:00-01:00)
+**Developer**: Claude (AI Assistant)
+
+#### 🎯 **PROBLEM RESOLVED: Graph Memory & User Management**
+- **Problem**: Graph nie był widoczny w Mem0 dashboard, "dziwne numery" w user dropdown
+- **Root Cause**: Brak enable_graph + UUID zamiast readable user_id 
+
+#### ✅ **Zrealizowane:**
+1. **Graph Memory Implementation**
+   - Dodano `enable_graph: true` do wszystkich Mem0 API calls
+   - Enhanced response format: `{memories, relations, graphEnabled}`
+   - Graph relationships między wspomnieniami aktywne
+
+2. **Readable User ID Conversion**
+   - `convertToReadableUserId()` - UUID → human-readable format
+   - `createUserMetadata()` - rich metadata dla dashboard display
+   - UUID `550e8400...` → `"test-user-natalia"`
+
+3. **User Separation Fixed**
+   - Każdy user ma swoją prywatną pamięć grafową
+   - Zmiana z `agent_id: 'talk2me-agent'` na `user_id: userId`
+   - Proper user context w Mem0 API calls
+
+4. **Mem0 Dashboard Integration**
+   - Users dropdown pokazuje readable names zamiast UUIDs
+   - Graph tab ma working user selection
+   - Rich user metadata: name, email, role, organization
+
+#### 🔧 **Użyte technologie:**
+- **Mem0 API v1**: Graph Memory z enable_graph parameter
+- **Node.js SDK**: mem0ai v2.1.33 z real API integration
+- **User Management**: Readable ID mapping + metadata enhancement
+- **Railway Deployment**: Force rebuild dla code updates
+
+#### 📊 **Stan końcowy:**
+- **Graph Memory**: ✅ FULLY FUNCTIONAL - relationships tworzą się automatycznie
+- **User Management**: ✅ READABLE NAMES w dashboard dropdown
+- **User Separation**: ✅ PRIVATE memory spaces per user
+- **Performance Issue**: ⚠️ 3-7s latency (do optymalizacji jutro)
+
+#### 🚀 **Następne priorytety (Sesja #23):**
+1. **Mem0 Performance**: async_mode + V2 API → 100-300ms latency
+2. **Dynamic User Mapping**: real users zamiast hardcoded names
+3. **Graph Dashboard Testing**: verify visualization w Mem0 platform
+
+---
 
 ### Sesja 10 - System Pamięci z LangChain (14.01.2025, 17:00-01:30)
 **Developer**: Claude (AI Assistant)

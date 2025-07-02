@@ -215,7 +215,7 @@ class MemoryRouter {
       case 'mem0':
         providerConfig = {
           apiKey: this.config.mem0_api_key,
-          userId: this.config.mem0_user_id || 'default-user',
+          userId: this.config.mem0_user_id || 'test-user', // Only for initialization tests
           openaiApiKey: this.config.openai_api_key
         };
         break;

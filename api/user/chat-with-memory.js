@@ -289,38 +289,7 @@ export default async function handler(req, res) {
         memorySystemEnabled = false
       }
     } else {
-      // Create temporary guest session for memory
-      console.log('⚠️ No userId - creating temporary guest session for memory')
-      const guestId = req.headers['x-guest-id'] || `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      console.log('🎭 Generated guest ID:', guestId)
-      
-      // Use guest ID as temporary userId for memory system
-      userId = guestId
-      
-      try {
-        console.log('🧠 Initializing Memory Router for guest user:', userId)
-        
-        if (!memoryRouter.initialized) {
-          console.log('🚀 Memory Router: First-time initialization...')
-          await memoryRouter.initialize()
-        }
-        
-        const status = memoryRouter.getStatus()
-        memorySystemEnabled = status.initialized && status.activeProvider?.enabled
-        
-        if (memorySystemEnabled) {
-          console.log('✅ Memory Router ready for guest:', {
-            guestId: userId,
-            provider: status.activeProvider.name,
-            enabled: status.activeProvider.enabled
-          })
-        } else {
-          console.log('⚠️ Memory Router not enabled for guest')
-        }
-      } catch (error) {
-        console.error('❌ Failed to initialize Memory Router for guest:', error.message)
-        memorySystemEnabled = false
-      }
+      console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
     // 3. POBIERZ RELEVANTNĄ PAMIĘĆ
