@@ -331,15 +331,14 @@ export default async function handler(req, res) {
       console.log('⚠️ No userId - memory system disabled for guest users')
     }
 
-    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ - TYLKO dla LocalProvider (z timing)
+    // 3. POBIERZ RELEVANTNĄ PAMIĘĆ - dla WSZYSTKICH providerów (Mem0 używa swoich native API)
     const memoryRetrievalStartTime = Date.now()
     console.log(`🕒 PERF: Memory retrieval started at +${memoryRetrievalStartTime - requestStartTime}ms`)
     
     let memoryContext = ''
-    const isLocalProviderForMemory = memoryRouter.activeProvider?.providerName === 'LocalProvider'
-    if (memorySystemEnabled && userId && isLocalProviderForMemory) {
+    if (memorySystemEnabled && userId) {
       try {
-        console.log('🔍 PERF: Starting LocalProvider memory retrieval...')
+        console.log(`🔍 PERF: Starting ${memoryRouter.activeProvider?.providerName} memory retrieval...`)
         console.log('🔍 PERF: User ID:', userId, 'Query length:', message.length)
         
         const result = await memoryRouter.getRelevantMemories(userId, message, 5)
@@ -382,8 +381,6 @@ export default async function handler(req, res) {
         console.error('❌ MEMORY DEBUG: Exception during memory retrieval:', error)
         console.error('❌ MEMORY DEBUG: Error stack:', error.stack)
       }
-    } else if (memorySystemEnabled && userId && !isLocalProviderForMemory) {
-      console.log('⚡ MEMORY DEBUG: Memory retrieval skipped for Mem0Provider (automatic memory management)')
     } else {
       console.log('⚠️ MEMORY DEBUG: Memory retrieval skipped:', {
         memorySystemEnabled,
