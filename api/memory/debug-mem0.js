@@ -105,8 +105,7 @@ export default async function handler(req, res) {
     ], {
       user_id: trimmedUserId,  // 🎯 Use readable user_id for dashboard
       version: 'v2',           // 🚀 V2 API for performance
-      enable_graph: true,      // 🔗 Enable graph memory for relationship mapping
-      async: true              // 🚀 PERFORMANCE: Enable async mode for faster response
+      async_mode: true         // 🚀 PERFORMANCE: Official async parameter
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
@@ -126,8 +125,7 @@ export default async function handler(req, res) {
     const memoriesResponse = await client.getAll({ 
       user_id: trimmedUserId,  // ✅ Use actual user_id for proper separation
       version: 'v2',           // 🚀 V2 API for performance
-      enable_graph: true,      // 🔗 Enable graph memory to get relations
-      async: true              // 🚀 PERFORMANCE: Enable async mode for faster retrieval
+      async_mode: true         // 🚀 PERFORMANCE: Official async parameter
     });
     
     // Handle graph response format

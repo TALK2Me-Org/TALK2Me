@@ -130,9 +130,8 @@ export default class Mem0Provider extends MemoryProvider {
       // Use test user for initialization test only
       const testResult = await this.client.getAll({ 
         user_id: this.testUserId,  // For initialization test, use configured test user
-        version: 'v2',  // 🚀 V2 API for 91% better latency
-        enable_graph: true,  // 🔗 Enable graph memory for initialization test
-        async: true      // 🚀 PERFORMANCE: Enable async mode for init test
+        version: 'v2',            // 🚀 V2 API for 91% better latency
+        async_mode: true          // 🚀 PERFORMANCE: Official async parameter
       });
       console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
@@ -169,9 +168,8 @@ export default class Mem0Provider extends MemoryProvider {
       // Test real API call - get memories count for test user
       const memoriesResponse = await this.client.getAll({ 
         user_id: this.testUserId,  // For connection test, use configured test user
-        version: 'v2',         // 🚀 V2 API for better latency
-        enable_graph: true,    // 🔗 Enable graph memory for test
-        async: true            // 🚀 PERFORMANCE: Enable async mode for test
+        version: 'v2',            // 🚀 V2 API for better latency
+        async_mode: true          // 🚀 PERFORMANCE: Official async parameter
       });
       
       // Handle graph response format
@@ -230,12 +228,11 @@ export default class Mem0Provider extends MemoryProvider {
         messageRoles: messages.map(m => m.role)
       });
 
-      // 🚀 OPTIMIZED Mem0 V2 API call with async mode + graph memory
+      // 🚀 OPTIMIZED Mem0 V2 Platform API call
       const result = await this.client.add(messages, {
         user_id: readableUserId,
         version: 'v2',
-        enable_graph: true,  // 🔗 Enable graph memory for relationships
-        async: true          // 🚀 PERFORMANCE: Enable async mode for faster response
+        async_mode: true     // 🚀 PERFORMANCE: Official async parameter
       });
 
       const latency = Date.now() - startTime;
@@ -283,13 +280,12 @@ export default class Mem0Provider extends MemoryProvider {
         limit
       });
       
-      // 🚀 OPTIMIZED Mem0 V2 search API with async mode + graph memory
+      // 🚀 OPTIMIZED Mem0 V2 Platform API search
       const searchResults = await this.client.search(query, { 
         user_id: readableUserId,
         version: 'v2',
         top_k: limit,
-        enable_graph: true,  // 🔗 Include graph relations in search
-        async: true          // 🚀 PERFORMANCE: Enable async mode for faster search
+        async_mode: true     // 🚀 PERFORMANCE: Official async parameter
       });
 
       // Process search results
@@ -344,12 +340,11 @@ export default class Mem0Provider extends MemoryProvider {
         filters 
       });
 
-      // 🚀 OPTIMIZED Mem0 V2 getAll API with async mode + graph memory
+      // 🚀 OPTIMIZED Mem0 V2 Platform API getAll
       const allMemoriesResponse = await this.client.getAll({ 
         user_id: readableUserId,
         version: 'v2',
-        enable_graph: true,  // 🔗 Include graph relations in response
-        async: true          // 🚀 PERFORMANCE: Enable async mode for faster retrieval
+        async_mode: true     // 🚀 PERFORMANCE: Official async parameter
       });
 
       // Process all memories response

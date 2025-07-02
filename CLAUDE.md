@@ -390,6 +390,114 @@ CREATE TABLE memories_v2 (
 );
 ```
 
+## 🧠 MEMORY PROVIDERS SYSTEM ARCHITECTURE
+
+### Architektura Modularnych Providerów Pamięci
+
+TALK2Me wykorzystuje zaawansowany **Memory Providers System** z router pattern, który umożliwia używanie różnych systemów pamięci bez konfliktów. Systemy działają **całkowicie niezależnie** i nie interferują ze sobą.
+
+#### 🔄 Memory Router Pattern
+- **Centralne zarządzanie**: `/api/memory/router.js` - singleton router
+- **Provider registration**: `LocalProvider` i `Mem0Provider` 
+- **Automatic fallback**: Local jako backup dla Mem0
+- **Hot reload**: zmiana providerów bez restartu aplikacji
+- **Configuration-driven**: provider wybierany z `app_config.default_memory_provider`
+
+#### 🏠 LocalProvider - Manual Memory Management
+```javascript
+// Charakterystyka LocalProvider:
+- Uses: function calling z remember_this() 
+- Storage: Supabase memories_v2 table z pgvector embeddings
+- AI Integration: OpenAI embeddings + LangChain orchestration
+- Memory Rules: 120-line detailed prompt rules dla AI
+- Manual control: AI decyduje CO i KIEDY zapamiętać
+- Processing: Synchronous function calling during chat
+```
+
+**Implementacja LocalProvider:**
+- **Function Calling**: AI automatycznie wywołuje `remember_this(summary, importance, type)`
+- **Manual Embeddings**: OpenAI text-embedding-ada-002 (1536D vectors)
+- **Structured Storage**: `memories_v2` z metadata (importance 1-5, memory_type, entities)
+- **Similarity Search**: pgvector matching z threshold 0.4
+- **Memory Rules**: Detailed 120-line prompt z examples i guidelines
+
+#### ☁️ Mem0Provider - Automatic Memory Management  
+```javascript
+// Charakterystyka Mem0Provider:
+- Uses: TYLKO oficjalne Mem0 API (mem0ai npm package)
+- Storage: Mem0 Cloud Platform z Graph Memory
+- AI Integration: Brak function calling - automatyczna pamięć
+- Clean API: Żadnych custom funkcji czy nietypowych modyfikacji
+- Auto-processing: Background conversation auto-save
+- Processing: Asynchronous background operations (non-blocking)
+```
+
+**Implementacja Mem0Provider:**
+- **Clean API Only**: `client.add()`, `client.search()`, `client.getAll()` - standard calls
+- **No Custom Logic**: Żadnych manual embeddings, custom functions czy przerubek
+- **Standard Parameters**: `user_id`, `version: 'v2'`, `enable_graph: true`, `async: true`
+- **Automatic Memory**: AI conversations automatycznie saved w background
+- **Graph Memory**: Relationships między wspomnieniami budowane automatycznie
+- **V2 Performance**: 91% better latency z async mode
+
+#### 🔧 Conditional Function Calling - Kluczowa Separacja
+
+**Najważniejsza część architektury** - function calling jest **TYLKO dla LocalProvider**:
+
+```javascript
+// W api/user/chat-with-memory.js - linia 502
+const isLocalProvider = memoryRouter.activeProvider?.providerName === 'LocalProvider'
+if (userId && memorySystemEnabled && isLocalProvider) {
+  chatOptions.functions = [MEMORY_FUNCTION]          // ✅ TYLKO LocalProvider
+  chatOptions.function_call = 'auto'
+  console.log('🔧 Function calling enabled for LocalProvider')
+} else {
+  console.log('⚠️ Function calling disabled - Mem0Provider uses automatic memory')
+}
+
+// Mem0Provider - Background Auto-Save (linia 767)
+const isMem0Provider = memoryRouter.activeProvider?.providerName === 'Mem0Provider'
+if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
+  setImmediate(async () => {                        // ✅ Background processing
+    const saveResult = await memoryRouter.saveMemory(userId, message, {
+      conversation_messages: conversationMessages    // ✅ Clean conversation format
+    })
+  })
+}
+```
+
+#### 🎯 Dlaczego Ta Architektura Działa
+
+1. **Brak Konfliktów**: LocalProvider używa function calling, Mem0Provider nie
+2. **Różne Podejścia**: Manual vs automatic memory - każdy optymalny dla swojego use case
+3. **User Choice**: Można switchować między providerami bez utraty funkcjonalności  
+4. **Performance**: Mem0 w background nie blokuje chat responses
+5. **Fallback Safety**: Local zawsze available jako backup
+6. **Clean Separation**: Każdy provider ma własną logikę bez cross-interference
+
+#### 📊 Porównanie Systemów
+
+| Aspekt | LocalProvider | Mem0Provider |
+|--------|---------------|--------------|
+| **Function Calling** | ✅ remember_this() | ❌ Disabled |
+| **Memory Approach** | Manual (AI decides) | Automatic (conversation-based) |
+| **API Usage** | OpenAI + LangChain + Supabase | Mem0 API ONLY |
+| **Processing** | Synchronous | Background async |
+| **Storage** | memories_v2 (Supabase) | Mem0 Cloud Platform |
+| **Custom Logic** | Embeddings + similarity search | Clean API calls only |
+| **Memory Rules** | 120-line detailed prompt | No rules (automatic) |
+| **Graph Memory** | No | Yes (automatic relationships) |
+| **Performance** | Blocks during function calling | Non-blocking background |
+
+#### 🔄 Router Configuration
+
+Memory Router wybiera aktywnego providera z `app_config.default_memory_provider`:
+- `'local'` → LocalProvider z function calling
+- `'mem0'` → Mem0Provider z automatic memory  
+- Fallback zawsze do LocalProvider jeśli główny provider fails
+
+**Ta separacja umożliwia używanie najlepszego z obu światów bez konfliktów architektonicznych.**
+
 ## 🔧 KONFIGURACJA
 
 ### Zmienne Środowiskowe
