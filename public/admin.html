@@ -935,6 +935,38 @@ Loading prompt...
                     <div id="prompt_status" style="margin-top: 10px; font-size: 14px;"></div>
                 </div>
             </div>
+            
+            <!-- Advanced Telemetry Section -->
+            <div class="config-section">
+                <div class="config-header">📊 Advanced Telemetry & Analytics</div>
+                <div style="padding: 20px;">
+                    <!-- Telemetry Navigation -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                            <button onclick="loadTelemetryData('mem0-costs')" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 12px;">
+                                💰 Mem0 Costs
+                            </button>
+                            <button onclick="loadTelemetryData('top-users')" style="background: #007bff; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 12px;">
+                                👑 Top Users
+                            </button>
+                            <button onclick="loadTelemetryData('detailed-performance')" style="background: #FF69B4; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 12px;">
+                                ⚡ Performance
+                            </button>
+                            <button onclick="loadTelemetryData('dashboard')" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 12px;">
+                                📊 Dashboard
+                            </button>
+                        </div>
+                        <div id="telemetry_status" style="font-size: 12px; margin-bottom: 10px;"></div>
+                    </div>
+
+                    <!-- Telemetry Content -->
+                    <div id="telemetry_content" style="background: #f8f9fa; padding: 15px; border-radius: 8px; min-height: 200px;">
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            Select a telemetry option above to view analytics data
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1970,31 +2002,69 @@ Loading prompt...
         /**
          * Load main telemetry dashboard data
          */
-        async function loadTelemetryData() {
-            console.log('🔄 Loading telemetry data...');
+        async function loadTelemetryData(action = 'dashboard') {
+            console.log(`🔄 Loading telemetry data: ${action}...`);
             
-            // Show loading state
+            // Update UI state
+            const statusElement = document.getElementById('telemetry_status');
+            const contentElement = document.getElementById('telemetry_content');
+            
+            if (statusElement) statusElement.innerHTML = `⏳ Loading ${action} data...`;
+            if (contentElement) contentElement.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner"></div>Loading...</div>';
+            
+            // Show loading state for old dashboard
             const loadingSpinner = document.querySelector('.loading-spinner');
             const placeholder = document.getElementById('telemetryPlaceholder');
             if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
             if (placeholder) placeholder.style.display = 'none';
             
             try {
-                const response = await fetch('/api/admin/telemetry?action=dashboard');
+                const response = await fetch(`/api/admin/telemetry?action=${action}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    telemetryData.dashboard = result.data;
-                    updateDashboardMetrics(result.data);
-                    showDashboardOverview(result.data);
-                    console.log('✅ Telemetry data loaded successfully');
+                    telemetryData[action] = result.data;
+                    
+                    // Update status
+                    if (statusElement) statusElement.innerHTML = `✅ ${action} data loaded (${new Date().toLocaleTimeString()})`;
+                    
+                    // Route to appropriate display function
+                    switch (action) {
+                        case 'dashboard':
+                            updateDashboardMetrics(result.data);
+                            showDashboardOverview(result.data);
+                            break;
+                        case 'mem0-costs':
+                            showMem0CostAnalytics(result.data);
+                            break;
+                        case 'top-users':
+                            showTopUsersAnalytics(result.data);
+                            break;
+                        case 'detailed-performance':
+                            showDetailedPerformanceMetrics(result.data);
+                            break;
+                        default:
+                            if (contentElement) contentElement.innerHTML = `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                    }
+                    
+                    console.log(`✅ ${action} telemetry data loaded successfully`);
                 } else {
-                    throw new Error(result.error || 'Failed to load telemetry data');
+                    throw new Error(result.error || `Failed to load ${action} data`);
                 }
                 
             } catch (error) {
-                console.error('❌ Error loading telemetry:', error);
-                showTelemetryError('Failed to load telemetry data: ' + error.message);
+                console.error(`❌ Error loading ${action} telemetry:`, error);
+                if (statusElement) statusElement.innerHTML = `❌ Failed to load ${action} data`;
+                if (contentElement) contentElement.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #dc3545;">
+                        <h4>❌ Error Loading ${action} Data</h4>
+                        <p>${error.message}</p>
+                        <button onclick="loadTelemetryData('${action}')" style="background: #007bff; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; margin-top: 10px;">
+                            🔄 Retry
+                        </button>
+                    </div>
+                `;
+                showTelemetryError(`Failed to load ${action} data: ` + error.message);
             } finally {
                 // Hide loading state
                 if (loadingSpinner) loadingSpinner.style.display = 'none';
@@ -2315,6 +2385,225 @@ Loading prompt...
             `;
         }
         
+        /**
+         * Show Mem0 Cost Analytics
+         */
+        function showMem0CostAnalytics(data) {
+            const contentElement = document.getElementById('telemetry_content');
+            if (!contentElement) return;
+            
+            contentElement.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #28a745; margin-bottom: 15px;">💰 Mem0 Cost Analytics</h3>
+                    
+                    <!-- Cost Overview -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0; color: #28a745;">Total Operations</h4>
+                            <div style="font-size: 24px; font-weight: bold;">${data.overview.totalOperations}</div>
+                            <small style="color: #666;">All time</small>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0; color: #FF69B4;">Monthly Cost</h4>
+                            <div style="font-size: 24px; font-weight: bold;">$${data.overview.estimatedMonthlyCost.toFixed(4)}</div>
+                            <small style="color: #666;">Estimated</small>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0; color: #007bff;">Cost per Operation</h4>
+                            <div style="font-size: 24px; font-weight: bold;">$${data.overview.costPerOperation.toFixed(6)}</div>
+                            <small style="color: #666;">Average</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Operations Breakdown -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+                        <h4 style="margin-top: 0;">📊 Operations Breakdown</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                            <div><strong>Today:</strong> ${data.operations.today}</div>
+                            <div><strong>This Week:</strong> ${data.operations.thisWeek}</div>
+                            <div><strong>This Month:</strong> ${data.operations.thisMonth}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cost Details -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                        <h4 style="margin-top: 0;">💸 Cost Details</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div>
+                                <strong>Add Operations:</strong><br>
+                                ${data.costBreakdown.addOperations.count} × $${data.costBreakdown.addOperations.unitCost} = $${data.costBreakdown.addOperations.totalCost.toFixed(4)}
+                            </div>
+                            <div>
+                                <strong>Search Operations:</strong><br>
+                                ${data.costBreakdown.searchOperations.count} × $${data.costBreakdown.searchOperations.unitCost} = $${data.costBreakdown.searchOperations.totalCost.toFixed(4)}
+                            </div>
+                            <div>
+                                <strong>Storage Costs:</strong><br>
+                                ${data.costBreakdown.storageCosts.memories} memories × $${data.costBreakdown.storageCosts.dailyCost.toFixed(6)}/day
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Show Top Users Analytics
+         */
+        function showTopUsersAnalytics(data) {
+            const contentElement = document.getElementById('telemetry_content');
+            if (!contentElement) return;
+            
+            contentElement.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #007bff; margin-bottom: 15px;">👑 Top Users Analytics</h3>
+                    
+                    <!-- Summary -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Total Users</h4>
+                            <div style="font-size: 24px; font-weight: bold;">${data.summary.totalUsers}</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Total Memories</h4>
+                            <div style="font-size: 24px; font-weight: bold;">${data.summary.totalMemories}</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Avg per User</h4>
+                            <div style="font-size: 24px; font-weight: bold;">${data.summary.avgMemoriesPerUser}</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Power Users</h4>
+                            <div style="font-size: 24px; font-weight: bold;">${data.insights.powerUsers}</div>
+                            <small>10+ memories</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Users Table -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                        <h4 style="margin-top: 0;">🏆 Top ${data.topUsers.length} Users</h4>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8f9fa;">
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">#</th>
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">User</th>
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Memories</th>
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Avg Importance</th>
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Per Day</th>
+                                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Days Active</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.topUsers.map((user, index) => `
+                                        <tr>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                                                <strong>${user.userName}</strong><br>
+                                                <small style="color: #666;">${user.userEmail}</small>
+                                            </td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${user.totalMemories}</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${user.avgImportance}⭐</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${user.memoriesPerDay}</td>
+                                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${user.daysSinceFirstMemory}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Show Detailed Performance Metrics
+         */
+        function showDetailedPerformanceMetrics(data) {
+            const contentElement = document.getElementById('telemetry_content');
+            if (!contentElement) return;
+            
+            if (data.message) {
+                // No performance data available yet
+                contentElement.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <h3>⚡ Performance Metrics</h3>
+                        <p>${data.message}</p>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                            <h4>💡 Suggestions:</h4>
+                            <ul style="text-align: left; display: inline-block;">
+                                ${data.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            contentElement.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: #FF69B4; margin-bottom: 15px;">⚡ Detailed Performance Metrics</h3>
+                    
+                    <!-- Overview Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Avg TTFT</h4>
+                            <div style="font-size: 24px; font-weight: bold;">${data.overview.avgTTFT}ms</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Fastest</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #28a745;">${data.overview.fastestRequest}ms</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Slowest</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #dc3545;">${data.overview.slowestRequest}ms</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                            <h4 style="margin: 0 0 10px 0;">Score</h4>
+                            <div style="font-size: 18px; font-weight: bold;">${data.recentTrends.performanceScore}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stage Breakdown -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+                        <h4 style="margin-top: 0;">🔄 Stage Breakdown</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div>
+                                <strong>Config Load:</strong><br>
+                                Avg: ${data.stageBreakdown.configLoad.avg}ms<br>
+                                <small>Range: ${data.stageBreakdown.configLoad.min}-${data.stageBreakdown.configLoad.max}ms</small>
+                            </div>
+                            <div>
+                                <strong>Memory Retrieval:</strong><br>
+                                Avg: ${data.stageBreakdown.memoryRetrieval.avg}ms<br>
+                                <small>Range: ${data.stageBreakdown.memoryRetrieval.min}-${data.stageBreakdown.memoryRetrieval.max}ms</small>
+                            </div>
+                            <div>
+                                <strong>OpenAI Call:</strong><br>
+                                Avg: ${data.stageBreakdown.openaiCall.avg}ms<br>
+                                <small>Range: ${data.stageBreakdown.openaiCall.min}-${data.stageBreakdown.openaiCall.max}ms</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cache Effectiveness -->
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                        <h4 style="margin-top: 0;">🚀 Cache Effectiveness</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <strong>Config Cache:</strong> ${data.cacheEffectiveness.configCacheRate}% hit rate<br>
+                                <small>${data.cacheEffectiveness.configCacheHits}/${data.cacheEffectiveness.totalRequests} requests</small>
+                            </div>
+                            <div>
+                                <strong>Prompt Cache:</strong> ${data.cacheEffectiveness.promptCacheRate}% hit rate<br>
+                                <small>${data.cacheEffectiveness.promptCacheHits}/${data.cacheEffectiveness.totalRequests} requests</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Auto-refresh telemetry data every 30 seconds
         setInterval(() => {
             if (document.getElementById('telemetryContent').innerHTML.includes('📊 System Overview')) {
