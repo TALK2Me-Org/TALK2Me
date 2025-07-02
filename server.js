@@ -53,6 +53,7 @@ let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
 let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
 let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler;
+let telemetryHandler;
 
 try {
   console.log('📦 Loading API handlers...');
@@ -161,6 +162,14 @@ try {
     console.log('✅ Loaded: debug-mem0 handler');
   } catch (e) {
     console.log('⚠️ Could not load debug-mem0 handler:', e.message);
+  }
+  
+  // Telemetry handler
+  try {
+    telemetryHandler = (await import('./api/admin/telemetry.js')).default;
+    console.log('✅ Loaded: telemetry handler');
+  } catch (e) {
+    console.log('⚠️ Could not load telemetry handler:', e.message);
   }
   
   console.log('✅ All handlers loaded successfully');
@@ -367,6 +376,12 @@ if (memoryReloadHandler) {
 if (debugMem0Handler) {
   app.get('/api/memory/debug-mem0', debugMem0Handler);
   console.log('✅ Registered route: GET /api/memory/debug-mem0');
+}
+
+// Telemetry endpoints
+if (telemetryHandler) {
+  app.get('/api/admin/telemetry', telemetryHandler);
+  console.log('✅ Registered route: GET /api/admin/telemetry');
 }
 
 // Root endpoint - handle both health checks and static files

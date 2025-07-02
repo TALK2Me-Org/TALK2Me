@@ -427,6 +427,122 @@
             60% { text-shadow: .25em 0 0 #666, .5em 0 0 rgba(0,0,0,0); }
             80%, 100% { text-shadow: .25em 0 0 #666, .5em 0 0 #666; }
         }
+        
+        /* Telemetry Dashboard Styles */
+        .metric-card {
+            background: white;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FF69B4;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-primary {
+            background: #FF69B4;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #e55a9f;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-item h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .stat-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FF69B4;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,105,180,.3);
+            border-radius: 50%;
+            border-top-color: #FF69B4;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -439,6 +555,49 @@
         
         <div class="admin-panel">
             <div id="adminStatus"></div>
+            
+            <!-- Telemetry & Analytics Section -->
+            <div class="config-section">
+                <div class="config-header">📊 Analytics & Telemetry Dashboard</div>
+                <div style="padding: 20px;">
+                    <!-- Overview Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="metric-card">
+                            <div class="metric-value" id="activeUsers">-</div>
+                            <div class="metric-label">Active Users (24h)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalMessages">-</div>
+                            <div class="metric-label">Messages Today</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="memoryOps">-</div>
+                            <div class="metric-label">Memory Operations</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="systemHealth">-</div>
+                            <div class="metric-label">System Health</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button onclick="loadTelemetryData()" class="btn-primary">🔄 Refresh Data</button>
+                        <button onclick="showPerformanceMetrics()" class="btn-secondary">📈 Performance</button>
+                        <button onclick="showMemoryAnalytics()" class="btn-secondary">🧠 Memory Analytics</button>
+                        <button onclick="showUserAnalytics()" class="btn-secondary">👥 User Behavior</button>
+                        <button onclick="exportTelemetryData()" class="btn-secondary">📥 Export Data</button>
+                    </div>
+                    
+                    <!-- Telemetry Content Area -->
+                    <div id="telemetryContent" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; padding: 20px;">
+                        <div style="text-align: center; color: #666;">
+                            <div class="loading-spinner" style="display: none;">Loading telemetry data...</div>
+                            <div id="telemetryPlaceholder">Click "Refresh Data" to load analytics dashboard</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- AI Models Section -->
             <div class="config-section">
@@ -1798,6 +1957,371 @@ Loading prompt...
         
         // Load users for memory management
         loadUsers();
+        
+        // Auto-load telemetry data on page load
+        loadTelemetryData();
+    </script>
+    
+    <!-- Telemetry Dashboard JavaScript -->
+    <script>
+        // Global telemetry data cache
+        let telemetryData = {};
+        
+        /**
+         * Load main telemetry dashboard data
+         */
+        async function loadTelemetryData() {
+            console.log('🔄 Loading telemetry data...');
+            
+            // Show loading state
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const placeholder = document.getElementById('telemetryPlaceholder');
+            if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
+            if (placeholder) placeholder.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/admin/telemetry?action=dashboard');
+                const result = await response.json();
+                
+                if (result.success) {
+                    telemetryData.dashboard = result.data;
+                    updateDashboardMetrics(result.data);
+                    showDashboardOverview(result.data);
+                    console.log('✅ Telemetry data loaded successfully');
+                } else {
+                    throw new Error(result.error || 'Failed to load telemetry data');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading telemetry:', error);
+                showTelemetryError('Failed to load telemetry data: ' + error.message);
+            } finally {
+                // Hide loading state
+                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'block';
+            }
+        }
+        
+        /**
+         * Update overview metric cards
+         */
+        function updateDashboardMetrics(data) {
+            document.getElementById('activeUsers').textContent = data.overview.activeUsers24h || '0';
+            document.getElementById('totalMessages').textContent = data.overview.messagesTotal || '0';
+            document.getElementById('memoryOps').textContent = data.overview.memoryOperations || '0';
+            
+            // Format system health with color
+            const healthElement = document.getElementById('systemHealth');
+            const status = data.overview.systemStatus || 'Unknown';
+            healthElement.textContent = status;
+            healthElement.style.color = status === 'Healthy' ? '#28a745' : '#dc3545';
+        }
+        
+        /**
+         * Show dashboard overview in content area
+         */
+        function showDashboardOverview(data) {
+            const content = document.getElementById('telemetryContent');
+            content.innerHTML = `
+                <div class="chart-title">📊 System Overview</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h4>📈 Performance</h4>
+                        <div class="value">${data.overview.avgResponseTime || 'N/A'}</div>
+                        <small>Average Response Time</small>
+                    </div>
+                    <div class="stat-item">
+                        <h4>⏱️ Uptime</h4>
+                        <div class="value">${data.overview.uptime || 'N/A'}</div>
+                        <small>System Uptime</small>
+                    </div>
+                    <div class="stat-item">
+                        <h4>👥 Total Users</h4>
+                        <div class="value">${data.quickStats.totalUsers || '0'}</div>
+                        <small>Registered Users</small>
+                    </div>
+                    <div class="stat-item">
+                        <h4>🧠 Total Memories</h4>
+                        <div class="value">${data.quickStats.totalMemories || '0'}</div>
+                        <small>Stored Memories</small>
+                    </div>
+                    <div class="stat-item">
+                        <h4>💬 Conversations</h4>
+                        <div class="value">${data.quickStats.totalConversations || '0'}</div>
+                        <small>Total Conversations</small>
+                    </div>
+                    <div class="stat-item">
+                        <h4>💾 Storage</h4>
+                        <div class="value">${data.quickStats.storageUsed || 'N/A'}</div>
+                        <small>Storage Used</small>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">🚨 System Alerts</div>
+                    <div style="display: flex; gap: 20px;">
+                        <div style="color: #dc3545;">❌ Errors: ${data.alerts.errors || 0}</div>
+                        <div style="color: #ffc107;">⚠️ Warnings: ${data.alerts.warnings || 0}</div>
+                        <div style="color: #dc3545;">🔴 Critical: ${data.alerts.critical || 0}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">
+                    Last updated: ${new Date(data.overview.lastUpdated).toLocaleString()} | 
+                    Data freshness: ${data.meta?.dataFreshness || 'real-time'}
+                </div>
+            `;
+        }
+        
+        /**
+         * Show performance metrics
+         */
+        async function showPerformanceMetrics() {
+            const content = document.getElementById('telemetryContent');
+            content.innerHTML = '<div class="loading-spinner"></div> Loading performance metrics...';
+            
+            try {
+                const response = await fetch('/api/admin/telemetry?action=performance&timeframe=24h');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    content.innerHTML = `
+                        <div class="chart-title">📈 Performance Metrics (24h)</div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <h4>⚡ API Performance</h4>
+                                <div class="value">${data.apiPerformance.averageResponseTime}</div>
+                                <small>Average Response Time</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Requests: ${data.apiPerformance.requestVolume}</div>
+                                    <div>Error Rate: ${data.apiPerformance.errorRate}</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>🧠 Memory Performance</h4>
+                                <div class="value">${data.memoryPerformance.averageLatency}</div>
+                                <small>Average Latency</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Operations: ${data.memoryPerformance.operationsCount}</div>
+                                    <div>Success Rate: ${data.memoryPerformance.successRate}</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>🌐 Mem0 Provider</h4>
+                                <div class="value">${data.memoryPerformance.providerComparison.mem0.avg}</div>
+                                <small>Mem0 Average Latency</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Count: ${data.memoryPerformance.providerComparison.mem0.count}</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>🏠 Local Provider</h4>
+                                <div class="value">${data.memoryPerformance.providerComparison.local.avg}</div>
+                                <small>Local Average Latency</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Count: ${data.memoryPerformance.providerComparison.local.count}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-title">📊 Performance Trends</div>
+                            <div style="color: #666; text-align: center; padding: 20px;">
+                                📈 Chart visualization would be displayed here<br>
+                                <small>Future enhancement: Interactive charts with Chart.js</small>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+                
+            } catch (error) {
+                showTelemetryError('Failed to load performance metrics: ' + error.message);
+            }
+        }
+        
+        /**
+         * Show memory analytics
+         */
+        async function showMemoryAnalytics() {
+            const content = document.getElementById('telemetryContent');
+            content.innerHTML = '<div class="loading-spinner"></div> Loading memory analytics...';
+            
+            try {
+                const response = await fetch('/api/admin/telemetry?action=memory');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    content.innerHTML = `
+                        <div class="chart-title">🧠 Memory System Analytics</div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <h4>📊 Overview</h4>
+                                <div class="value">${data.overview.totalMemories}</div>
+                                <small>Total Memories</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Unique Users: ${data.overview.uniqueUsers}</div>
+                                    <div>Avg per User: ${data.overview.avgMemoriesPerUser.toFixed(1)}</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>📈 Quality</h4>
+                                <div class="value">${data.qualityMetrics.averageImportance}</div>
+                                <small>Average Importance</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Avg Length: ${data.qualityMetrics.contentLength}</div>
+                                    <div>Engagement: ${data.qualityMetrics.userEngagement}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-title">📋 Memory Distribution</div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                ${Object.entries(data.distribution.byType).map(([type, count]) => `
+                                    <div style="text-align: center; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                                        <div style="font-weight: bold; color: #FF69B4;">${count}</div>
+                                        <div style="font-size: 12px; text-transform: capitalize;">${type}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+                
+            } catch (error) {
+                showTelemetryError('Failed to load memory analytics: ' + error.message);
+            }
+        }
+        
+        /**
+         * Show user analytics
+         */
+        async function showUserAnalytics() {
+            const content = document.getElementById('telemetryContent');
+            content.innerHTML = '<div class="loading-spinner"></div> Loading user analytics...';
+            
+            try {
+                const response = await fetch('/api/admin/telemetry?action=users');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    content.innerHTML = `
+                        <div class="chart-title">👥 User Behavior Analytics</div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <h4>📈 Growth</h4>
+                                <div class="value">${data.growth.totalUsers}</div>
+                                <small>Total Users</small>
+                                <div style="margin-top: 10px;">
+                                    <div>New Today: ${data.growth.newUsersToday}</div>
+                                    <div>Retention: ${data.growth.retentionRate}</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>💬 Engagement</h4>
+                                <div class="value">${data.engagement.activeUsers}</div>
+                                <small>Active Users (24h)</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Avg Session: ${data.engagement.avgSessionDuration}</div>
+                                    <div>Conv/User: ${data.engagement.conversationsPerUser.toFixed(1)}</div>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <h4>📱 Behavior</h4>
+                                <div class="value">${data.behavior.deviceTypes.mobile}</div>
+                                <small>Mobile Usage</small>
+                                <div style="margin-top: 10px;">
+                                    <div>Desktop: ${data.behavior.deviceTypes.desktop}</div>
+                                    <div>Favorites: ${data.engagement.favoriteRatio}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <div class="chart-title">⏰ Peak Usage Hours</div>
+                            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                ${data.behavior.peakHours.map(hour => `
+                                    <div style="padding: 8px 12px; background: #FF69B4; color: white; border-radius: 4px; font-size: 12px;">
+                                        ${hour}:00
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 15px; font-size: 11px; color: #666; text-align: center;">
+                            ${result.meta.privacyNote}
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+                
+            } catch (error) {
+                showTelemetryError('Failed to load user analytics: ' + error.message);
+            }
+        }
+        
+        /**
+         * Export telemetry data
+         */
+        async function exportTelemetryData() {
+            try {
+                const exportData = {
+                    timestamp: new Date().toISOString(),
+                    dashboard: telemetryData.dashboard,
+                    exportedBy: 'admin-panel'
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `talk2me-telemetry-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('✅ Telemetry data exported successfully');
+                
+            } catch (error) {
+                console.error('❌ Export error:', error);
+                alert('Failed to export telemetry data: ' + error.message);
+            }
+        }
+        
+        /**
+         * Show error message in telemetry content
+         */
+        function showTelemetryError(message) {
+            const content = document.getElementById('telemetryContent');
+            content.innerHTML = `
+                <div style="text-align: center; color: #dc3545; padding: 40px;">
+                    <div style="font-size: 18px; margin-bottom: 10px;">❌ Error</div>
+                    <div>${message}</div>
+                    <button onclick="loadTelemetryData()" class="btn-primary" style="margin-top: 15px;">🔄 Retry</button>
+                </div>
+            `;
+        }
+        
+        // Auto-refresh telemetry data every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('telemetryContent').innerHTML.includes('📊 System Overview')) {
+                loadTelemetryData();
+            }
+        }, 30000);
+        
     </script>
 </body>
 </html>
