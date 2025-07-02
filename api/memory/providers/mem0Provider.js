@@ -164,11 +164,10 @@ export default class Mem0Provider extends MemoryProvider {
 
       console.log('🧪 Mem0Provider: Testing real API connection...');
       
-      // Test real API call - get memories count for test user with graph memory
+      // Test real API call - get memories count for test user
       const memoriesResponse = await this.client.getAll({ 
         user_id: this.testUserId,  // For connection test, use configured test user
-        enable_graph: true,    // 🔗 NEW: Enable graph memory for relationship mapping
-        version: 'v2'         // 🚀 NEW: V2 API for 91% better latency
+        version: 'v2'         // 🚀 V2 API for better latency
       });
       
       // Handle graph response format
@@ -219,34 +218,18 @@ export default class Mem0Provider extends MemoryProvider {
         metadata
       });
 
-      // Prepare user metadata and memory data
-      const userMetadata = this.createUserMetadata(userId, readableUserId);
-      
-      // Use conversation_messages if provided (auto-save), otherwise single user message
+      // Simple message format for Mem0 V2 API
       const messages = metadata.conversation_messages || [{ role: 'user', content: content }];
       
-      const memoryData = {
-        userId: readableUserId,
-        messages: messages,
-        metadata: {
-          summary: metadata.summary || content.substring(0, 100),
-          importance: metadata.importance || 3, // Lower default for auto-saves
-          memory_type: metadata.memory_type || 'personal',
-          conversation_id: metadata.conversation_id,
-          original_user_id: userId,
-          auto_saved: metadata.auto_saved || false
-        }
-      };
+      console.log('💾 Mem0Provider: Prepared messages for V2 API:', {
+        messageCount: messages.length,
+        messageRoles: messages.map(m => m.role)
+      });
 
-      // Merge user metadata
-      memoryData.metadata = { ...memoryData.metadata, ...userMetadata };
-
-      // 🚀 ASYNC: Single optimized API call
-      const result = await this.client.add(memoryData.messages, {
+      // 🚀 CLEAN Mem0 V2 API call - only standard parameters
+      const result = await this.client.add(messages, {
         user_id: readableUserId,
-        enable_graph: true,
-        version: 'v2',
-        metadata: memoryData.metadata
+        version: 'v2'
       });
 
       const latency = Date.now() - startTime;
@@ -294,12 +277,11 @@ export default class Mem0Provider extends MemoryProvider {
         limit
       });
       
-      // 🚀 ASYNC OPTIMIZATION: Single optimized search call
+      // 🚀 CLEAN Mem0 V2 search API - only standard parameters
       const searchResults = await this.client.search(query, { 
         user_id: readableUserId,
-        enable_graph: true,
         version: 'v2',
-        limit: limit 
+        top_k: limit 
       });
 
       // Process search results
@@ -354,10 +336,9 @@ export default class Mem0Provider extends MemoryProvider {
         filters 
       });
 
-      // 🚀 ASYNC OPTIMIZATION: Single optimized getAll call
+      // 🚀 CLEAN Mem0 V2 getAll API - only standard parameters
       const allMemoriesResponse = await this.client.getAll({ 
         user_id: readableUserId,
-        enable_graph: true,
         version: 'v2'
       });
 

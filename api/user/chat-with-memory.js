@@ -762,15 +762,13 @@ export default async function handler(req, res) {
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', activeConversationId)
 
-      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider - WYŁĄCZONA
-      // TODO: Dodać auto-save gdy system będzie w pełni stabilny
-      // Problem: conversation_messages format powoduje błędy w client.add()
+      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider - CLEAN V2 API
       const isMem0Provider = memoryRouter.activeProvider?.providerName === 'Mem0Provider'
-      if (false && memorySystemEnabled && isMem0Provider && userId && fullResponse) {
+      if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
         try {
-          console.log('💾 Auto-saving conversation to Mem0Provider...')
+          console.log('💾 Auto-saving conversation to Mem0Provider with clean V2 API...')
           
-          // Test z conversation_messages - bezpieczne formatowanie
+          // 🚀 CLEAN Mem0 V2 format - simple conversation messages
           const conversationMessages = [
             { role: 'user', content: message },
             { role: 'assistant', content: fullResponse }
@@ -778,11 +776,9 @@ export default async function handler(req, res) {
           
           const saveResult = await memoryRouter.saveMemory(
             userId,
-            message, // original user message for context
+            message, // original content for fallback
             {
-              conversation_messages: conversationMessages,
-              auto_saved: true,
-              conversation_id: activeConversationId
+              conversation_messages: conversationMessages
             }
           )
           
