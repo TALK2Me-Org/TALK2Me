@@ -221,15 +221,20 @@ export default class Mem0Provider extends MemoryProvider {
 
       // Prepare user metadata and memory data
       const userMetadata = this.createUserMetadata(userId, readableUserId);
+      
+      // Use conversation_messages if provided (auto-save), otherwise single user message
+      const messages = metadata.conversation_messages || [{ role: 'user', content: content }];
+      
       const memoryData = {
         userId: readableUserId,
-        messages: [{ role: 'user', content: content }],
+        messages: messages,
         metadata: {
           summary: metadata.summary || content.substring(0, 100),
-          importance: metadata.importance || 5,
+          importance: metadata.importance || 3, // Lower default for auto-saves
           memory_type: metadata.memory_type || 'personal',
           conversation_id: metadata.conversation_id,
-          original_user_id: userId
+          original_user_id: userId,
+          auto_saved: metadata.auto_saved || false
         }
       };
 

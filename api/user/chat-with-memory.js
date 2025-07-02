@@ -418,13 +418,14 @@ export default async function handler(req, res) {
             stream: true
           }
 
-          // 4. PRZYGOTUJ FUNKCJĘ remember_this
-          // AI może wywołać tę funkcję aby zapisać ważną informację do pamięci
-          // Używa Memory Router z automatycznym fallback między providerami
-          if (userId && memorySystemEnabled) {
+          // 4. PRZYGOTUJ FUNKCJĘ remember_this TYLKO dla LocalProvider
+          // Mem0Provider używa automatycznej pamięci bez function calling
+          // LocalProvider zachowuje pełną funkcjonalność z remember_this()
+          const isLocalProvider = memoryRouter.activeProvider?.providerName === 'LocalProvider'
+          if (userId && memorySystemEnabled && isLocalProvider) {
             chatOptions.functions = [MEMORY_FUNCTION]
             chatOptions.function_call = 'auto'
-            console.log('🔧 Function calling enabled for Memory Router', {
+            console.log('🔧 Function calling enabled for LocalProvider', {
               model: openaiModel,
               userId: userId,
               memoryEnabled: memorySystemEnabled,
@@ -434,7 +435,8 @@ export default async function handler(req, res) {
             console.log('⚠️ Function calling disabled:', {
               userId: !!userId,
               memorySystemEnabled,
-              routerInitialized: memoryRouter.initialized
+              activeProvider: memoryRouter.activeProvider?.providerName || 'none',
+              reason: isLocalProvider ? 'other' : 'Mem0Provider uses automatic memory'
             })
           }
 
@@ -450,10 +452,10 @@ export default async function handler(req, res) {
               stream: true
             }
 
-            if (userId && memorySystemEnabled) {
+            if (userId && memorySystemEnabled && isLocalProvider) {
               chatOptions.functions = [MEMORY_FUNCTION]
               chatOptions.function_call = 'auto'
-              console.log('🔧 Function calling enabled for Memory Router (fallback)', {
+              console.log('🔧 Function calling enabled for LocalProvider (fallback)', {
                 model: 'gpt-3.5-turbo',
                 userId: userId,
                 memoryEnabled: memorySystemEnabled,
@@ -645,6 +647,38 @@ export default async function handler(req, res) {
         .from('conversations')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', activeConversationId)
+
+      // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider
+      // Zapisz całą konwersację do Mem0 dla automatycznej ekstrakcji wspomnień
+      const isMem0Provider = memoryRouter.activeProvider?.providerName === 'Mem0Provider'
+      if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
+        try {
+          console.log('💾 Auto-saving conversation to Mem0Provider...')
+          const conversationMessages = [
+            { role: 'user', content: message },
+            { role: 'assistant', content: fullResponse }
+          ]
+          
+          const saveResult = await memoryRouter.saveMemory(
+            userId,
+            message, // original user message for context
+            {
+              conversation_messages: conversationMessages,
+              conversation_id: activeConversationId,
+              auto_saved: true,
+              timestamp: new Date().toISOString()
+            }
+          )
+          
+          if (saveResult.success) {
+            console.log(`✅ Mem0Provider: Auto-saved conversation (${saveResult.latency}ms)`)
+          } else {
+            console.warn('⚠️ Mem0Provider: Auto-save failed:', saveResult.error)
+          }
+        } catch (error) {
+          console.error('❌ Mem0Provider: Auto-save error:', error.message)
+        }
+      }
     }
 
     // Stary kod zapisujący do chat_history usunięty - używamy nowego systemu conversations/messages
