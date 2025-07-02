@@ -7,6 +7,78 @@ a projekt używa [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.12.0] - 2025-07-02
+
+### Sesja 25 - Mem0 Platform API Fix - Graph Memory Working! (02.07.2025, 23:40-00:10)
+**Developer**: Claude (AI Assistant)
+
+#### 🔧 **NAPRAWA: Mem0 Platform API - Graph Memory działa!**
+
+##### **🚨 Problem zidentyfikowany:**
+- **Root Cause**: Używaliśmy nieoficjalnych parametrów w Mem0 Platform API
+- **Błędne parametry**: `enable_graph: true`, `async: true` (nie istnieją w Platform API)
+- **Impact**: Graph Memory nie działał mimo że kod wyglądał poprawnie
+
+##### **✅ Naprawione:**
+
+1. **FAZA 1: Audit parametrów API**
+   - Zidentyfikowano 10 wystąpień nieoficjalnych parametrów
+   - 2 pliki: mem0Provider.js (6x) + debug-mem0.js (4x)
+   - Porównanie z oficjalną dokumentacją Mem0 Platform API
+
+2. **FAZA 2: Usunięcie nieoficjalnych parametrów**
+   - **REMOVED**: `enable_graph: true` - nie istnieje w Platform API
+   - **FIXED**: `async: true` → `async_mode: true` - poprawna składnia
+   - **Updated**: Wszystkie API calls używają tylko oficjalnych parametrów
+
+3. **FAZA 3: Test w production**
+   - Deploy na Railway z poprawionymi parametrami
+   - Test endpoint: `/api/memory/debug-mem0` - **SUCCESS!**
+   - Graph Memory działa: `"graphEnabled": true`, `"success": true`
+
+4. **FAZA 4: Dokumentacja aktualizowana**
+   - CLAUDE.md: Poprawione parametry w Memory Providers System
+   - Tabela porównawcza: "Platform API ONLY", "always enabled in Platform"
+
+##### **🎯 Kluczowe odkrycia:**
+
+**✅ OFICJALNE PARAMETRY (Platform API):**
+```javascript
+await client.add(messages, {
+  user_id: readableUserId,
+  version: 'v2',
+  async_mode: true     // ✅ OFICJALNY
+});
+```
+
+**❌ NIEOFICJALNE (używaliśmy błędnie):**
+```javascript
+enable_graph: true,   // ❌ Tylko w open-source
+async: true          // ❌ Błędna składnia
+```
+
+##### **📊 Wyniki po naprawie:**
+- **Graph Memory**: ✅ Działa automatycznie w Platform API
+- **Performance**: 1404ms latency (dobra wydajność)
+- **API Response**: Oficjalne parametry rozpoznawane poprawnie
+- **7 users** w systemie z working graph relationships
+
+#### 🔧 **Użyte technologie:**
+- **Mem0 Platform API** - oficjalna dokumentacja + real testing
+- **Platform vs Open-source** - różnice w parametrach API
+- **Railway deployment** - auto-deploy + production testing
+- **API debugging** - curl testing + response analysis
+
+#### 📊 **Stan końcowy:**
+- **Graph Memory**: ✅ FIXED - działa z oficjalnymi parametrami
+- **Code quality**: Clean API calls without custom parameters
+- **Documentation**: Updated with correct Platform API specs
+- **Production**: All Mem0 features working on Railway
+
+**PROBLEM RESOLVED: Graph Memory działa z poprawną Mem0 Platform API!** 🎉✅🔗
+
+---
+
 ## [1.11.0] - 2025-07-02
 
 ### Sesja 24 - Memory Providers System Documentation (02.07.2025, 23:30-23:35)

@@ -435,10 +435,10 @@ TALK2Me wykorzystuje zaawansowany **Memory Providers System** z router pattern, 
 **Implementacja Mem0Provider:**
 - **Clean API Only**: `client.add()`, `client.search()`, `client.getAll()` - standard calls
 - **No Custom Logic**: Żadnych manual embeddings, custom functions czy przerubek
-- **Standard Parameters**: `user_id`, `version: 'v2'`, `enable_graph: true`, `async: true`
+- **Standard Parameters**: `user_id`, `version: 'v2'`, `async_mode: true` (TYLKO oficjalne)
 - **Automatic Memory**: AI conversations automatycznie saved w background
-- **Graph Memory**: Relationships między wspomnieniami budowane automatycznie
-- **V2 Performance**: 91% better latency z async mode
+- **Graph Memory**: Always enabled w Platform API - relationships automatyczne
+- **V2 Performance**: 91% better latency z async_mode
 
 #### 🔧 Conditional Function Calling - Kluczowa Separacja
 
@@ -481,12 +481,12 @@ if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
 |--------|---------------|--------------|
 | **Function Calling** | ✅ remember_this() | ❌ Disabled |
 | **Memory Approach** | Manual (AI decides) | Automatic (conversation-based) |
-| **API Usage** | OpenAI + LangChain + Supabase | Mem0 API ONLY |
+| **API Usage** | OpenAI + LangChain + Supabase | Mem0 Platform API ONLY |
 | **Processing** | Synchronous | Background async |
 | **Storage** | memories_v2 (Supabase) | Mem0 Cloud Platform |
 | **Custom Logic** | Embeddings + similarity search | Clean API calls only |
 | **Memory Rules** | 120-line detailed prompt | No rules (automatic) |
-| **Graph Memory** | No | Yes (automatic relationships) |
+| **Graph Memory** | No | Yes (always enabled in Platform) |
 | **Performance** | Blocks during function calling | Non-blocking background |
 
 #### 🔄 Router Configuration
