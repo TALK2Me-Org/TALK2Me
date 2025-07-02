@@ -97,20 +97,13 @@ export default async function handler(req, res) {
     const startTime = Date.now();
     
     // Try a simple add operation first with graph memory enabled
-    // 🎯 NEW: Add test memory with readable user_id and rich metadata
+    // 🚀 CLEAN Mem0 V2 API call (matching production mem0Provider.js)
     const testMemory = await client.add([
       { role: 'user', content: 'Test memory from TALK2Me debug endpoint - Natalia Rybarczyk jest właścicielem TALK2Me i pracuje z Maciejem jako mentor projektu' }
     ], {
-      user_id: trimmedUserId,  // 🎯 NEW: Use readable user_id for dashboard
-      enable_graph: true,      // 🔗 Enable graph memory for relationship mapping
-      metadata: {
-        user_name: 'Test User Natalia',
-        user_email: 'test@nataliarybarczyk.pl',
-        user_role: 'Test User',
-        user_organization: 'TALK2Me',
-        user_type: 'test',
-        original_user_id: originalUserId
-      }
+      user_id: trimmedUserId,  // 🎯 Use readable user_id for dashboard
+      version: 'v2',           // 🚀 V2 API for performance
+      enable_graph: true       // 🔗 Enable graph memory for relationship mapping
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
@@ -128,8 +121,9 @@ export default async function handler(req, res) {
     
     // Now try to get all memories for this specific user with graph enabled
     const memoriesResponse = await client.getAll({ 
-      user_id: trimmedUserId,  // ✅ FIXED: Use actual user_id for proper separation
-      enable_graph: true       // 🔗 NEW: Enable graph memory to get relations
+      user_id: trimmedUserId,  // ✅ Use actual user_id for proper separation
+      version: 'v2',           // 🚀 V2 API for performance
+      enable_graph: true       // 🔗 Enable graph memory to get relations
     });
     
     // Handle graph response format

@@ -130,7 +130,8 @@ export default class Mem0Provider extends MemoryProvider {
       // Use test user for initialization test only
       const testResult = await this.client.getAll({ 
         user_id: this.testUserId,  // For initialization test, use configured test user
-        version: 'v2'  // 🚀 NEW: V2 API for 91% better latency
+        version: 'v2',  // 🚀 NEW: V2 API for 91% better latency
+        enable_graph: true  // 🔗 Enable graph memory for initialization test
       });
       console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
@@ -167,7 +168,8 @@ export default class Mem0Provider extends MemoryProvider {
       // Test real API call - get memories count for test user
       const memoriesResponse = await this.client.getAll({ 
         user_id: this.testUserId,  // For connection test, use configured test user
-        version: 'v2'         // 🚀 V2 API for better latency
+        version: 'v2',         // 🚀 V2 API for better latency
+        enable_graph: true     // 🔗 Enable graph memory for test
       });
       
       // Handle graph response format
@@ -226,10 +228,11 @@ export default class Mem0Provider extends MemoryProvider {
         messageRoles: messages.map(m => m.role)
       });
 
-      // 🚀 CLEAN Mem0 V2 API call - only standard parameters
+      // 🚀 CLEAN Mem0 V2 API call with Graph Memory enabled
       const result = await this.client.add(messages, {
         user_id: readableUserId,
-        version: 'v2'
+        version: 'v2',
+        enable_graph: true  // 🔗 Enable graph memory for relationships
       });
 
       const latency = Date.now() - startTime;
@@ -277,11 +280,12 @@ export default class Mem0Provider extends MemoryProvider {
         limit
       });
       
-      // 🚀 CLEAN Mem0 V2 search API - only standard parameters
+      // 🚀 CLEAN Mem0 V2 search API with Graph Memory enabled
       const searchResults = await this.client.search(query, { 
         user_id: readableUserId,
         version: 'v2',
-        top_k: limit 
+        top_k: limit,
+        enable_graph: true  // 🔗 Include graph relations in search
       });
 
       // Process search results
@@ -336,10 +340,11 @@ export default class Mem0Provider extends MemoryProvider {
         filters 
       });
 
-      // 🚀 CLEAN Mem0 V2 getAll API - only standard parameters
+      // 🚀 CLEAN Mem0 V2 getAll API with Graph Memory enabled
       const allMemoriesResponse = await this.client.getAll({ 
         user_id: readableUserId,
-        version: 'v2'
+        version: 'v2',
+        enable_graph: true  // 🔗 Include graph relations in response
       });
 
       // Process all memories response
