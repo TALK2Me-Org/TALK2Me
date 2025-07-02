@@ -33,6 +33,19 @@ export const promptCache = {
   source: 'none'
 }
 
+// 🚀 PERFORMANCE: Cache konfiguracji dla Mem0Provider
+export const configCache = {
+  config: null,
+  timestamp: 0,
+  ttl: 300000 // 5 minut cache dla config
+}
+
+// 🚀 PERFORMANCE: Cache OpenAI klienta dla performance
+export const openaiCache = {
+  client: null,
+  apiKey: null // Track API key to invalidate cache if changed
+}
+
 // Memory Router - modular provider system
 // Handles multiple memory providers (Local, Mem0) with automatic fallback
 // No caching needed as router manages provider instances internally
@@ -236,31 +249,43 @@ export default async function handler(req, res) {
       }
     }
 
-    // 1. POBIERZ KONFIGURACJĘ Z BAZY
-    // Konfiguracja zawiera OpenAI API key, temperature, max_tokens itp.
-    // Jeśli brak klucza w bazie, fallback na process.env.OPENAI_API_KEY
-    const { data: config } = await supabase
-      .from('app_config')
-      .select('config_key, config_value')
+    // 1. POBIERZ KONFIGURACJĘ Z BAZY (z cache dla performance)
+    // 🚀 PERFORMANCE: Cache config dla Mem0Provider (5min TTL)
+    let configMap = {}
     
-    const configMap = {}
-    config?.forEach(item => {
-      configMap[item.config_key] = item.config_value
-    })
+    if (configCache.config && Date.now() - configCache.timestamp < configCache.ttl) {
+      configMap = configCache.config
+      console.log('⚡ Using cached config (age:', Math.round((Date.now() - configCache.timestamp) / 1000), 'seconds)')
+    } else {
+      console.log('🔄 Fetching fresh config from database...')
+      const { data: config } = await supabase
+        .from('app_config')
+        .select('config_key, config_value')
+      
+      config?.forEach(item => {
+        configMap[item.config_key] = item.config_value
+      })
+      
+      // Cache config for performance
+      configCache.config = configMap
+      configCache.timestamp = Date.now()
+      console.log('💾 Config cached for 5 minutes')
+    }
 
     const activeModel = configMap.active_model || 'openai'
     
-    // 2. INICJALIZUJ MEMORY ROUTER
-    // Memory Router zarządza providerami pamięci (Local, Mem0) z automatycznym fallback
-    // Obsługuje modular provider system z hot reload capabilities
+    // 2. INICJALIZUJ MEMORY ROUTER (z optymalizacją dla performance)
+    // 🚀 PERFORMANCE: Szybka inicjalizacja dla Mem0Provider
     let memorySystemEnabled = false
     
     if (userId) {
       try {
-        console.log('🧠 Initializing Memory Router for user:', userId)
+        console.log('🧠 Memory Router check for user:', userId)
         
-        // Initialize router if not already done
-        if (!memoryRouter.initialized) {
+        // 🚀 FAST PATH: If already initialized, just check status
+        if (memoryRouter.initialized) {
+          console.log('⚡ Memory Router: Already initialized, checking status...')
+        } else {
           console.log('🚀 Memory Router: First-time initialization...')
           await memoryRouter.initialize()
         }
@@ -369,7 +394,18 @@ export default async function handler(req, res) {
     
     if (activeModel === 'openai' && openaiKey) {
       try {
-        const openai = new OpenAI({ apiKey: openaiKey })
+        // 🚀 PERFORMANCE: Cache OpenAI client to avoid re-initialization
+        let openai
+        if (openaiCache.client && openaiCache.apiKey === openaiKey) {
+          openai = openaiCache.client
+          console.log('⚡ Using cached OpenAI client')
+        } else {
+          console.log('🔄 Creating new OpenAI client...')
+          openai = new OpenAI({ apiKey: openaiKey })
+          openaiCache.client = openai
+          openaiCache.apiKey = openaiKey
+          console.log('💾 OpenAI client cached')
+        }
         
         // Pobierz prompt z cache lub Assistant API
         let systemPrompt = 'You are a helpful AI assistant.'
