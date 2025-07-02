@@ -93,20 +93,26 @@ export default async function handler(req, res) {
     
     const startTime = Date.now();
     
-    // Try a simple add operation first (this might work better)
+    // Try a simple add operation first with graph memory enabled
     // ✅ FIXED: Use user_id for proper user separation instead of agent_id
     const testMemory = await client.add([
-      { role: 'user', content: 'Test memory from TALK2Me debug endpoint' }
+      { role: 'user', content: 'Test memory from TALK2Me debug endpoint - Natalia jest właścicielem TALK2Me i pracuje z Maciejem' }
     ], {
-      user_id: trimmedUserId  // ✅ FIXED: Use actual user_id for proper separation
+      user_id: trimmedUserId,  // ✅ FIXED: Use actual user_id for proper separation
+      enable_graph: true       // 🔗 NEW: Enable graph memory for relationship mapping
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
     
-    // Now try to get all memories for this specific user
-    const memories = await client.getAll({ 
-      user_id: trimmedUserId  // ✅ FIXED: Use actual user_id for proper separation
+    // Now try to get all memories for this specific user with graph enabled
+    const memoriesResponse = await client.getAll({ 
+      user_id: trimmedUserId,  // ✅ FIXED: Use actual user_id for proper separation
+      enable_graph: true       // 🔗 NEW: Enable graph memory to get relations
     });
+    
+    // Handle graph response format
+    const memories = memoriesResponse.results || memoriesResponse;
+    const relations = memoriesResponse.relations || [];
     
     const latency = Date.now() - startTime;
 
@@ -118,14 +124,17 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Mem0 API working perfectly!',
+      message: 'Mem0 API with Graph Memory working perfectly!',
       debug: {
         apiKey: `${trimmedApiKey.substring(0, 10)}...`,
         userId: trimmedUserId,
         latency: `${latency}ms`,
         testMemoryAdded: testMemory,
         memoriesFound: memories.length,
+        relationsFound: relations.length,  // 🔗 NEW: Graph relations count
         sampleMemories: memories.slice(0, 2),
+        sampleRelations: relations.slice(0, 3),  // 🔗 NEW: Sample relations
+        graphEnabled: true,  // 🔗 NEW: Graph memory indicator
         clientMethods: Object.getOwnPropertyNames(Object.getPrototypeOf(client))
       }
     });

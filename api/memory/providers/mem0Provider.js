@@ -87,22 +87,29 @@ export default class Mem0Provider extends MemoryProvider {
 
       console.log('🧪 Mem0Provider: Testing real API connection...');
       
-      // Test real API call - get memories count for specific user
-      const memories = await this.client.getAll({ 
-        user_id: this.userId  // ✅ FIXED: Use actual userId for proper user separation
+      // Test real API call - get memories count for specific user with graph memory
+      const memoriesResponse = await this.client.getAll({ 
+        user_id: this.userId,  // ✅ FIXED: Use actual userId for proper user separation
+        enable_graph: true     // 🔗 NEW: Enable graph memory for relationship mapping
       });
+      
+      // Handle graph response format
+      const memories = memoriesResponse.results || memoriesResponse;
+      const relations = memoriesResponse.relations || [];
       
       const latency = Date.now() - startTime;
       
       return { 
         success: true, 
-        message: `Mem0Provider connected (${latency}ms) - Real API`,
+        message: `Mem0Provider connected (${latency}ms) - Real API with Graph Memory`,
         latency,
         details: {
           api: 'Mem0 Cloud API v1',
           userId: this.userId,
           status: 'Real API connection successful',
-          memoriesCount: memories.length || 0
+          memoriesCount: memories.length || 0,
+          relationsCount: relations.length || 0,  // 🔗 NEW: Graph relations count
+          graphEnabled: true                      // 🔗 NEW: Graph memory indicator
         }
       };
     } catch (error) {
@@ -141,9 +148,10 @@ export default class Mem0Provider extends MemoryProvider {
         }
       };
 
-      // Call real Mem0 API with proper user_id for user separation
+      // Call real Mem0 API with proper user_id for user separation + graph memory
       const result = await this.client.add(memoryData.messages, {
         user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
+        enable_graph: true,  // 🔗 NEW: Enable graph memory for relationship mapping
         metadata: memoryData.metadata
       });
 
@@ -184,16 +192,23 @@ export default class Mem0Provider extends MemoryProvider {
         limit
       });
       
-      // Call real Mem0 search API with proper user_id for user separation
+      // Call real Mem0 search API with proper user_id for user separation + graph memory
       const searchResults = await this.client.search(query, { 
         user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
+        enable_graph: true,  // 🔗 NEW: Enable graph memory for relationship-aware search
         limit: limit 
       });
 
-      console.log(`🔍 Mem0Provider: API returned ${searchResults.length} memories`);
+      console.log(`🔍 Mem0Provider: Graph search completed for user ${userId}`);
+      
+      // Handle graph response format: searchResults now has {results, relations} when enable_graph=true
+      const memories = searchResults.results || searchResults; // Fallback for backward compatibility
+      const relations = searchResults.relations || [];
+      
+      console.log(`🔍 Mem0Provider: Found ${memories.length} memories, ${relations.length} relations`);
 
       // Format results to match our provider interface
-      const formattedMemories = searchResults.map(memory => ({
+      const formattedMemories = memories.map(memory => ({
         id: memory.id,
         user_id: userId,
         content: memory.memory || memory.content || '',
@@ -210,7 +225,9 @@ export default class Mem0Provider extends MemoryProvider {
       return { 
         success: true, 
         memories: formattedMemories,
-        count: formattedMemories.length
+        count: formattedMemories.length,
+        relations: relations,  // 🔗 NEW: Include graph relations in response
+        graphEnabled: true     // 🔗 NEW: Indicate graph memory is active
       };
     } catch (error) {
       console.error('❌ Mem0Provider: getRelevantMemories error:', error);
@@ -228,12 +245,19 @@ export default class Mem0Provider extends MemoryProvider {
     try {
       console.log('📋 Mem0Provider: Getting all memories from real API:', { userId, filters });
 
-      // Call real Mem0 getAll API with proper user_id for user separation
-      const allMemories = await this.client.getAll({ 
-        user_id: userId  // ✅ FIXED: Use actual userId for proper user separation
+      // Call real Mem0 getAll API with proper user_id for user separation + graph memory
+      const allMemoriesResponse = await this.client.getAll({ 
+        user_id: userId,  // ✅ FIXED: Use actual userId for proper user separation
+        enable_graph: true  // 🔗 NEW: Enable graph memory for relationship mapping
       });
 
-      console.log(`📋 Mem0Provider: API returned ${allMemories.length} total memories`);
+      console.log(`📋 Mem0Provider: Graph getAll completed for user ${userId}`);
+      
+      // Handle graph response format: allMemoriesResponse may have {results, relations} when enable_graph=true
+      const allMemories = allMemoriesResponse.results || allMemoriesResponse; // Fallback for backward compatibility
+      const allRelations = allMemoriesResponse.relations || [];
+      
+      console.log(`📋 Mem0Provider: Found ${allMemories.length} total memories, ${allRelations.length} relations`);
 
       // Format results to match our provider interface
       let formattedMemories = allMemories.map(memory => ({
@@ -262,7 +286,9 @@ export default class Mem0Provider extends MemoryProvider {
       return { 
         success: true, 
         memories: formattedMemories,
-        count: formattedMemories.length
+        count: formattedMemories.length,
+        relations: allRelations,  // 🔗 NEW: Include graph relations in response
+        graphEnabled: true        // 🔗 NEW: Indicate graph memory is active
       };
     } catch (error) {
       console.error('❌ Mem0Provider: getAllMemories error:', error);
