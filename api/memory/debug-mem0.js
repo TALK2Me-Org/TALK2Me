@@ -104,7 +104,8 @@ export default async function handler(req, res) {
       { role: 'user', content: 'Tak, Maciej pomaga mi z częścią techniczną, a ja jestem właścicielką i założycielką TALK2Me' }
     ], {
       user_id: trimmedUserId,  // 🎯 Use readable user_id for dashboard
-      version: 'v2'            // 🚀 V2 API for performance
+      version: 'v2',           // 🚀 V2 API for performance
+      async_mode: true         // 🚀 PERFORMANCE: Official async parameter
     });
     
     console.log('✅ MEM0 DEBUG: Add operation successful!', testMemory);
@@ -123,7 +124,8 @@ export default async function handler(req, res) {
     // Now try to get all memories for this specific user with optimized async mode
     const memoriesResponse = await client.getAll({ 
       user_id: trimmedUserId,  // ✅ Use actual user_id for proper separation
-      version: 'v2'            // 🚀 V2 API for performance
+      version: 'v2',           // 🚀 V2 API for performance
+      async_mode: true         // 🚀 PERFORMANCE: Official async parameter
     });
     
     // Handle graph response format
