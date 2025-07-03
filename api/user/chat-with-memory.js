@@ -360,15 +360,18 @@ export default async function handler(req, res) {
             created: m.created_at
           })))
           
-          // Format memories for AI context (using LocalProvider's format as standard)
-          const formattedMemories = result.memories.map((memory, index) => {
-            const date = new Date(memory.created_at).toLocaleDateString()
-            const importance = '★'.repeat(memory.importance || 1)
-            
-            return `[Memory ${index + 1}] (${date}, ${importance})\nType: ${memory.memory_type || 'personal'}\nSummary: ${memory.summary}\nContent: ${memory.content}\n`
-          }).join('\n---\n')
+          // FIXED: Clean memory context formatting - no raw metadata injection
+          const maxMemories = 5
+          const formattedMemories = result.memories
+            .slice(0, maxMemories)
+            .map(memory => {
+              const summary = memory.summary?.trim() || memory.content?.trim() || ''
+              return summary.length > 200 ? summary.slice(0, 197) + '...' : summary
+            })
+            .filter(Boolean)
+            .join('\n')
           
-          memoryContext = formattedMemories
+          memoryContext = formattedMemories ? `\n\nWiem o Tobie:\n${formattedMemories}\n` : ''
           console.log(`📚 MEMORY DEBUG: Formatted ${result.memories.length} memories for AI context`)
           console.log(`📚 MEMORY DEBUG: Memory context length: ${memoryContext.length} chars`)
         } else if (result.success) {
