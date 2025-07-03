@@ -52,7 +52,7 @@ let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
 let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
-let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler;
+let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler, debugZepHandler;
 let telemetryHandler, performanceLogsHandler;
 
 try {
@@ -162,6 +162,13 @@ try {
     console.log('✅ Loaded: debug-mem0 handler');
   } catch (e) {
     console.log('⚠️ Could not load debug-mem0 handler:', e.message);
+  }
+  
+  try {
+    debugZepHandler = (await import('./api/memory/debug-zep.js')).default;
+    console.log('✅ Loaded: debug-zep handler');
+  } catch (e) {
+    console.log('⚠️ Could not load debug-zep handler:', e.message);
   }
   
   // Telemetry handler
@@ -384,6 +391,11 @@ if (memoryReloadHandler) {
 if (debugMem0Handler) {
   app.get('/api/memory/debug-mem0', debugMem0Handler);
   console.log('✅ Registered route: GET /api/memory/debug-mem0');
+}
+
+if (debugZepHandler) {
+  app.get('/api/memory/debug-zep', debugZepHandler);
+  console.log('✅ Registered route: GET /api/memory/debug-zep');
 }
 
 // Telemetry endpoints

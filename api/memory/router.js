@@ -15,6 +15,7 @@
 import { createClient } from '@supabase/supabase-js';
 import LocalProvider from './providers/localProvider.js';
 import Mem0Provider from './providers/mem0Provider.js';
+import ZepProvider from './providers/zepProvider.js';
 
 class MemoryRouter {
   constructor() {
@@ -58,6 +59,8 @@ class MemoryRouter {
           'default_memory_provider',
           'mem0_api_key',
           'mem0_user_id',
+          'zep_account_id',
+          'zep_api_key',
           'openai_api_key'
         ]);
 
@@ -75,7 +78,8 @@ class MemoryRouter {
       console.log('✅ MemoryRouter: Config loaded:', {
         provider: this.config.default_memory_provider || 'local',
         hasOpenAI: !!this.config.openai_api_key,
-        hasMem0: !!this.config.mem0_api_key
+        hasMem0: !!this.config.mem0_api_key,
+        hasZep: !!(this.config.zep_account_id && this.config.zep_api_key)
       });
 
       return true;
@@ -219,6 +223,18 @@ class MemoryRouter {
           openaiApiKey: this.config.openai_api_key
         };
         break;
+      case 'zep':
+        providerConfig = {
+          accountId: this.config.zep_account_id,
+          apiKey: this.config.zep_api_key
+        };
+        
+        console.log('🔧 MemoryRouter: ZepProvider config prepared:', {
+          accountId: !!providerConfig.accountId,
+          apiKey: !!providerConfig.apiKey,
+          accountIdPreview: providerConfig.accountId ? `${providerConfig.accountId.substring(0, 8)}...` : 'missing'
+        });
+        break;
     }
 
     return new ProviderClass(providerConfig);
@@ -346,6 +362,7 @@ const memoryRouter = new MemoryRouter();
 // Register providers immediately
 memoryRouter.registerProvider('local', LocalProvider);
 memoryRouter.registerProvider('mem0', Mem0Provider);
+memoryRouter.registerProvider('zep', ZepProvider);
 
 console.log('🚦 MemoryRouter: Providers registered:', Array.from(memoryRouter.providers.keys()));
 

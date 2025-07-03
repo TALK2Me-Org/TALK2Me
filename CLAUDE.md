@@ -185,11 +185,42 @@ await client.graph.search({ query, user_id, scope: "edges", limit: 20 })
 
 ---
 
+### 🔄 **FUTURE OPTIMIZATIONS (Post-Zep):**
+
+#### 💰 **MEM0 COST OPTIMIZATION AUDIT**
+**Odkrycie z Sesji #26**: Prawdopodobnie źle używamy Mem0 API i tracimy 90% potencjalnych oszczędności!
+
+##### **🚨 CURRENT PROBLEM:**
+```javascript
+// Wysyłamy RAW MEMORIES do OpenAI zamiast pre-computed context:
+systemPrompt += memoryContext  // ~2000 tokenów raw memories! 💸
+// Koszt: ~$0.12 per request zamiast ~$0.012
+```
+
+##### **💡 HYPOTHESIS:**
+Mem0 prawdopodobnie ma context field (podobnie jak Zep), ale używamy złego API method:
+- ❌ Current: `search()` → raw memories  
+- ✅ Probably: `get_context()` → pre-computed context
+
+##### **📋 PLAN (after Zep implementation):**
+1. Research Mem0 API for context/summary fields
+2. Test alternative API methods vs raw memory retrieval
+3. Benchmark token usage: current vs optimized
+4. Compare costs: optimized Mem0 vs Zep Cloud
+5. Decision: keep optimized Mem0 or migrate to Zep
+
+##### **🎯 EXPECTED:**
+If Mem0 has context API: 90% cost reduction (matching their claims)
+If not: confirms Zep Cloud superiority for cost optimization
+
+---
+
 ### 🔄 **UKOŃCZONE ZADANIA (Sesja #26):**
 1. ✅ **Verify Mem0 async parameter** - zweryfikowane jako oficjalny parametr
 2. ✅ **Graph Memory verification** - działa stabilnie z 74 memories  
 3. ✅ **Zep Cloud research** - complete documentation analysis
 4. ✅ **Integration planning** - ready for implementation
+5. ✅ **Mem0 cost analysis** - identified potential 90% optimization opportunity
 
 ### 🚨 KNOWN ISSUES (Parkowane problemy)
 

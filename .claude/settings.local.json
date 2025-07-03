@@ -27,7 +27,8 @@
       "Bash(npm start)",
       "Bash(rg:*)",
       "WebFetch(domain:docs.mem0.ai)",
-      "Bash(time:*)"
+      "Bash(time:*)",
+      "WebFetch(domain:help.getzep.com)"
     ],
     "deny": []
   }
