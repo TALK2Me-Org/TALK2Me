@@ -19,16 +19,13 @@ export default class Mem0Provider extends MemoryProvider {
     this.providerName = 'Mem0Provider';
     this.apiKey = config.apiKey ? config.apiKey.trim() : null;
     
-    // Mem0Provider is now stateless - no hardcoded userId
-    // Each method receives dynamic userId parameter from chat requests
-    // Test user ID for initialization/connection tests only
+    // Stateless provider - userId passed dynamically to each method
     this.testUserId = (config.userId || 'test-user').trim();
     this.client = null;
     
-    console.log('🏗️ Mem0Provider constructor:', {
+    console.log('Mem0Provider constructor:', {
       apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'missing',
-      testUserId: this.testUserId,
-      userIdSource: config.userId ? 'config' : 'fallback-test-user'
+      testUserId: this.testUserId
     });
 
     this.enabled = !!this.apiKey;
@@ -40,62 +37,25 @@ export default class Mem0Provider extends MemoryProvider {
    * @returns {string} - Readable user_id for Mem0
    */
   convertToReadableUserId(userId) {
-    // If it's an email, extract readable format
     if (userId.includes('@')) {
-      if (userId.includes('kontakt@nataliarybarczyk.pl')) return 'natalia-rybarczyk';
-      if (userId.includes('fidziu@me.com')) return 'maciej-mentor';
-      // Generic email conversion: extract username part
       return userId.split('@')[0].replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
     }
     
-    // If it's UUID, provide meaningful fallback based on known UUIDs
     if (userId.match(/^[0-9a-f-]{36}$/i)) {
-      // Map known UUIDs to readable names
-      const knownUUIDs = {
-        '550e8400-e29b-41d4-a716-446655440000': 'test-user-nati',
-        '9b2f5a20-4296-4981-8145-c61d1356d74a': 'user-maciej'
-      };
-      return knownUUIDs[userId] || `user-${userId.slice(0, 8)}`;
+      return `user-${userId.slice(0, 8)}`;
     }
     
-    // If already readable, return as-is
     return userId.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
   }
 
   /**
-   * Create rich user metadata for Mem0 dashboard display
+   * Create user metadata for Mem0 dashboard display
    * @param {string} originalUserId - Original UUID/email
    * @param {string} readableUserId - Readable user_id
    * @returns {object} - User metadata object
    */
   createUserMetadata(originalUserId, readableUserId) {
-    // Define known users with rich metadata
-    const userProfiles = {
-      'natalia-rybarczyk': {
-        user_name: 'Natalia Rybarczyk',
-        user_email: 'kontakt@nataliarybarczyk.pl',
-        user_role: 'Owner & Founder',
-        user_organization: 'TALK2Me',
-        user_type: 'admin'
-      },
-      'maciej-mentor': {
-        user_name: 'Maciej',
-        user_email: 'fidziu@me.com', 
-        user_role: 'Project Mentor',
-        user_organization: 'TALK2Me',
-        user_type: 'mentor'
-      },
-      'test-user-nati': {
-        user_name: 'Test User Natalia',
-        user_email: 'test@example.com',
-        user_role: 'Test User',
-        user_organization: 'TALK2Me',
-        user_type: 'test'
-      }
-    };
-
-    // Return metadata for known user or generic metadata
-    return userProfiles[readableUserId] || {
+    return {
       user_name: readableUserId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       user_email: originalUserId.includes('@') ? originalUserId : 'unknown@example.com',
       user_role: 'User',
@@ -104,39 +64,140 @@ export default class Mem0Provider extends MemoryProvider {
     };
   }
 
+  /**
+   * Helper function for error handling and logging
+   * @param {string} operation - Operation name
+   * @param {Error} error - Error object
+   * @param {number} startTime - Start time for latency calculation
+   * @returns {object} - Formatted error response
+   */
+  handleError(operation, error, startTime) {
+    const latency = Date.now() - startTime;
+    console.error(`❌ Mem0Provider: ${operation} error (${latency}ms):`, error.message);
+    return { success: false, error: error.message, latency };
+  }
+
+  /**
+   * Defensive validation for memory input - prevents context dumps
+   * @param {string} content - Memory content to validate
+   * @param {object} metadata - Metadata object to validate
+   * @returns {object} - {valid: boolean, sanitized: string, warning?: string}
+   */
+  validateMemoryInput(content, metadata = {}) {
+    // Check for conversation_messages - BLOCKED!
+    if (metadata.conversation_messages && Array.isArray(metadata.conversation_messages)) {
+      return {
+        valid: false,
+        sanitized: '',
+        warning: 'conversation_messages detected - context dumps blocked'
+      };
+    }
+
+    // Check content type and length
+    if (typeof content !== 'string') {
+      return {
+        valid: false,
+        sanitized: '',
+        warning: 'content must be string type'
+      };
+    }
+
+    // Max 512 characters for single memory
+    const MAX_MEMORY_LENGTH = 512;
+    if (content.length > MAX_MEMORY_LENGTH) {
+      const truncated = content.substring(0, MAX_MEMORY_LENGTH);
+      return {
+        valid: true,
+        sanitized: truncated,
+        warning: `content truncated from ${content.length} to ${MAX_MEMORY_LENGTH} chars`
+      };
+    }
+
+    // Empty content check
+    if (!content.trim()) {
+      return {
+        valid: false,
+        sanitized: '',
+        warning: 'empty content not allowed'
+      };
+    }
+
+    return {
+      valid: true,
+      sanitized: content.trim(),
+      warning: null
+    };
+  }
+
+  /**
+   * Defensive validation for query input
+   * @param {string} query - Query string to validate
+   * @returns {object} - {valid: boolean, sanitized: string, warning?: string}
+   */
+  validateQueryInput(query) {
+    if (typeof query !== 'string') {
+      return {
+        valid: false,
+        sanitized: '',
+        warning: 'query must be string type'
+      };
+    }
+
+    // Max 256 characters for query
+    const MAX_QUERY_LENGTH = 256;
+    if (query.length > MAX_QUERY_LENGTH) {
+      const truncated = query.substring(0, MAX_QUERY_LENGTH);
+      return {
+        valid: true,
+        sanitized: truncated,
+        warning: `query truncated from ${query.length} to ${MAX_QUERY_LENGTH} chars`
+      };
+    }
+
+    if (!query.trim()) {
+      return {
+        valid: false,
+        sanitized: '',
+        warning: 'empty query not allowed'
+      };
+    }
+
+    return {
+      valid: true,
+      sanitized: query.trim(),
+      warning: null
+    };
+  }
+
   async initialize() {
     if (this.initialized) return true;
 
-    console.log('🚀 Mem0Provider: Starting initialization...');
+    console.log('Mem0Provider: Starting initialization...');
 
     if (!this.enabled) {
-      console.warn('⚠️ Mem0Provider: Missing API key - disabled');
+      console.warn('Mem0Provider: Missing API key - disabled');
       this.initialized = true;
       return false;
     }
 
     try {
-      // Initialize Mem0 client with performance optimizations
-      console.log('🔧 Mem0Provider: Creating MemoryClient with performance config...');
+      console.log('Mem0Provider: Creating MemoryClient...');
       this.client = new MemoryClient({ 
         apiKey: this.apiKey,
-        // 🚀 Performance optimizations
-        timeout: 5000,  // 5s timeout instead of default
-        retries: 2      // Fewer retries for faster failures
+        timeout: 5000,
+        retries: 2
       });
       
-      // Test connection by attempting to get memories (should work even if empty)
-      console.log(`🔧 Mem0Provider: Testing API connection with test user_id: ${this.testUserId}`);
-      // Use test user for initialization test only
+      console.log(`Mem0Provider: Testing API connection with test user_id: ${this.testUserId}`);
       const testResult = await this.client.getAll({ 
-        user_id: this.testUserId,  // For initialization test, use configured test user
-        version: 'v2',            // 🚀 V2 API for 91% better latency
-        async_mode: true          // 🚀 PERFORMANCE: Official async parameter
+        user_id: this.testUserId,
+        version: 'v2',
+        async_mode: true
       });
-      console.log(`🔧 Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
+      console.log(`Mem0Provider: API test successful, found ${testResult.length || 0} memories`);
       
       this.initialized = true;
-      console.log('✅ Mem0Provider: Initialized successfully with real API');
+      console.log('Mem0Provider: Initialized successfully');
       return true;
     } catch (error) {
       console.error('❌ Mem0Provider: Initialization failed:', error);
@@ -144,9 +205,9 @@ export default class Mem0Provider extends MemoryProvider {
       
       // Check for specific user_id related errors
       if (error.message && error.message.includes('user_id')) {
-        console.error('💡 Mem0Provider: This appears to be a user_id format issue');
-        console.error(`💡 Mem0Provider: Current testUserId: "${this.testUserId}"`);
-        console.error('💡 Mem0Provider: Mem0 API requires valid UUID format for user_id');
+        console.error('Mem0Provider: user_id format issue');
+        console.error(`Mem0Provider: Current testUserId: "${this.testUserId}"`);
+        console.error('Mem0Provider: API requires valid UUID format for user_id');
       }
       
       this.enabled = false;
@@ -163,16 +224,13 @@ export default class Mem0Provider extends MemoryProvider {
         return { success: false, message: 'Provider not enabled or initialized' };
       }
 
-      console.log('🧪 Mem0Provider: Testing real API connection...');
+      console.log('Mem0Provider: Testing API connection...');
       
-      // Test real API call - get memories count for test user
       const memoriesResponse = await this.client.getAll({ 
-        user_id: this.testUserId,  // For connection test, use configured test user
-        version: 'v2',            // 🚀 V2 API for better latency
-        async_mode: true          // 🚀 PERFORMANCE: Official async parameter
+        user_id: this.testUserId,
+        version: 'v2',
+        async_mode: true
       });
-      
-      // Handle graph response format
       const memories = memoriesResponse.results || memoriesResponse;
       const relations = memoriesResponse.relations || [];
       
@@ -187,8 +245,8 @@ export default class Mem0Provider extends MemoryProvider {
           testUserId: this.testUserId,
           status: 'Real API connection successful',
           memoriesCount: memories.length || 0,
-          relationsCount: relations.length || 0,  // 🔗 NEW: Graph relations count
-          graphEnabled: true                      // 🔗 NEW: Graph memory indicator
+          relationsCount: relations.length || 0,
+          graphEnabled: true
         }
       };
     } catch (error) {
@@ -203,6 +261,18 @@ export default class Mem0Provider extends MemoryProvider {
   async saveMemory(userId, content, metadata = {}) {
     const startTime = Date.now();
     
+    // DEFENSIVE PROGRAMMING: Validate input first
+    const validation = this.validateMemoryInput(content, metadata);
+    if (!validation.valid) {
+      console.warn(`Mem0Provider: saveMemory blocked - ${validation.warning}`);
+      return { success: false, error: validation.warning };
+    }
+    
+    // Log warning if content was truncated
+    if (validation.warning) {
+      console.warn(`Mem0Provider: saveMemory warning - ${validation.warning}`);
+    }
+    
     if (!this.initialized) await this.initialize();
     
     if (!this.isEnabled()) {
@@ -210,33 +280,25 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      // 🎯 Convert to readable user_id for Mem0 dashboard
       const readableUserId = this.convertToReadableUserId(userId);
       
-      console.log('💾 Mem0Provider: Saving memory to real API:', {
-        originalUserId: userId,
-        readableUserId: readableUserId,
-        contentLength: content.length,
-        metadata
+      console.log('Mem0Provider: Saving single memory:', {
+        userId: readableUserId,
+        contentLength: validation.sanitized.length,
+        originalLength: content.length
       });
 
-      // Simple message format for Mem0 V2 API
-      const messages = metadata.conversation_messages || [{ role: 'user', content: content }];
+      // FIXED: Only single memory, NO conversation_messages!
+      const singleMessage = [{ role: 'user', content: validation.sanitized }];
       
-      console.log('💾 Mem0Provider: Prepared messages for V2 API:', {
-        messageCount: messages.length,
-        messageRoles: messages.map(m => m.role)
-      });
-
-      // 🚀 OPTIMIZED Mem0 V2 Platform API call
-      const result = await this.client.add(messages, {
+      const result = await this.client.add(singleMessage, {
         user_id: readableUserId,
         version: 'v2',
-        async_mode: true     // 🚀 PERFORMANCE: Official async parameter
+        async_mode: true
       });
 
       const latency = Date.now() - startTime;
-      console.log(`✅ Mem0Provider: Memory saved successfully (${latency}ms)`);
+      console.log(`Mem0Provider: Memory saved successfully (${latency}ms)`);
       
       return { 
         success: true, 
@@ -245,8 +307,8 @@ export default class Mem0Provider extends MemoryProvider {
         memory: {
           id: result.id || `mem0_${Date.now()}`,
           user_id: userId,
-          content: content,
-          summary: metadata.summary || content.substring(0, 100),
+          content: validation.sanitized,
+          summary: metadata.summary || validation.sanitized.substring(0, 100),
           importance: metadata.importance || 5,
           memory_type: metadata.memory_type || 'personal',
           created_at: new Date().toISOString(),
@@ -254,14 +316,27 @@ export default class Mem0Provider extends MemoryProvider {
         }
       };
     } catch (error) {
-      const latency = Date.now() - startTime;
-      console.error(`❌ Mem0Provider: saveMemory error (${latency}ms):`, error);
-      return { success: false, error: error.message, latency };
+      return this.handleError('saveMemory', error, startTime);
     }
   }
 
   async getRelevantMemories(userId, query, limit = 10) {
     const startTime = Date.now();
+    
+    // DEFENSIVE PROGRAMMING: Validate query input
+    const queryValidation = this.validateQueryInput(query);
+    if (!queryValidation.valid) {
+      console.warn(`Mem0Provider: getRelevantMemories blocked - ${queryValidation.warning}`);
+      return { success: false, error: queryValidation.warning };
+    }
+    
+    // Log warning if query was truncated
+    if (queryValidation.warning) {
+      console.warn(`Mem0Provider: getRelevantMemories warning - ${queryValidation.warning}`);
+    }
+    
+    // DEFENSIVE: Limit max results to 10
+    const safeLimit = Math.min(limit || 10, 10);
     
     if (!this.initialized) await this.initialize();
     
@@ -270,25 +345,23 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      // 🎯 Convert to readable user_id for Mem0 queries
       const readableUserId = this.convertToReadableUserId(userId);
       
-      console.log('🔍 Mem0Provider: Getting relevant memories from real API:', {
-        originalUserId: userId,
-        readableUserId: readableUserId,
-        query: query.substring(0, 50) + '...',
-        limit
+      console.log('Mem0Provider: Getting relevant memories:', {
+        userId: readableUserId,
+        queryLength: queryValidation.sanitized.length,
+        originalQueryLength: query.length,
+        limitRequested: limit,
+        limitApplied: safeLimit
       });
       
-      // 🚀 OPTIMIZED Mem0 V2 Platform API search
-      const searchResults = await this.client.search(query, { 
+      const searchResults = await this.client.search(queryValidation.sanitized, { 
         user_id: readableUserId,
         version: 'v2',
-        top_k: limit,
-        async_mode: true     // 🚀 PERFORMANCE: Official async parameter
+        top_k: safeLimit,
+        async_mode: true
       });
 
-      // Process search results
       const memories = searchResults.results || searchResults;
       const relations = searchResults.relations || [];
       const formattedMemories = memories.map(memory => ({
@@ -304,7 +377,7 @@ export default class Mem0Provider extends MemoryProvider {
       }));
 
       const latency = Date.now() - startTime;
-      console.log(`✅ Mem0Provider: Found ${formattedMemories.length} memories, ${relations.length} relations (${latency}ms)`);
+      console.log(`Mem0Provider: Found ${formattedMemories.length} memories (${latency}ms)`);
       
       return { 
         success: true, 
@@ -315,14 +388,15 @@ export default class Mem0Provider extends MemoryProvider {
         graphEnabled: true
       };
     } catch (error) {
-      const latency = Date.now() - startTime;
-      console.error(`❌ Mem0Provider: getRelevantMemories error (${latency}ms):`, error);
-      return { success: false, error: error.message, latency };
+      return this.handleError('getRelevantMemories', error, startTime);
     }
   }
 
   async getAllMemories(userId, filters = {}) {
     const startTime = Date.now();
+    
+    // DEFENSIVE: No need for query validation here, but limit results
+    const MAX_ALL_MEMORIES = 100; // Safety limit for getAllMemories
     
     if (!this.initialized) await this.initialize();
     
@@ -331,26 +405,30 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      // 🎯 Convert to readable user_id for Mem0 queries
       const readableUserId = this.convertToReadableUserId(userId);
       
-      console.log('📋 Mem0Provider: Getting all memories from real API:', { 
-        originalUserId: userId, 
-        readableUserId: readableUserId, 
-        filters 
+      console.log('Mem0Provider: Getting all memories (max 100):', { 
+        userId: readableUserId,
+        filters,
+        maxResults: MAX_ALL_MEMORIES
       });
 
-      // 🚀 OPTIMIZED Mem0 V2 Platform API getAll
       const allMemoriesResponse = await this.client.getAll({ 
         user_id: readableUserId,
         version: 'v2',
-        async_mode: true     // 🚀 PERFORMANCE: Official async parameter
+        async_mode: true
       });
 
-      // Process all memories response
       const allMemories = allMemoriesResponse.results || allMemoriesResponse;
       const allRelations = allMemoriesResponse.relations || [];
-      const formattedMemories = allMemories.map(memory => ({
+      
+      // DEFENSIVE: Limit number of memories to prevent memory overload
+      const limitedMemories = allMemories.slice(0, MAX_ALL_MEMORIES);
+      if (allMemories.length > MAX_ALL_MEMORIES) {
+        console.warn(`Mem0Provider: Truncated ${allMemories.length} memories to ${MAX_ALL_MEMORIES}`);
+      }
+      
+      const formattedMemories = limitedMemories.map(memory => ({
         id: memory.id,
         user_id: userId,
         content: memory.memory || memory.content || '',
@@ -362,7 +440,6 @@ export default class Mem0Provider extends MemoryProvider {
         provider: 'mem0'
       }));
 
-      // Apply filters
       let filteredMemories = formattedMemories;
       
       if (filters.memory_type) {
@@ -374,7 +451,7 @@ export default class Mem0Provider extends MemoryProvider {
       }
 
       const latency = Date.now() - startTime;
-      console.log(`✅ Mem0Provider: Returning ${filteredMemories.length} filtered memories, ${allRelations.length} relations (${latency}ms)`);
+      console.log(`Mem0Provider: Returning ${filteredMemories.length} memories (${latency}ms)`);
 
       return { 
         success: true, 
@@ -385,9 +462,7 @@ export default class Mem0Provider extends MemoryProvider {
         graphEnabled: true
       };
     } catch (error) {
-      const latency = Date.now() - startTime;
-      console.error(`❌ Mem0Provider: getAllMemories error (${latency}ms):`, error);
-      return { success: false, error: error.message, latency };
+      return this.handleError('getAllMemories', error, startTime);
     }
   }
 
@@ -397,15 +472,14 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('🗑️ Mem0Provider: Deleting memory from real API:', memoryId);
+      console.log('Mem0Provider: Deleting memory:', memoryId);
       
-      // Call real Mem0 delete API
       await this.client.delete(memoryId);
       
-      console.log('✅ Mem0Provider: Memory deleted successfully from real API');
+      console.log('Mem0Provider: Memory deleted successfully');
       return { success: true };
     } catch (error) {
-      console.error('❌ Mem0Provider: deleteMemory error:', error);
+      console.error('❌ Mem0Provider: deleteMemory error:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -416,9 +490,8 @@ export default class Mem0Provider extends MemoryProvider {
     }
 
     try {
-      console.log('✏️ Mem0Provider: Updating memory with real API:', { memoryId, updates });
+      console.log('Mem0Provider: Updating memory:', { memoryId, updates });
       
-      // Call real Mem0 update API
       const updatedMemory = await this.client.update(memoryId, {
         data: updates.content || updates.summary,
         metadata: {
@@ -426,8 +499,6 @@ export default class Mem0Provider extends MemoryProvider {
           importance: updates.importance
         }
       });
-
-      // Format response to match our provider interface
       const formattedMemory = {
         id: memoryId,
         content: updates.content || updates.summary,
@@ -438,10 +509,10 @@ export default class Mem0Provider extends MemoryProvider {
         provider: 'mem0'
       };
 
-      console.log('✅ Mem0Provider: Memory updated successfully with real API');
+      console.log('Mem0Provider: Memory updated successfully');
       return { success: true, memory: formattedMemory };
     } catch (error) {
-      console.error('❌ Mem0Provider: updateMemory error:', error);
+      console.error('❌ Mem0Provider: updateMemory error:', error.message);
       return { success: false, error: error.message };
     }
   }
