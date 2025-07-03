@@ -1,17 +1,8 @@
 /**
  * ZepProvider - Zep Cloud Integration
  * 
- * Third memory provider using Zep Cloud platform
- * Features:
- * - 98% cost reduction vs traditional memory systems
- * - Sub-second memory retrieval through pre-computed context
- * - Temporal reasoning with valid_at/invalid_at tracking
- * - Unlimited conversation history without LLM processing costs
- * - Business data integration through structured JSON in graph
- * 
- * @author Claude (AI Assistant) - Sesja #27 Zep Cloud Integration
- * @date 03.07.2025
- * @status ✅ IMPLEMENTATION COMPLETE
+ * Memory provider using Zep Cloud platform for cost-optimized memory management
+ * Uses sessions and pre-computed context for reduced token costs
  */
 
 import { ZepClient } from '@getzep/zep-cloud';
@@ -26,10 +17,9 @@ export default class ZepProvider extends MemoryProvider {
     this.apiKey = config.apiKey ? config.apiKey.trim() : null;
     this.client = null;
     
-    console.log('🏗️ ZepProvider constructor:', {
+    console.log('ZepProvider constructor:', {
       accountId: this.accountId ? `${this.accountId.substring(0, 8)}...` : 'missing',
-      apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'missing',
-      hasCredentials: !!(this.accountId && this.apiKey)
+      apiKey: this.apiKey ? `${this.apiKey.substring(0, 8)}...` : 'missing'
     });
 
     this.enabled = !!(this.accountId && this.apiKey);
@@ -37,26 +27,14 @@ export default class ZepProvider extends MemoryProvider {
 
   /**
    * Convert UUID or email to readable user_id for Zep
-   * Similar to Mem0Provider but optimized for Zep's user management
    */
   convertToReadableUserId(userId) {
-    // If it's an email, extract readable format
     if (userId.includes('@')) {
-      if (userId.includes('kontakt@nataliarybarczyk.pl')) return 'natalia-rybarczyk';
-      if (userId.includes('fidziu@me.com')) return 'maciej-mentor';
-      if (userId.includes('test-nati@example.com')) return 'test-user-nati';
-      // Generic email conversion
       return userId.split('@')[0].replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
     }
     
-    // If it's UUID, provide meaningful fallback
     if (userId.match(/^[0-9a-f-]{36}$/i)) {
-      const knownUUIDs = {
-        '550e8400-e29b-41d4-a716-446655440000': 'test-user-nati',
-        '00000000-0000-0000-0000-000000000001': 'test-user-nati',
-        '9b2f5a20-4296-4981-8145-c61d1356d74a': 'user-maciej'
-      };
-      return knownUUIDs[userId] || `user-${userId.slice(0, 8)}`;
+      return `user-${userId.slice(0, 8)}`;
     }
     
     return userId.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
@@ -66,28 +44,7 @@ export default class ZepProvider extends MemoryProvider {
    * Create user metadata for Zep user management
    */
   createUserMetadata(originalUserId, readableUserId) {
-    const userProfiles = {
-      'natalia-rybarczyk': {
-        email: 'kontakt@nataliarybarczyk.pl',
-        firstName: 'Natalia',
-        lastName: 'Rybarczyk',
-        metadata: { role: 'owner', organization: 'TALK2Me', type: 'admin' }
-      },
-      'maciej-mentor': {
-        email: 'fidziu@me.com',
-        firstName: 'Maciej',
-        lastName: 'Mentor', 
-        metadata: { role: 'mentor', organization: 'TALK2Me', type: 'mentor' }
-      },
-      'test-user-nati': {
-        email: 'test-nati@example.com',
-        firstName: 'Test',
-        lastName: 'Natalia',
-        metadata: { role: 'test', organization: 'TALK2Me', type: 'test' }
-      }
-    };
-
-    return userProfiles[readableUserId] || {
+    return {
       email: originalUserId.includes('@') ? originalUserId : 'unknown@example.com',
       firstName: readableUserId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       lastName: 'User',
@@ -109,30 +66,28 @@ export default class ZepProvider extends MemoryProvider {
    */
   async initialize() {
     if (this.initialized) {
-      console.log('✅ ZepProvider: Already initialized');
+      console.log('ZepProvider: Already initialized');
       return true;
     }
 
     if (!this.accountId || !this.apiKey) {
-      console.error('❌ ZepProvider: Missing credentials (accountId or apiKey)');
+      console.error('ZepProvider: Missing credentials');
       this.enabled = false;
       return false;
     }
 
     try {
-      console.log('🚀 ZepProvider: Initializing Zep client...');
+      console.log('ZepProvider: Initializing client...');
       
-      // Inicjalizacja Zep client
       this.client = new ZepClient({
         apiKey: this.apiKey,
       });
 
-      console.log('✅ ZepProvider: Client created, testing connection...');
+      console.log('ZepProvider: Testing connection...');
       
-      // Test connection
       const connectionTest = await this.testConnection();
       if (!connectionTest.success) {
-        console.error('❌ ZepProvider: Connection test failed:', connectionTest.error);
+        console.error('ZepProvider: Connection test failed:', connectionTest.error);
         this.enabled = false;
         return false;
       }
@@ -140,10 +95,10 @@ export default class ZepProvider extends MemoryProvider {
       this.initialized = true;
       this.enabled = true;
       
-      console.log('✅ ZepProvider: Initialized successfully');
+      console.log('ZepProvider: Initialized successfully');
       return true;
     } catch (error) {
-      console.error('❌ ZepProvider: Initialization error:', error);
+      console.error('ZepProvider: Initialization error:', error);
       this.enabled = false;
       return false;
     }
@@ -172,10 +127,7 @@ export default class ZepProvider extends MemoryProvider {
 
       const latency = Date.now() - startTime;
 
-      console.log('✅ ZepProvider: Connection test successful:', {
-        latency: `${latency}ms`,
-        testUserId: testUser.userId
-      });
+      console.log(`ZepProvider: Connection test successful (${latency}ms)`);
 
       return { 
         success: true, 
@@ -184,7 +136,7 @@ export default class ZepProvider extends MemoryProvider {
         testUserId: testUser.userId
       };
     } catch (error) {
-      console.error('❌ ZepProvider: Connection test failed:', error);
+      console.error('ZepProvider: Connection test failed:', error.message);
       return { 
         success: false, 
         error: `Connection failed: ${error.message}` 
@@ -200,7 +152,6 @@ export default class ZepProvider extends MemoryProvider {
     const userMetadata = this.createUserMetadata(userId, readableUserId);
 
     try {
-      // Spróbuj dodać usera (Zep automatically handles duplicates)
       await this.client.user.add({
         userId: readableUserId,
         email: userMetadata.email,
@@ -209,16 +160,16 @@ export default class ZepProvider extends MemoryProvider {
         metadata: userMetadata.metadata
       });
 
-      console.log(`✅ ZepProvider: User ensured: ${readableUserId}`);
+      console.log(`ZepProvider: User ensured: ${readableUserId}`);
       return { success: true, userId: readableUserId };
     } catch (error) {
       // Jeśli user już istnieje, to jest OK
       if (error.message.includes('already exists') || error.status === 409) {
-        console.log(`ℹ️ ZepProvider: User already exists: ${readableUserId}`);
+        console.log(`ZepProvider: User already exists: ${readableUserId}`);
         return { success: true, userId: readableUserId };
       }
       
-      console.error('❌ ZepProvider: Error ensuring user:', error);
+      console.error('ZepProvider: Error ensuring user:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -240,16 +191,16 @@ export default class ZepProvider extends MemoryProvider {
         }
       });
 
-      console.log(`✅ ZepProvider: Session ensured: ${sessionId}`);
+      console.log(`ZepProvider: Session ensured: ${sessionId}`);
       return { success: true, sessionId: sessionId };
     } catch (error) {
       // Session may already exist
       if (error.message.includes('already exists') || error.status === 409) {
-        console.log(`ℹ️ ZepProvider: Session already exists: ${sessionId}`);
+        console.log(`ZepProvider: Session already exists: ${sessionId}`);
         return { success: true, sessionId: sessionId };
       }
       
-      console.error('❌ ZepProvider: Error ensuring session:', error);
+      console.error('ZepProvider: Error ensuring session:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -263,41 +214,34 @@ export default class ZepProvider extends MemoryProvider {
     }
 
     try {
-      console.log('💾 ZepProvider: Saving memory...', {
+      console.log('ZepProvider: Saving memory:', {
         userId: userId,
-        contentLength: content.length,
-        metadata: Object.keys(metadata)
+        contentLength: content.length
       });
 
-      // 1. Ensure user exists
       const userResult = await this.ensureUser(userId);
       if (!userResult.success) {
         return { success: false, error: `User creation failed: ${userResult.error}` };
       }
       const readableUserId = userResult.userId;
 
-      // 2. Generate session ID (można też przekazać z metadata)
       const sessionId = metadata.sessionId || this.generateSessionId(userId);
       
-      // 3. Ensure session exists
       const sessionResult = await this.ensureSession(sessionId, userId);
       if (!sessionResult.success) {
         return { success: false, error: `Session creation failed: ${sessionResult.error}` };
       }
 
-      // 4. Add memory to session
       const messageRole = metadata.role || 'user';
-      const messageContent = content;
-
+      
       await this.client.memory.add(sessionId, {
         messages: [{
           role: messageRole,
-          content: messageContent
-        }],
-        // Zep automatically processes and creates summaries
+          content: content
+        }]
       });
 
-      console.log('✅ ZepProvider: Memory saved successfully');
+      console.log('ZepProvider: Memory saved successfully');
       return { 
         success: true, 
         memoryId: sessionId, // Zep uses session-based memory
@@ -305,7 +249,7 @@ export default class ZepProvider extends MemoryProvider {
         userId: readableUserId
       };
     } catch (error) {
-      console.error('❌ ZepProvider: Save memory error:', error);
+      console.error('ZepProvider: Save memory error:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -320,36 +264,31 @@ export default class ZepProvider extends MemoryProvider {
     }
 
     try {
-      console.log('🔍 ZepProvider: Getting relevant memories...', {
+      console.log('ZepProvider: Getting relevant memories:', {
         userId: userId,
-        queryLength: query.length,
         limit: limit
       });
 
       const readableUserId = this.convertToReadableUserId(userId);
 
-      // Get recent sessions for this user (może być kilka sesji)
       const sessions = await this.client.memory.listSessions({
         userId: readableUserId,
-        limit: 5 // Ostatnie 5 sesji
+        limit: 5
       });
 
       if (!sessions.sessions || sessions.sessions.length === 0) {
-        console.log('ℹ️ ZepProvider: No sessions found for user');
+        console.log('ZepProvider: No sessions found for user');
         return { success: true, memories: [], context: '' };
       }
 
-      // Search memories across user's sessions
       const searchResults = await this.client.memory.searchSessions({
         sessionIds: sessions.sessions.map(s => s.sessionId),
         text: query,
-        searchScope: 'messages', // search in messages
-        searchType: 'mmr', // Maximum Marginal Relevance for diversity
-        mmrLambda: 0.6, // Balance relevance vs diversity
+        searchScope: 'messages',
+        searchType: 'mmr',
+        mmrLambda: 0.6,
         limit: limit
       });
-
-      // Convert results to our standard format
       const memories = [];
       let contextParts = [];
 
@@ -375,14 +314,9 @@ export default class ZepProvider extends MemoryProvider {
         });
       }
 
-      // 🚀 COST OPTIMIZATION: Return pre-computed context instead of raw memories
       const context = contextParts.join('\n\n');
 
-      console.log('✅ ZepProvider: Retrieved relevant memories:', {
-        memoriesCount: memories.length,
-        contextLength: context.length,
-        avgScore: memories.length > 0 ? (memories.reduce((sum, m) => sum + m.relevance_score, 0) / memories.length).toFixed(2) : 0
-      });
+      console.log(`ZepProvider: Retrieved ${memories.length} memories`);
 
       return { 
         success: true, 
@@ -391,7 +325,7 @@ export default class ZepProvider extends MemoryProvider {
         total: memories.length
       };
     } catch (error) {
-      console.error('❌ ZepProvider: Get relevant memories error:', error);
+      console.error('ZepProvider: Get relevant memories error:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -407,10 +341,9 @@ export default class ZepProvider extends MemoryProvider {
     try {
       const readableUserId = this.convertToReadableUserId(userId);
 
-      // Get all sessions for user
       const sessions = await this.client.memory.listSessions({
         userId: readableUserId,
-        limit: 50 // Max sessions to check
+        limit: 50
       });
 
       if (!sessions.sessions || sessions.sessions.length === 0) {
@@ -419,11 +352,10 @@ export default class ZepProvider extends MemoryProvider {
 
       const allMemories = [];
 
-      // Get messages from each session
       for (const session of sessions.sessions) {
         try {
           const sessionMessages = await this.client.memory.getSessionMessages(session.sessionId, {
-            limit: 100 // Max messages per session
+            limit: 100
           });
 
           if (sessionMessages.messages) {
@@ -444,21 +376,16 @@ export default class ZepProvider extends MemoryProvider {
             });
           }
         } catch (sessionError) {
-          console.warn('⚠️ ZepProvider: Error getting session messages:', sessionError);
+          console.warn('ZepProvider: Error getting session messages:', sessionError.message);
         }
       }
 
-      // Apply filters if provided
       let filteredMemories = allMemories;
       if (filters.memory_type) {
         filteredMemories = filteredMemories.filter(m => m.memory_type === filters.memory_type);
       }
 
-      console.log('✅ ZepProvider: Retrieved all memories:', {
-        total: allMemories.length,
-        filtered: filteredMemories.length,
-        sessions: sessions.sessions.length
-      });
+      console.log(`ZepProvider: Retrieved ${filteredMemories.length} memories`);
 
       return { 
         success: true, 
@@ -466,7 +393,7 @@ export default class ZepProvider extends MemoryProvider {
         count: filteredMemories.length
       };
     } catch (error) {
-      console.error('❌ ZepProvider: Get all memories error:', error);
+      console.error('ZepProvider: Get all memories error:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -480,21 +407,18 @@ export default class ZepProvider extends MemoryProvider {
     }
 
     try {
-      // W Zep, memoryId może być sessionId lub messageId
-      // Dla uproszczenia, usuńmy całą sesję
       await this.client.memory.deleteSession(memoryId);
       
-      console.log('✅ ZepProvider: Memory deleted successfully');
+      console.log('ZepProvider: Memory deleted successfully');
       return { success: true };
     } catch (error) {
-      console.error('❌ ZepProvider: Delete memory error:', error);
+      console.error('ZepProvider: Delete memory error:', error.message);
       return { success: false, error: error.message };
     }
   }
 
   /**
-   * Aktualizuje wspomnienie (dla admin panelu)
-   * W Zep można aktualizować metadata wiadomości
+   * Update memory (admin panel)
    */
   async updateMemory(memoryId, updates) {
     if (!this.isEnabled()) {
@@ -502,16 +426,14 @@ export default class ZepProvider extends MemoryProvider {
     }
 
     try {
-      // Zep doesn't support direct memory content updates
-      // Można aktualizować metadata wiadomości
-      console.log('ℹ️ ZepProvider: Memory content updates not supported, metadata only');
+      console.log('ZepProvider: Memory content updates not supported, metadata only');
       
       return { 
         success: true, 
         message: 'Zep memories are immutable, only metadata can be updated'
       };
     } catch (error) {
-      console.error('❌ ZepProvider: Update memory error:', error);
+      console.error('ZepProvider: Update memory error:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -520,7 +442,7 @@ export default class ZepProvider extends MemoryProvider {
    * Cleanup przy zmianie providera
    */
   async cleanup() {
-    console.log('🧹 ZepProvider: Cleanup completed');
+    console.log('ZepProvider: Cleanup completed');
     this.client = null;
     this.initialized = false;
   }
