@@ -2,7 +2,7 @@
  * Memory Provider Test API - Test połączenia z konkretnym providerem
  * 
  * Endpointy:
- * - GET /api/memory/test?provider=local|mem0 - test providera
+ * - GET /api/memory/test?provider=local|mem0|zep - test providera
  * 
  * @author Claude (AI Assistant) - Memory Providers System
  * @date 29.06.2025
@@ -31,14 +31,14 @@ export default async function handler(req, res) {
     if (!provider) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Provider parameter required (local|mem0)' 
+        error: 'Provider parameter required (local|mem0|zep)' 
       });
     }
 
-    if (!['local', 'mem0'].includes(provider)) {
+    if (!['local', 'mem0', 'zep'].includes(provider)) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Invalid provider. Use: local or mem0' 
+        error: 'Invalid provider. Use: local, mem0, or zep' 
       });
     }
 

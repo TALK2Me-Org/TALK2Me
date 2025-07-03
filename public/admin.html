@@ -673,6 +673,20 @@
                             </div>
                             <div id="mem0-test-result" style="margin-top: 10px; font-size: 11px;"></div>
                         </div>
+                        
+                        <!-- Zep Provider Card -->
+                        <div class="model-card" id="provider-zep">
+                            <div class="model-status" id="zep-status">🔍 CHECKING...</div>
+                            <h3>⚡ Zep Provider</h3>
+                            <p>Zep Cloud Platform</p>
+                            <p style="font-size: 12px; color: #666;">Ultra-fast memory with 98% cost reduction</p>
+                            <div style="margin-top: 15px;">
+                                <button onclick="testProvider('zep')" style="background: #6f42c1; color: white; border: none; border-radius: 4px; padding: 8px 15px; cursor: pointer; font-size: 12px;">
+                                    🧪 Test Connection
+                                </button>
+                            </div>
+                            <div id="zep-test-result" style="margin-top: 10px; font-size: 11px;"></div>
+                        </div>
                     </div>
                     
                     <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #FF69B4;">
@@ -1772,12 +1786,19 @@ Loading prompt...
                     // Update dropdown selection
                     const selector = document.getElementById('memory_provider_selector');
                     if (data.activeProvider) {
-                        selector.value = data.activeProvider.name === 'LocalProvider' ? 'local' : 'mem0';
+                        if (data.activeProvider.name === 'LocalProvider') {
+                            selector.value = 'local';
+                        } else if (data.activeProvider.name === 'Mem0Provider') {
+                            selector.value = 'mem0';
+                        } else if (data.activeProvider.name === 'ZepProvider') {
+                            selector.value = 'zep';
+                        }
                     }
                     
                     // Update provider cards
                     updateProviderCard('local', data.activeProvider?.name === 'LocalProvider', data.activeProvider?.enabled);
                     updateProviderCard('mem0', data.activeProvider?.name === 'Mem0Provider', data.activeProvider?.enabled);
+                    updateProviderCard('zep', data.activeProvider?.name === 'ZepProvider', data.activeProvider?.enabled);
                     
                     console.log('Memory system status:', data);
                 } else {
@@ -1787,6 +1808,7 @@ Loading prompt...
                 console.error('Error loading memory provider status:', error);
                 updateProviderCard('local', false, false, 'ERROR');
                 updateProviderCard('mem0', false, false, 'ERROR');
+                updateProviderCard('zep', false, false, 'ERROR');
             }
         }
         
