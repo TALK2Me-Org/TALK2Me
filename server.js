@@ -15,6 +15,10 @@ import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 // Startup diagnostics
 console.log('🚀 Starting TALK2Me server...');

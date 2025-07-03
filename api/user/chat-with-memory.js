@@ -1,28 +1,30 @@
 /**
- * TALK2Me Chat API v6.0 - Z systemem pamięci LangChain
+ * TALK2Me Chat API v7.0 - Z systemem pamięci LangChain + Dual Auth
  * 
  * Główne funkcjonalności:
  * - Streaming odpowiedzi przez SSE (Server-Sent Events)
  * - Function calling dla zapisywania wspomnień
- * - Integracja z MemoryManager dla personalizacji
+ * - Dual Auth: Supabase Auth + Custom JWT (backward compatibility)
+ * - Integracja z Memory Router dla personalizacji
  * - Obsługa konwersacji (conversations/messages)
  * 
- * @author Claude (AI Assistant) - Sesja 10-13
- * @date 14-17.06.2025
- * @status ✅ DZIAŁA w produkcji
+ * @author Claude (AI Assistant) - Sesja 10-13, Updated Sesja 27
+ * @date 14-17.06.2025, Updated 03.07.2025
+ * @status ✅ DZIAŁA w produkcji z DUAL AUTH
  * 
  * Flow działania:
- * 1. Weryfikacja JWT token (jeśli podany)
- * 2. Inicjalizacja MemoryManager dla usera
- * 3. Pobranie relevantnych wspomnień z bazy
- * 4. Wysłanie do OpenAI z function calling
+ * 1. Dual Auth: Supabase Auth FIRST, Custom JWT fallback
+ * 2. Inicjalizacja Memory Router dla usera
+ * 3. Pobranie relevantnych wspomnień z active provider
+ * 4. Wysłanie do OpenAI z function calling (LocalProvider only)
  * 5. Streaming odpowiedzi + obsługa remember_this()
- * 6. Zapis odpowiedzi do konwersacji
+ * 6. Zapis odpowiedzi do konwersacji + background auto-save (Mem0Provider)
  */
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import memoryRouter from '../memory/router.js'
 import { addPerfLog } from '../debug/performance-logs.js'
+import DualAuthMiddleware from '../../lib/auth-middleware.js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -139,74 +141,66 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, userContext, conversationId } = req.body
+    const { message, conversationId } = req.body
     const authHeader = req.headers.authorization
     
     if (!message) {
       return res.status(400).json({ error: 'Message is required' })
     }
 
+    // Handle missing env vars gracefully for dual auth system
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn('⚠️ Missing Supabase env vars, continuing with limited functionality');
+      return res.status(500).json({ 
+        error: 'Configuration error: Missing Supabase configuration',
+        canContinueAsGuest: true,
+        suggestion: 'Try using guest mode or configure Supabase environment variables'
+      });
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    // Sprawdź czy user jest zalogowany
-    let userId = null
-    console.log('🔍 Auth header:', authHeader ? 'Present' : 'Missing')
+    // 🚀 NEW: Dual Auth System - supports both Supabase Auth AND custom JWT
+    const userContext = await DualAuthMiddleware.authenticateUser(req)
+    const userId = userContext.getUserId()
     
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1]
-      console.log('🔐 Token received:', token.substring(0, 20) + '...')
-      
-      // Weryfikuj JWT token
-      try {
-        // Pobierz JWT secret
-        const { data: config } = await supabase
-          .from('app_config')
-          .select('config_value')
-          .eq('config_key', 'jwt_secret')
-          .single()
-        
-        const jwtSecret = config?.config_value
-        if (!jwtSecret) {
-          console.error('❌ JWT secret not configured in database')
-          // Continue as guest user - don't fail chat completely
-          userId = null
-        } else {
-          // Import jwt dynamically
-          const jwt = await import('jsonwebtoken')
-          const decoded = jwt.default.verify(token, jwtSecret)
-          userId = decoded.id
-          console.log('✅ Token verified, userId:', userId)
-        }
-      } catch (error) {
-        console.log('❌ Invalid token:', error.message)
-        // Kontynuuj jako gość jeśli token nieprawidłowy
-      }
-    } else {
-      console.log('⚠️ No auth header or invalid format')
-      // 🧪 TEMPORARY: Test fallback dla demo Mem0 memory functionality
-      if (message && message.toLowerCase().includes('test mem0')) {
-        userId = '550e8400-e29b-41d4-a716-446655440000' // User with Mem0 memories
-        console.log('🧪 TEMP: Using test userId for Mem0 demo:', userId)
-      }
+    console.log('🔐 DualAuth Result:', {
+      authType: userContext.authType,
+      isAuthenticated: userContext.isAuthenticated,
+      userId: userId ? userId.substring(0, 8) + '...' : 'none',
+      name: userContext.name
+    })
+    
+    // 🧪 TEMPORARY: Keep existing test fallback for demo Mem0 memory functionality
+    if (!userId && message && message.toLowerCase().includes('test mem0')) {
+      // Override with test user for Mem0 demo
+      userContext.id = '550e8400-e29b-41d4-a716-446655440000'
+      userContext.authType = 'test_demo'
+      console.log('🧪 TEMP: Using test userId for Mem0 demo:', userContext.id)
     }
 
-    // Jeśli brak userId, nie możemy obsługiwać konwersacji ani pamięci
-    if (!userId && conversationId) {
-      return res.status(401).json({ error: 'Login required for conversations' })
+    // Jeśli brak finalUserId, nie możemy obsługiwać konwersacji ani pamięci
+    const finalUserId = userContext.getUserId()
+    if (!finalUserId && conversationId) {
+      return res.status(401).json({ 
+        error: 'Login required for conversations',
+        authSupported: ['supabase', 'custom_jwt'],
+        currentAuthType: userContext.authType
+      })
     }
 
     // Obsługa konwersacji
     let activeConversationId = conversationId
     let conversationMessages = []
 
-    if (userId) {
+    if (finalUserId) {
       // Jeśli podano conversationId, sprawdź czy należy do użytkownika
       if (activeConversationId) {
         const { data: conv } = await supabase
           .from('conversations')
           .select('id')
           .eq('id', activeConversationId)
-          .eq('user_id', userId)
+          .eq('user_id', finalUserId)
           .single()
 
         if (!conv) {
@@ -227,7 +221,7 @@ export default async function handler(req, res) {
         const { data: newConv, error: convError } = await supabase
           .from('conversations')
           .insert({
-            user_id: userId,
+            user_id: finalUserId,
             title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
             last_message_at: new Date().toISOString()
           })
@@ -248,7 +242,7 @@ export default async function handler(req, res) {
           .from('messages')
           .insert({
             conversation_id: activeConversationId,
-            user_id: userId,
+            user_id: finalUserId,
             role: 'user',
             content: message
           })
@@ -294,9 +288,9 @@ export default async function handler(req, res) {
     
     let memorySystemEnabled = false
     
-    if (userId) {
+    if (finalUserId) {
       try {
-        console.log('🧠 PERF: Memory Router check for user:', userId)
+        console.log('🧠 PERF: Memory Router check for user:', finalUserId)
         
         // Check if already initialized
         if (memoryRouter.initialized) {
@@ -333,7 +327,7 @@ export default async function handler(req, res) {
         memorySystemEnabled = false
       }
     } else {
-      console.log('⚠️ No userId - memory system disabled for guest users')
+      console.log('⚠️ No finalUserId - memory system disabled for guest users')
     }
 
     // 3. POBIERZ RELEVANTNĄ PAMIĘĆ - dla WSZYSTKICH providerów (Mem0 używa swoich native API)
@@ -341,12 +335,12 @@ export default async function handler(req, res) {
     console.log(`🕒 PERF: Memory retrieval started at +${memoryRetrievalStartTime - requestStartTime}ms`)
     
     let memoryContext = ''
-    if (memorySystemEnabled && userId) {
+    if (memorySystemEnabled && finalUserId) {
       try {
         console.log(`🔍 PERF: Starting ${memoryRouter.activeProvider?.providerName} memory retrieval...`)
-        console.log('🔍 PERF: User ID:', userId, 'Query length:', message.length)
+        console.log('🔍 PERF: User ID:', finalUserId, 'Query length:', message.length)
         
-        const result = await memoryRouter.getRelevantMemories(userId, message, 5)
+        const result = await memoryRouter.getRelevantMemories(finalUserId, message, 5)
         const memoryTime = Date.now() - memoryRetrievalStartTime
         console.log(`🏁 PERF: Memory retrieval completed (${memoryTime}ms)`)
         
@@ -389,7 +383,7 @@ export default async function handler(req, res) {
     } else {
       console.log('⚠️ MEMORY DEBUG: Memory retrieval skipped:', {
         memorySystemEnabled,
-        userId: !!userId,
+        userId: !!finalUserId,
         provider: memoryRouter.activeProvider?.providerName || 'none'
       })
     }
@@ -463,7 +457,7 @@ export default async function handler(req, res) {
         // Dodaj memory context i rules - TYLKO dla LocalProvider
         // Mem0Provider nie potrzebuje MEMORY_RULES (ma automatyczną pamięć)
         const isLocalProviderForRules = memoryRouter.activeProvider?.providerName === 'LocalProvider'
-        if (isLocalProviderForRules && userId) {
+        if (isLocalProviderForRules && finalUserId) {
           systemPrompt += memoryContext + MEMORY_RULES
           console.log('📋 Added memory context + rules for LocalProvider')
         } else if (memoryContext) {
@@ -500,18 +494,18 @@ export default async function handler(req, res) {
           // Mem0Provider używa automatycznej pamięci bez function calling
           // LocalProvider zachowuje pełną funkcjonalność z remember_this()
           const isLocalProvider = memoryRouter.activeProvider?.providerName === 'LocalProvider'
-          if (userId && memorySystemEnabled && isLocalProvider) {
+          if (finalUserId && memorySystemEnabled && isLocalProvider) {
             chatOptions.functions = [MEMORY_FUNCTION]
             chatOptions.function_call = 'auto'
             console.log('🔧 Function calling enabled for LocalProvider', {
               model: openaiModel,
-              userId: userId,
+              userId: finalUserId,
               memoryEnabled: memorySystemEnabled,
               activeProvider: memoryRouter.activeProvider?.providerName || 'none'
             })
           } else {
             console.log('⚠️ Function calling disabled:', {
-              userId: !!userId,
+              userId: !!finalUserId,
               memorySystemEnabled,
               activeProvider: memoryRouter.activeProvider?.providerName || 'none',
               reason: isLocalProvider ? 'other' : 'Mem0Provider uses automatic memory'
@@ -534,12 +528,12 @@ export default async function handler(req, res) {
               stream: true
             }
 
-            if (userId && memorySystemEnabled && isLocalProvider) {
+            if (finalUserId && memorySystemEnabled && isLocalProvider) {
               chatOptions.functions = [MEMORY_FUNCTION]
               chatOptions.function_call = 'auto'
               console.log('🔧 Function calling enabled for LocalProvider (fallback)', {
                 model: 'gpt-3.5-turbo',
-                userId: userId,
+                userId: finalUserId,
                 memoryEnabled: memorySystemEnabled,
                 activeProvider: memoryRouter.activeProvider?.providerName || 'none'
               })
@@ -632,16 +626,16 @@ export default async function handler(req, res) {
             // Execute remember_this function via Memory Router
             console.log('📝 Processing remember_this function via Memory Router', {
               memorySystemEnabled,
-              userId: userId,
+              userId: finalUserId,
               activeProvider: memoryRouter.activeProvider?.providerName || 'none'
             })
             
             let functionResult = { success: false }
-            if (memorySystemEnabled && userId) {
+            if (memorySystemEnabled && finalUserId) {
               try {
                 console.log('💾 Saving memory via Memory Router...')
                 const saveResult = await memoryRouter.saveMemory(
-                  userId,
+                  finalUserId,
                   message, // original content
                   {
                     summary: args.summary,
@@ -665,7 +659,7 @@ export default async function handler(req, res) {
             } else {
               console.log('⚠️ Cannot save memory:', {
                 memorySystemEnabled,
-                userId: userId
+                userId: finalUserId
               })
               functionResult = { success: false, error: 'Memory system not available' }
             }
@@ -741,12 +735,12 @@ export default async function handler(req, res) {
     }
 
     // Zapisz odpowiedź AI do konwersacji
-    if (userId && fullResponse && activeConversationId) {
+    if (finalUserId && fullResponse && activeConversationId) {
       const { error: msgError } = await supabase
         .from('messages')
         .insert({
           conversation_id: activeConversationId,
-          user_id: userId,
+          user_id: finalUserId,
           role: 'assistant',
           content: fullResponse,
           ai_model: activeModel
@@ -764,7 +758,7 @@ export default async function handler(req, res) {
 
       // 5. AUTOMATYCZNA PAMIĘĆ dla Mem0Provider - BACKGROUND PROCESSING
       const isMem0Provider = memoryRouter.activeProvider?.providerName === 'Mem0Provider'
-      if (memorySystemEnabled && isMem0Provider && userId && fullResponse) {
+      if (memorySystemEnabled && isMem0Provider && finalUserId && fullResponse) {
         // 🚀 PERFORMANCE: Background processing - don't block response
         setImmediate(async () => {
           try {
@@ -777,7 +771,7 @@ export default async function handler(req, res) {
             ]
             
             const saveResult = await memoryRouter.saveMemory(
-              userId,
+              finalUserId,
               message, // original content for fallback
               {
                 conversation_messages: conversationMessages

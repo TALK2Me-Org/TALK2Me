@@ -245,6 +245,55 @@
             width: 20px;
             height: 20px;
         }
+        
+        /* 🚀 NEW: Supabase Auth Styles */
+        .auth-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 2px solid #e8f5e8;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8fff8 0%, #f0f9f0 100%);
+        }
+        
+        .supabase-auth-container {
+            margin: 20px 0;
+        }
+        
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+        
+        .auth-divider span {
+            margin: 0 15px;
+            color: #666;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        /* Supabase Auth UI customization */
+        .supabase-auth-ui .supabase-auth-ui_ui-button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .supabase-auth-ui .supabase-auth-ui_ui-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -257,7 +306,24 @@
         <div id="errorMessage" class="error-message"></div>
         <div id="successMessage" class="success-message"></div>
         
-        <!-- Formularz logowania -->
+        <!-- 🚀 NEW: Supabase Auth Section -->
+        <div id="supabaseAuthSection" class="auth-section">
+            <h2 style="margin-bottom: 20px; text-align: center; color: #4CAF50;">✨ Nowy Sposób Logowania</h2>
+            <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                Bezpieczna autoryzacja przez Supabase z społecznościowymi loginami
+            </p>
+            
+            <div class="supabase-auth-container">
+                <!-- Supabase Auth UI will be rendered here -->
+                <div id="supabase-auth-ui"></div>
+            </div>
+            
+            <div class="auth-divider">
+                <span>lub użyj tradycyjnego logowania</span>
+            </div>
+        </div>
+        
+        <!-- Formularz logowania (Legacy) -->
         <form id="loginForm">
             <h2 style="margin-bottom: 20px; text-align: center;">Zaloguj się</h2>
             
@@ -359,8 +425,88 @@
         </div>
     </div>
 
+    <!-- 🚀 NEW: Supabase Auth Scripts -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/auth-ui-shared@latest/dist/index.js"></script>
+    <script src="https://unpkg.com/@supabase/auth-ui-web@latest/dist/index.js"></script>
+
     <script>
         const API_URL = '';
+        
+        // 🚀 NEW: Supabase Auth Configuration
+        const SUPABASE_URL = 'https://hpxzhbubvdgxdvwxmhzo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhweHpoYnVidmRneGR2d3htaHpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzYwMjg3MDUsImV4cCI6MjA1MTYwNDcwNX0.sZmMaGNWbhubwCuZUlFKB3RWnzDe9J7VLlgQbJWo9Mk';
+        
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Initialize Supabase Auth UI
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing Supabase Auth UI...');
+            
+            const authContainer = document.getElementById('supabase-auth-ui');
+            if (authContainer) {
+                try {
+                    const { AuthApiError } = window.supabase;
+                    const { Auth } = window.supabaseAuthUI;
+                    
+                    const auth = new Auth(supabase.auth, {
+                        container: '#supabase-auth-ui',
+                        appearance: {
+                            theme: 'default',
+                            variables: {
+                                default: {
+                                    colors: {
+                                        brand: '#FF69B4',
+                                        brandAccent: '#FF1493'
+                                    }
+                                }
+                            }
+                        },
+                        providers: ['google', 'apple'],
+                        redirectTo: window.location.origin + '/',
+                        showLinks: true,
+                        magicLink: true
+                    });
+                    
+                    console.log('✅ Supabase Auth UI initialized');
+                } catch (error) {
+                    console.error('❌ Failed to initialize Supabase Auth UI:', error);
+                    authContainer.innerHTML = '<p style="color: #999; text-align: center;">Supabase Auth UI not available. Using legacy forms.</p>';
+                }
+            }
+        });
+        
+        // Handle Supabase Auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log('🔐 Supabase Auth Event:', event, session ? 'User logged in' : 'No session');
+            
+            if (event === 'SIGNED_IN' && session) {
+                console.log('✅ Supabase login successful:', session.user.email);
+                
+                // Store session token for dual auth compatibility
+                localStorage.setItem('supabase_session', JSON.stringify(session));
+                localStorage.setItem('token', session.access_token);
+                localStorage.setItem('user', JSON.stringify({
+                    id: session.user.id,
+                    email: session.user.email,
+                    name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                    authType: 'supabase'
+                }));
+                
+                showSuccess('Zalogowano przez Supabase! Przekierowywanie...');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            }
+            
+            if (event === 'SIGNED_OUT') {
+                console.log('🔓 User signed out');
+                localStorage.removeItem('supabase_session');
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            }
+        });
         
         function showError(message) {
             const errorEl = document.getElementById('errorMessage');
@@ -478,22 +624,20 @@
             window.location.href = '/';
         }
         
-        // Social login functions
+        // Social login functions (Legacy - now available via Supabase Auth above)
         function loginWithGoogle() {
             showLoading(true);
-            // Symulacja logowania przez Google
             setTimeout(() => {
                 showLoading(false);
-                showError('Logowanie przez Google będzie dostępne wkrótce!\n\nW pełnej wersji zostanie zintegrowane z Google OAuth 2.0');
+                showError('✨ Google OAuth jest już dostępny w nowej sekcji Supabase Auth powyżej!\n\nKliknij przycisk "Kontynuuj z Google" w zielonej sekcji na górze strony.');
             }, 1000);
         }
         
         function loginWithApple() {
             showLoading(true);
-            // Symulacja logowania przez Apple
             setTimeout(() => {
                 showLoading(false);
-                showError('Logowanie przez Apple będzie dostępne wkrótce!\n\nW pełnej wersji zostanie zintegrowane z Apple Sign-In');
+                showError('✨ Apple Sign-In jest już dostępny w nowej sekcji Supabase Auth powyżej!\n\nKliknij przycisk "Kontynuuj z Apple" w zielonej sekcji na górze strony.');
             }, 1000);
         }
     </script>

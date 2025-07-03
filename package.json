@@ -17,6 +17,8 @@
     "@langchain/community": "^0.3.17",
     "@langchain/core": "^0.3.58",
     "@langchain/openai": "^0.3.14",
+    "@supabase/auth-ui-react": "^0.4.7",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
