@@ -29,15 +29,23 @@ export default class ZepProvider extends MemoryProvider {
    * Convert UUID or email to readable user_id for Zep
    */
   convertToReadableUserId(userId) {
+    console.log('🐛 ZepProvider DEBUG: convertToReadableUserId INPUT:', userId);
+    
     if (userId.includes('@')) {
-      return userId.split('@')[0].replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+      const result = userId.split('@')[0].replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+      console.log('🐛 ZepProvider DEBUG: Email conversion path → result:', result);
+      return result;
     }
     
     if (userId.match(/^[0-9a-f-]{36}$/i)) {
-      return `user-${userId.slice(0, 8)}`;
+      const result = `user-${userId.slice(0, 8)}`;
+      console.log('🐛 ZepProvider DEBUG: UUID conversion path → result:', result);
+      return result;
     }
     
-    return userId.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+    const result = userId.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+    console.log('🐛 ZepProvider DEBUG: Fallback conversion path → result:', result);
+    return result;
   }
 
   /**
@@ -156,28 +164,46 @@ export default class ZepProvider extends MemoryProvider {
    * Ensure user exists in Zep Cloud
    */
   async ensureUser(userId) {
+    console.log('🐛 ZepProvider DEBUG: ensureUser() ENTRY');
+    console.log('🐛 ZepProvider DEBUG: Original userId:', userId);
+    
     const readableUserId = this.convertToReadableUserId(userId);
+    console.log('🐛 ZepProvider DEBUG: Converted readableUserId:', readableUserId);
+    
     const userMetadata = this.createUserMetadata(userId, readableUserId);
+    console.log('🐛 ZepProvider DEBUG: User metadata:', userMetadata);
+
+    const zapPayload = {
+      userId: readableUserId,
+      email: userMetadata.email,
+      firstName: userMetadata.firstName,
+      lastName: userMetadata.lastName,
+      metadata: userMetadata.metadata
+    };
+    console.log('🐛 ZepProvider DEBUG: Zep API payload:', zapPayload);
 
     try {
-      await this.client.user.add({
-        userId: readableUserId,
-        email: userMetadata.email,
-        firstName: userMetadata.firstName,
-        lastName: userMetadata.lastName,
-        metadata: userMetadata.metadata
-      });
+      console.log('🐛 ZepProvider DEBUG: Calling Zep client.user.add()...');
+      const zapResult = await this.client.user.add(zapPayload);
+      console.log('🐛 ZepProvider DEBUG: Zep API SUCCESS result:', zapResult);
 
-      console.log(`ZepProvider: User ensured: ${readableUserId}`);
+      console.log(`✅ ZepProvider: User ensured: ${readableUserId}`);
       return { success: true, userId: readableUserId };
     } catch (error) {
+      console.log('🐛 ZepProvider DEBUG: Zep API ERROR caught:', {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        stack: error.stack
+      });
+      
       // Jeśli user już istnieje, to jest OK
       if (error.message.includes('already exists') || error.status === 409) {
-        console.log(`ZepProvider: User already exists: ${readableUserId}`);
+        console.log(`✅ ZepProvider: User already exists: ${readableUserId}`);
         return { success: true, userId: readableUserId };
       }
       
-      console.error('ZepProvider: Error ensuring user:', error.message);
+      console.error('❌ ZepProvider: Error ensuring user:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -234,12 +260,16 @@ export default class ZepProvider extends MemoryProvider {
     }
 
     try {
-      console.log('ZepProvider: saveMemory for REAL userId:', userId, {
-        contentLength: content.length,
-        userIdType: 'REAL_USER'
-      });
-
+      console.log('🐛 ZepProvider DEBUG: saveMemory ENTRY POINT');
+      console.log('🐛 ZepProvider DEBUG: Raw userId:', userId);
+      console.log('🐛 ZepProvider DEBUG: userId type:', typeof userId);
+      console.log('🐛 ZepProvider DEBUG: userId length:', userId?.length);
+      console.log('🐛 ZepProvider DEBUG: Content length:', content.length);
+      console.log('🐛 ZepProvider DEBUG: Metadata:', metadata);
+      
+      console.log('🐛 ZepProvider DEBUG: BEFORE ensureUser() call...');
       const userResult = await this.ensureUser(userId);
+      console.log('🐛 ZepProvider DEBUG: ensureUser() RESULT:', userResult);
       if (!userResult.success) {
         return { success: false, error: `User creation failed: ${userResult.error}` };
       }
