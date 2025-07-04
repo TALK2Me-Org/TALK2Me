@@ -56,7 +56,7 @@ let chatHandler, historyHandler, favoritesHandler, conversationsHandler;
 let loginHandler, registerHandler, meHandler, verifyHandler;
 let configHandler, debugHandler, testMemoryHandler, memoryHandler, debugTablesHandler;
 let saveMemoryHandler, updateProfileHandler, summarizeMemoriesHandler;
-let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler, debugZepHandler;
+let memoryStatusHandler, memoryTestHandler, memoryReloadHandler, debugMem0Handler, debugZepHandler, debugZepUserCreateHandler;
 let telemetryHandler, performanceLogsHandler;
 
 try {
@@ -175,7 +175,6 @@ try {
     console.log('⚠️ Could not load debug-zep handler:', e.message);
   }
   
-  let debugZepUserCreateHandler = null;
   try {
     debugZepUserCreateHandler = (await import('./api/memory/debug-zep-user-create.js')).default;
     console.log('✅ Loaded: debug-zep-user-create handler');

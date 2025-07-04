@@ -437,18 +437,22 @@ export default class ZepProvider extends MemoryProvider {
           });
         }
 
-      let filteredMemories = allMemories;
-      if (filters.memory_type) {
-        filteredMemories = filteredMemories.filter(m => m.memory_type === filters.memory_type);
+        let filteredMemories = allMemories;
+        if (filters.memory_type) {
+          filteredMemories = filteredMemories.filter(m => m.memory_type === filters.memory_type);
+        }
+
+        console.log(`ZepProvider: Retrieved ${filteredMemories.length} memories`);
+
+        return { 
+          success: true, 
+          memories: filteredMemories,
+          count: filteredMemories.length
+        };
+      } catch (apiError) {
+        console.error('ZepProvider: Get all memories API error:', apiError.message);
+        return { success: true, memories: [], count: 0 }; // Return empty on API error
       }
-
-      console.log(`ZepProvider: Retrieved ${filteredMemories.length} memories`);
-
-      return { 
-        success: true, 
-        memories: filteredMemories,
-        count: filteredMemories.length
-      };
     } catch (error) {
       console.error('ZepProvider: Get all memories error:', error.message);
       return { success: false, error: error.message };
