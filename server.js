@@ -175,6 +175,14 @@ try {
     console.log('⚠️ Could not load debug-zep handler:', e.message);
   }
   
+  let debugZepUserCreateHandler = null;
+  try {
+    debugZepUserCreateHandler = (await import('./api/memory/debug-zep-user-create.js')).default;
+    console.log('✅ Loaded: debug-zep-user-create handler');
+  } catch (e) {
+    console.log('⚠️ Could not load debug-zep-user-create handler:', e.message);
+  }
+  
   // Telemetry handler
   try {
     telemetryHandler = (await import('./api/admin/telemetry.js')).default;
@@ -400,6 +408,11 @@ if (debugMem0Handler) {
 if (debugZepHandler) {
   app.get('/api/memory/debug-zep', debugZepHandler);
   console.log('✅ Registered route: GET /api/memory/debug-zep');
+}
+
+if (debugZepUserCreateHandler) {
+  app.get('/api/memory/debug-zep-user-create', debugZepUserCreateHandler);
+  console.log('✅ Registered route: GET /api/memory/debug-zep-user-create');
 }
 
 // Telemetry endpoints

@@ -135,8 +135,8 @@ export default class ZepProvider extends MemoryProvider {
       const startTime = Date.now();
       
       // DEVELOPMENT ONLY: Simple API status check without creating users
-      // Try to list sessions (empty result is OK, just test API access)
-      const testResult = await this.client.memory.listSessions({
+      // Try to get memories (empty result is OK, just test API access)
+      const testResult = await this.client.memory.getAll({
         userId: 'api-test-check',
         limit: 1
       });
@@ -333,21 +333,12 @@ export default class ZepProvider extends MemoryProvider {
 
       const readableUserId = this.convertToReadableUserId(userId);
 
-      const sessions = await this.client.memory.listSessions({
+      // FIXED: Use new Zep API - direct memory search instead of deprecated searchSessions
+      console.log('ZepProvider: Using new memory search API...');
+      const searchResults = await this.client.memory.search(query, {
         userId: readableUserId,
-        limit: 5
-      });
-
-      if (!sessions.sessions || sessions.sessions.length === 0) {
-        console.log('ZepProvider: No sessions found for user');
-        return { success: true, memories: [], context: '' };
-      }
-
-      const searchResults = await this.client.memory.searchSessions({
-        sessionIds: sessions.sessions.map(s => s.sessionId),
-        text: query,
         searchScope: 'messages',
-        searchType: 'mmr',
+        searchType: 'mmr', 
         mmrLambda: 0.6,
         limit: limit
       });
@@ -420,44 +411,31 @@ export default class ZepProvider extends MemoryProvider {
 
       const readableUserId = this.convertToReadableUserId(userId);
 
-      const sessions = await this.client.memory.listSessions({
-        userId: readableUserId,
-        limit: 50
-      });
+      // FIXED: Use new Zep API - get all memories directly instead of sessions
+      console.log('ZepProvider: Getting all memories with new API...');
+      try {
+        const allMemoriesResult = await this.client.memory.getAll({
+          userId: readableUserId,
+          limit: 100
+        });
 
-      if (!sessions.sessions || sessions.sessions.length === 0) {
-        return { success: true, memories: [], count: 0 };
-      }
-
-      const allMemories = [];
-
-      for (const session of sessions.sessions) {
-        try {
-          const sessionMessages = await this.client.memory.getSessionMessages(session.sessionId, {
-            limit: 100
-          });
-
-          if (sessionMessages.messages) {
-            sessionMessages.messages.forEach(message => {
-              allMemories.push({
-                id: message.uuid,
-                content: message.content,
-                summary: message.content.substring(0, 200) + '...',
-                importance: 3, // Default importance
-                memory_type: 'conversation',
-                created_at: message.createdAt,
-                metadata: {
-                  sessionId: session.sessionId,
-                  role: message.role,
-                  session_created: session.createdAt
-                }
-              });
+        const allMemories = [];
+        if (allMemoriesResult.memories) {
+          allMemoriesResult.memories.forEach(memory => {
+            allMemories.push({
+              id: memory.id || memory.uuid,
+              content: memory.content || memory.memory,
+              summary: (memory.content || memory.memory || '').substring(0, 200) + '...',
+              importance: 3, // Default importance
+              memory_type: 'conversation',
+              created_at: memory.createdAt || memory.created_at,
+              metadata: {
+                memory_id: memory.id,
+                zep_metadata: memory.metadata
+              }
             });
-          }
-        } catch (sessionError) {
-          console.warn('ZepProvider: Error getting session messages:', sessionError.message);
+          });
         }
-      }
 
       let filteredMemories = allMemories;
       if (filters.memory_type) {

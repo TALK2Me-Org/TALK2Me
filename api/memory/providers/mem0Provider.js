@@ -84,13 +84,10 @@ export default class Mem0Provider extends MemoryProvider {
    * @returns {object} - {valid: boolean, sanitized: string, warning?: string}
    */
   validateMemoryInput(content, metadata = {}) {
-    // Check for conversation_messages - BLOCKED!
+    // FIXED: Allow conversation_messages (legitimate use case for background auto-save)
+    // Only log for awareness, don't block
     if (metadata.conversation_messages && Array.isArray(metadata.conversation_messages)) {
-      return {
-        valid: false,
-        sanitized: '',
-        warning: 'conversation_messages detected - context dumps blocked'
-      };
+      console.log('Mem0Provider: conversation_messages detected (allowed for auto-save)');
     }
 
     // Check content type and length
