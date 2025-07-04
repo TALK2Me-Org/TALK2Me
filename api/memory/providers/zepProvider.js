@@ -105,35 +105,43 @@ export default class ZepProvider extends MemoryProvider {
   }
 
   /**
-   * Test połączenia z Zep Cloud
+   * Test połączenia z Zep Cloud - PRODUCTION SAFE (no test users created)
    */
   async testConnection() {
     if (!this.client) {
       return { success: false, error: 'Client not initialized' };
     }
 
+    // PRODUCTION SAFE: Skip connection test to avoid creating test users
+    if (process.env.NODE_ENV === 'production') {
+      console.log('ZepProvider: Connection test skipped in production (no test users created)');
+      return { 
+        success: true, 
+        message: 'Zep Cloud connection test skipped in production',
+        latency: 0,
+        note: 'Production mode - real users only'
+      };
+    }
+
     try {
       const startTime = Date.now();
       
-      // Prosty test - spróbuj utworzyć test user
-      const testUserId = `connection-test-${Date.now()}`;
-      const testUser = await this.client.user.add({
-        userId: testUserId,
-        email: 'test@zep-connection.com',
-        firstName: 'Connection',
-        lastName: 'Test',
-        metadata: { test: true, timestamp: Date.now() }
+      // DEVELOPMENT ONLY: Simple API status check without creating users
+      // Try to list sessions (empty result is OK, just test API access)
+      const testResult = await this.client.memory.listSessions({
+        userId: 'api-test-check',
+        limit: 1
       });
 
       const latency = Date.now() - startTime;
 
-      console.log(`ZepProvider: Connection test successful (${latency}ms)`);
+      console.log(`ZepProvider: Connection test successful (${latency}ms) - API accessible`);
 
       return { 
         success: true, 
-        message: `Zep Cloud connection successful`,
+        message: `Zep Cloud API accessible`,
         latency: latency,
-        testUserId: testUser.userId
+        note: 'Development mode - API check only'
       };
     } catch (error) {
       console.error('ZepProvider: Connection test failed:', error.message);
@@ -206,17 +214,28 @@ export default class ZepProvider extends MemoryProvider {
   }
 
   /**
-   * Zapisuje wspomnienie w Zep Cloud
+   * Zapisuje wspomnienie w Zep Cloud - ONLY REAL USERS
    */
   async saveMemory(userId, content, metadata = {}) {
     if (!this.isEnabled()) {
       return { success: false, error: 'ZepProvider not enabled' };
     }
 
+    // CRITICAL: Validate real userId - reject test/demo/undefined users
+    if (!userId || typeof userId !== 'string' || userId.length < 10) {
+      console.error('ZepProvider: REJECTED saveMemory - invalid userId:', userId);
+      return { success: false, error: 'Invalid userId - real user required' };
+    }
+
+    if (userId.includes('test') || userId.includes('demo') || userId.includes('connection')) {
+      console.error('ZepProvider: REJECTED saveMemory - test user detected:', userId);
+      return { success: false, error: 'Test users not allowed - real user required' };
+    }
+
     try {
-      console.log('ZepProvider: Saving memory:', {
-        userId: userId,
-        contentLength: content.length
+      console.log('ZepProvider: saveMemory for REAL userId:', userId, {
+        contentLength: content.length,
+        userIdType: 'REAL_USER'
       });
 
       const userResult = await this.ensureUser(userId);
@@ -255,7 +274,7 @@ export default class ZepProvider extends MemoryProvider {
   }
 
   /**
-   * Pobiera relevantne wspomnienia z Zep Cloud
+   * Pobiera relevantne wspomnienia z Zep Cloud - ONLY REAL USERS
    * KLUCZOWA FUNKCJA dla cost optimization - używa return_context: true
    */
   async getRelevantMemories(userId, query, limit = 10) {
@@ -263,10 +282,21 @@ export default class ZepProvider extends MemoryProvider {
       return { success: false, error: 'ZepProvider not enabled' };
     }
 
+    // CRITICAL: Validate real userId - reject test/demo/undefined users
+    if (!userId || typeof userId !== 'string' || userId.length < 10) {
+      console.error('ZepProvider: REJECTED getRelevantMemories - invalid userId:', userId);
+      return { success: true, memories: [], context: '' }; // Empty result for invalid users
+    }
+
+    if (userId.includes('test') || userId.includes('demo') || userId.includes('connection')) {
+      console.error('ZepProvider: REJECTED getRelevantMemories - test user detected:', userId);
+      return { success: true, memories: [], context: '' }; // Empty result for test users
+    }
+
     try {
-      console.log('ZepProvider: Getting relevant memories:', {
-        userId: userId,
-        limit: limit
+      console.log('ZepProvider: getRelevantMemories for REAL userId:', userId, {
+        limit: limit,
+        userIdType: 'REAL_USER'
       });
 
       const readableUserId = this.convertToReadableUserId(userId);
@@ -331,14 +361,30 @@ export default class ZepProvider extends MemoryProvider {
   }
 
   /**
-   * Pobiera wszystkie wspomnienia użytkownika (dla admin panelu)
+   * Pobiera wszystkie wspomnienia użytkownika (dla admin panelu) - ONLY REAL USERS
    */
   async getAllMemories(userId, filters = {}) {
     if (!this.isEnabled()) {
       return { success: false, error: 'ZepProvider not enabled' };
     }
 
+    // CRITICAL: Validate real userId - reject test/demo/undefined users
+    if (!userId || typeof userId !== 'string' || userId.length < 10) {
+      console.error('ZepProvider: REJECTED getAllMemories - invalid userId:', userId);
+      return { success: true, memories: [], count: 0 }; // Empty result for invalid users
+    }
+
+    if (userId.includes('test') || userId.includes('demo') || userId.includes('connection')) {
+      console.error('ZepProvider: REJECTED getAllMemories - test user detected:', userId);
+      return { success: true, memories: [], count: 0 }; // Empty result for test users
+    }
+
     try {
+      console.log('ZepProvider: getAllMemories for REAL userId:', userId, {
+        filters,
+        userIdType: 'REAL_USER'
+      });
+
       const readableUserId = this.convertToReadableUserId(userId);
 
       const sessions = await this.client.memory.listSessions({

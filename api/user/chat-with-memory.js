@@ -171,13 +171,8 @@ export default async function handler(req, res) {
       name: userContext.name
     })
     
-    // 🧪 TEMPORARY: Keep existing test fallback for demo Mem0 memory functionality
-    if (!userId && message && message.toLowerCase().includes('test mem0')) {
-      // Override with test user for Mem0 demo
-      userContext.id = '550e8400-e29b-41d4-a716-446655440000'
-      userContext.authType = 'test_demo'
-      console.log('🧪 TEMP: Using test userId for Mem0 demo:', userContext.id)
-    }
+    // REMOVED: Test fallback - ONLY REAL USERS allowed
+    // All memory operations require proper authentication
 
     // Jeśli brak finalUserId, nie możemy obsługiwać konwersacji ani pamięci
     const finalUserId = userContext.getUserId()
