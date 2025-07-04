@@ -112,14 +112,14 @@ export default class ZepProvider extends MemoryProvider {
       return { success: false, error: 'Client not initialized' };
     }
 
-    // PRODUCTION SAFE: Skip connection test to avoid creating test users
+    // PRODUCTION SAFE: Skip connection test to avoid creating spam users
     if (process.env.NODE_ENV === 'production') {
-      console.log('ZepProvider: Connection test skipped in production (no test users created)');
+      console.log('ZepProvider: Connection test skipped in production (no spam users created)');
       return { 
         success: true, 
         message: 'Zep Cloud connection test skipped in production',
         latency: 0,
-        note: 'Production mode - real users only'
+        note: 'Production mode - API assumed working'
       };
     }
 
@@ -221,15 +221,16 @@ export default class ZepProvider extends MemoryProvider {
       return { success: false, error: 'ZepProvider not enabled' };
     }
 
-    // CRITICAL: Validate real userId - reject test/demo/undefined users
+    // CRITICAL: Validate userId format - reject invalid/spam users only
     if (!userId || typeof userId !== 'string' || userId.length < 10) {
       console.error('ZepProvider: REJECTED saveMemory - invalid userId:', userId);
-      return { success: false, error: 'Invalid userId - real user required' };
+      return { success: false, error: 'Invalid userId - valid user required' };
     }
 
-    if (userId.includes('test') || userId.includes('demo') || userId.includes('connection')) {
-      console.error('ZepProvider: REJECTED saveMemory - test user detected:', userId);
-      return { success: false, error: 'Test users not allowed - real user required' };
+    // ONLY reject spam connection-test users, allow real UUIDs (including test-nati)
+    if (userId.startsWith('connection-test-') || userId.startsWith('demo-') || userId === 'undefined' || userId === 'null') {
+      console.error('ZepProvider: REJECTED saveMemory - spam user detected:', userId);
+      return { success: false, error: 'Spam users not allowed - valid user required' };
     }
 
     try {
@@ -282,15 +283,16 @@ export default class ZepProvider extends MemoryProvider {
       return { success: false, error: 'ZepProvider not enabled' };
     }
 
-    // CRITICAL: Validate real userId - reject test/demo/undefined users
+    // CRITICAL: Validate userId format - reject invalid/spam users only
     if (!userId || typeof userId !== 'string' || userId.length < 10) {
       console.error('ZepProvider: REJECTED getRelevantMemories - invalid userId:', userId);
       return { success: true, memories: [], context: '' }; // Empty result for invalid users
     }
 
-    if (userId.includes('test') || userId.includes('demo') || userId.includes('connection')) {
-      console.error('ZepProvider: REJECTED getRelevantMemories - test user detected:', userId);
-      return { success: true, memories: [], context: '' }; // Empty result for test users
+    // ONLY reject spam connection-test users, allow real UUIDs (including test-nati)
+    if (userId.startsWith('connection-test-') || userId.startsWith('demo-') || userId === 'undefined' || userId === 'null') {
+      console.error('ZepProvider: REJECTED getRelevantMemories - spam user detected:', userId);
+      return { success: true, memories: [], context: '' }; // Empty result for spam users
     }
 
     try {
@@ -368,15 +370,16 @@ export default class ZepProvider extends MemoryProvider {
       return { success: false, error: 'ZepProvider not enabled' };
     }
 
-    // CRITICAL: Validate real userId - reject test/demo/undefined users
+    // CRITICAL: Validate userId format - reject invalid/spam users only
     if (!userId || typeof userId !== 'string' || userId.length < 10) {
       console.error('ZepProvider: REJECTED getAllMemories - invalid userId:', userId);
       return { success: true, memories: [], count: 0 }; // Empty result for invalid users
     }
 
-    if (userId.includes('test') || userId.includes('demo') || userId.includes('connection')) {
-      console.error('ZepProvider: REJECTED getAllMemories - test user detected:', userId);
-      return { success: true, memories: [], count: 0 }; // Empty result for test users
+    // ONLY reject spam connection-test users, allow real UUIDs (including test-nati)
+    if (userId.startsWith('connection-test-') || userId.startsWith('demo-') || userId === 'undefined' || userId === 'null') {
+      console.error('ZepProvider: REJECTED getAllMemories - spam user detected:', userId);
+      return { success: true, memories: [], count: 0 }; // Empty result for spam users
     }
 
     try {

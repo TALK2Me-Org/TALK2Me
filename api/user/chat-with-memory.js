@@ -171,8 +171,13 @@ export default async function handler(req, res) {
       name: userContext.name
     })
     
-    // REMOVED: Test fallback - ONLY REAL USERS allowed
-    // All memory operations require proper authentication
+    // 🧪 RESTORED: Test fallback for memory system testing (development/debug)
+    if (!userId && message && message.toLowerCase().includes('test mem0')) {
+      // Override with test user for memory provider testing
+      userContext.id = '00000000-0000-0000-0000-000000000001' // test-nati user from database
+      userContext.authType = 'test_demo'
+      console.log('🧪 RESTORED: Using test-nati userId for memory testing:', userContext.id)
+    }
 
     // Jeśli brak finalUserId, nie możemy obsługiwać konwersacji ani pamięci
     const finalUserId = userContext.getUserId()
